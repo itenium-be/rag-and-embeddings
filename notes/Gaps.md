@@ -28,10 +28,13 @@ None of these terms appear anywhere in the notes:
 
 ---
 
-## P1 — fill these first
+## P1 — fill these first ✅ written
 
-These four are what an audience expects from the session title and what they will actually
-use on Monday.
+These are what an audience expects from the session title and what they will actually use on
+Monday. All five now have notes — see the links under each.
+
+The demo dataset they are written against is consultant data from BambooHR plus CVs and
+project sheets: [Demo Data](Demo-Data.md).
 
 ### 1. Embeddings, properly
 
@@ -43,7 +46,7 @@ dimension/cost tradeoffs.
 a paragraph. "Which embedding model should I use, and what does it cost" is the first
 question anyone asks.
 
-**Suggested note:** `Embedding-Models.md`
+**Written up:** [Embedding Models](Embedding-Models.md)
 - Encoder → pooling (CLS vs mean) → vector; contrastive training is why similar texts land close
 - The lineup: OpenAI `text-embedding-3-small` / `-large`, Cohere Embed, Voyage,
   open-weights BGE / E5 / GTE — and MTEB as the leaderboard to check, with the caveat that
@@ -65,7 +68,7 @@ queries that make a demo look broken. The current notes say hybrid search "combi
 keyword matches from a full text search index with the vector search" and stop there,
 never explaining *how* two ranked lists become one.
 
-**Suggested note:** `Hybrid-Search.md`
+**Written up:** [Hybrid Search](Hybrid-Search.md)
 - Lexical retrieval: TF-IDF → BM25, and what BM25's term saturation actually buys you
 - Where dense retrieval wins and where lexical wins — with example queries for each
 - RRF: score each document as the sum of `1 / (k + rank)` across the lists it appears in
@@ -84,7 +87,7 @@ it returns *approximate* neighbours — but never says what the approximation co
 tune it. Meanwhile the book notes recommend metadata prefiltering without mentioning that
 filters and ANN interact badly.
 
-**Suggested note:** `Vector-Indexes.md`
+**Written up:** [Vector Indexes](Vector-Indexes.md)
 - Brute force / flat: exact, fine up to surprisingly large collections — start here
 - HNSW: the graph, and the three knobs (`M`, `ef_construction`, `ef_search`) that trade
   recall against latency and memory
@@ -102,7 +105,7 @@ filters and ANN interact badly.
 **Why it matters:** for an itenium audience "do I just use pgvector" is probably the single
 most relevant decision in the session.
 
-**Suggested note:** `Vector-Stores.md`
+**Written up:** [Vector Stores](Vector-Stores.md)
 - pgvector / pgvectorscale — the default answer when Postgres is already in the stack
 - Dedicated: Qdrant, Weaviate, Milvus, Chroma, Pinecone
 - Search engines that grew vectors: Elasticsearch, OpenSearch, Redis
@@ -117,7 +120,7 @@ most relevant decision in the session.
 usually the biggest single quality jump after hybrid search. The notes give it one sentence
 inside an "other techniques" bullet list.
 
-**Suggested note:** fold into `Hybrid-Search.md` or its own `Reranking.md`
+**Written up:** [Reranking](Reranking.md)
 - Bi-encoder (fast, precomputed) vs cross-encoder (slow, far more accurate) — why you can
   only afford the cross-encoder on the top ~50
 - Hosted: Cohere Rerank. Open: BGE reranker
@@ -147,6 +150,9 @@ getting to the text in the first place, which is where most real projects stall.
 Entirely absent, and it is the gap most likely to block a real deployment. Which chunks is
 *this* user allowed to retrieve? Filtering at query time interacts directly with the ANN
 recall problem in gap 3, and getting it wrong leaks documents across tenants.
+
+With the BambooHR dataset this stops being hypothetical — see [Demo Data](Demo-Data.md).
+Consider promoting it from a caveat to a demoed feature.
 
 ### 8. Citations and attribution
 

@@ -17,8 +17,19 @@ Notes for the itenium session on **Essential GraphRAG** by [[Tomaž Bratanič]] 
 
 | Note | Covers |
 | --- | --- |
-| [Session outline](notes/Session-Outline.md) | Proposed 2-hour running order (and a 60-minute cut), built around five questions the naive pipeline gets wrong |
+| [Session outline](notes/Session-Outline.md) | 2-hour running order (and a 60-minute cut), built around five questions of which the naive pipeline answers one |
+| [Demo data](notes/Demo-Data.md) | Consultant data from BambooHR plus CVs — what to pull, and what must not reach the vector store |
 | [Gaps](notes/Gaps.md) | What the book notes do not cover but the session needs, prioritised, plus corrections to the existing notes |
+
+# Session material (P1 gaps, written)
+
+| Note | Covers |
+| --- | --- |
+| [Embedding models](notes/Embedding-Models.md) | What the vector is, the model lineup, MTEB, dimensions and cost, Matryoshka, the query/passage prefix gotcha |
+| [Hybrid search](notes/Hybrid-Search.md) | Where dense retrieval fails, BM25, and Reciprocal Rank Fusion |
+| [Reranking](notes/Reranking.md) | Bi-encoder vs cross-encoder, what to run, and "lost in the middle" |
+| [Vector indexes](notes/Vector-Indexes.md) | Brute force, HNSW and its dials, quantization, and the metadata filter trap |
+| [Vector stores](notes/Vector-Stores.md) | pgvector vs the dedicated stores, and how to choose |
 
 # Reading order
 
