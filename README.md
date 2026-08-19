@@ -31,6 +31,24 @@ Notes for the itenium session on **Essential GraphRAG** by [[Tomaž Bratanič]] 
 | [Vector indexes](notes/Vector-Indexes.md) | Brute force, HNSW and its dials, quantization, and the metadata filter trap |
 | [Vector stores](notes/Vector-Stores.md) | pgvector vs the dedicated stores, and how to choose |
 
+# Production concerns (P2)
+
+| Note | Covers |
+| --- | --- |
+| [Ingestion](notes/Ingestion.md) | Parsing before chunking, deterministic chunk IDs, deletes, and re-embedding as a migration |
+| [Access control](notes/Access-Control.md) | The index is a copy with different permissions — filtering, Postgres RLS, drift, and four ways it leaks |
+| [Citations](notes/Citations.md) | Carrying provenance end to end, verifying the citation, and designing the refusal |
+| [Cost and caching](notes/Cost-And-Caching.md) | Where the money goes, what GraphRAG indexing costs, prompt caching, semantic caching risks |
+
+# Framing and depth (P3)
+
+| Note | Covers |
+| --- | --- |
+| [Evaluating retrieval](notes/Evaluation.md) | recall@k, MRR, nDCG, the recall@50-vs-@5 diagnostic, and building the golden set |
+| [When not to reach for this](notes/When-Not-To-RAG.md) | Long context, plain keyword search, text2sql, and the GraphRAG cost test |
+| [Cypher primer](notes/Cypher-Primer.md) | Enough Cypher to read what text2cypher generates — and why it is not Neo4j-only |
+| [GraphRAG since the book](notes/GraphRAG-Since-The-Book.md) | LazyGraphRAG, DRIFT search, and Leiden vs Louvain |
+
 # Reading order
 
 Start with [Essential GraphRAG](notes/Essential-GraphRAG.md) — the other three are the

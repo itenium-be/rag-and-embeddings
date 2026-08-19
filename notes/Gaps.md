@@ -129,7 +129,7 @@ inside an "other techniques" bullet list.
 
 ---
 
-## P2 — production reality
+## P2 — production reality ✅ written
 
 The notes describe techniques. These are the things that decide whether the project ships.
 
@@ -145,6 +145,8 @@ getting to the text in the first place, which is where most real projects stall.
   embedding model require all documents to be re-setup") — it deserves a plan, not a clause
 - Versioning the index so you can roll back a bad ingestion
 
+**Written up:** [Ingestion](Ingestion.md)
+
 ### 7. Access control and multi-tenancy
 
 Entirely absent, and it is the gap most likely to block a real deployment. Which chunks is
@@ -154,11 +156,15 @@ recall problem in gap 3, and getting it wrong leaks documents across tenants.
 With the BambooHR dataset this stops being hypothetical — see [Demo Data](Demo-Data.md).
 Consider promoting it from a caveat to a demoed feature.
 
+**Written up:** [Access Control](Access-Control.md)
+
 ### 8. Citations and attribution
 
 Also absent, which is odd given the book's own pitch is "accurate, **explainable**,
 context-aware". Covering: carrying chunk provenance through retrieval, getting the model to
 cite, and verifying that the citation actually supports the claim.
+
+**Written up:** [Citations](Citations.md)
 
 ### 9. Cost, latency and caching
 
@@ -169,9 +175,11 @@ cite, and verifying that the citation actually supports the claim.
   a call per community summary. The notes describe the technique thoroughly and never once
   say what it costs to run
 
+**Written up:** [Cost and Caching](Cost-And-Caching.md)
+
 ---
 
-## P3 — framing and depth
+## P3 — framing and depth ✅ written
 
 ### 10. Retrieval evaluation, separately from generation
 
@@ -181,6 +189,8 @@ recall@k, precision@k, MRR, nDCG@k. Without those you learn that the answer is b
 whether retrieval or generation broke it. Also missing: how to build the golden dataset,
 which is the actual hard part.
 
+**Written up:** [Evaluation](Evaluation.md)
+
 ### 11. When *not* to reach for this
 
 A session that only sells the technique is less useful than one that draws the line.
@@ -189,6 +199,8 @@ A session that only sells the technique is less useful than one that draws the l
 - When plain keyword search is enough
 - When GraphRAG's indexing cost is not repaid — the notes explain the technique but never
   offer the "is this worth it" test
+
+**Written up:** [When Not To RAG](When-Not-To-RAG.md)
 
 ### 12. Cypher primer — and Cypher is not Neo4j-only
 
@@ -210,11 +222,15 @@ portable, and most Cypher in the wild still runs on Neo4j. But for the session i
 text2cypher is a transferable skill rather than vendor lock-in — and Apache AGE makes a
 Postgres-only demo possible if you would rather not stand up Neo4j.
 
+**Written up:** [Cypher Primer](Cypher-Primer.md)
+
 ### 13. GraphRAG has moved since the book
 
 Microsoft's implementation gained **LazyGraphRAG** (defers the expensive indexing until
 query time, dramatically cheaper) and **DRIFT search** (blends local and global) after the
 book's cutoff. Worth a slide so the session is not describing a frozen snapshot.
+
+**Written up:** [GraphRAG Since The Book](GraphRAG-Since-The-Book.md)
 
 ---
 

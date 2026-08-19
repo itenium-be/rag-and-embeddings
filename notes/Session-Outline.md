@@ -177,5 +177,5 @@ follow-up session — do not compress them, they will just land badly.
   narrative collapses. Screenshot the failures beforehand.
 - **The five questions are the handout.** Anyone who leaves remembering only "vectors cannot
   count" has got their money's worth.
-- Sources for every section are in [Gaps](Gaps.md). The P1 gaps are now written; P2 and P3
-  are still outlines.
+- Sources for every section are in [Gaps](Gaps.md). **All thirteen gaps now have notes** —
+  the outline is deliverable as written.
