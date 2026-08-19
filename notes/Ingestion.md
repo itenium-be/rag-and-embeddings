@@ -74,10 +74,10 @@ will actually be asked — *why is this document not being found*, *when did thi
 
 ## For the session
 
-This is part 9 of the [outline](Session-Outline.md), and it is the least glamorous material
-in the session — which is exactly why it is worth including. Everyone demos chunk-embed-
-retrieve; almost nobody mentions that the demo becomes a maintenance problem the moment it
-has real users.
+**Session three material** — see the parked list in the [outline](Session-Outline.md). It is
+the least glamorous topic in the whole set, which is exactly why it is worth a session for
+the people who will actually build one: everyone demos chunk-embed-retrieve, almost nobody
+mentions that the demo becomes a maintenance problem the moment it has real users.
 
 If you want one slide: the two-column CV. Show the extracted text, let the room read the
 interleaved nonsense, and point out that nothing in the pipeline would ever have told you.

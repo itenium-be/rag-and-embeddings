@@ -1,5 +1,13 @@
 # Content gaps for a "RAG & Embeddings" session
 
+> **Scoping update.** Session one is now pitched at a room with no prior exposure and covers
+> **vector RAG only** — see the [outline](Session-Outline.md). Most of what follows is still
+> needed, but it is spread across three sessions rather than crammed into one: gaps 1, 2, 5
+> and 8 land in session one, gaps 12 and 13 in the GraphRAG session, and gaps 3, 4, 6, 7, 9
+> and 10 in a production session. The foundations a beginner room needs *before* any of it
+> were themselves a gap, now filled by [Foundations](Foundations.md) and
+> [Glossary](Glossary.md).
+
 ## Why there are gaps
 
 Everything in this repo comes from [Essential GraphRAG](Essential-GraphRAG.md). The book

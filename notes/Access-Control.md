@@ -84,8 +84,10 @@ code remembers.
 
 ## For the session
 
-Part 9 of the [outline](Session-Outline.md), and worth promoting from a caveat to a demoed
-feature.
+**Session three material** — see the parked list in the [outline](Session-Outline.md), where
+it is flagged as the one parked topic with a claim on being brought forward. With this
+dataset it is not theoretical: it is the question that decides whether such a tool is allowed
+to exist at itenium at all.
 
 The demo is small: run "who is on a performance improvement plan" as an admin, then as a
 regular consultant, and show the second one returning nothing rather than a filtered

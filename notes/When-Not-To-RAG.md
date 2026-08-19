@@ -82,7 +82,9 @@ Most disappointing RAG systems are the second question asked of the first tool.
 
 ## For the session
 
-Part 9 of the [outline](Session-Outline.md), and the closing note.
+Part 6 of the [outline](Session-Outline.md) — the closing note of session one, after
+question 5 is declared permanently unfixable. Keep the long-context and keyword-only points;
+the GraphRAG cost test belongs in session two.
 
 Resist ending on a victory lap. The room will remember "vectors cannot count" and "try long
 context first" longer than they will remember the RRF formula, and both make them better at

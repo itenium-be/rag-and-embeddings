@@ -77,9 +77,9 @@ unanswerable questions is more useful than one that never does, not less.
 
 ## For the session
 
-Part 9 of the [outline](Session-Outline.md), and a natural pairing with
-[Access Control](Access-Control.md) — both are about what the system is allowed to say and
-whether you can check it.
+Part 5 of the [outline](Session-Outline.md) — it answers "how do I know it isn't making this
+up?", which someone will have been waiting to ask since the invented answer in part 0. That
+makes it one of the few advanced-sounding topics that genuinely belongs in a first session.
 
 The demo: ask a question the corpus genuinely cannot answer, and show the uncited confident
 paragraph. Then show the same query with citations and a refusal path. The contrast lands

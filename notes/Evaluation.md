@@ -84,8 +84,8 @@ decisions with. It is far less work than it feels like before you start.
 
 ## For the session
 
-Part 8 of the [outline](Session-Outline.md), and the first thing to cut for the 60-minute
-version.
+**Session three material** — see the parked list in the [outline](Session-Outline.md).
+Measuring retrieval means nothing to someone who has not yet built any.
 
 If you keep one slide, keep the recall@50-vs-recall@5 diagnostic. It is genuinely
 actionable, it takes thirty seconds to explain, and it is the single most useful thing most

@@ -1,181 +1,201 @@
 # Session outline — RAG & Embeddings
 
+**Audience:** no prior exposure to RAG, embeddings or vector search. Assume the words are
+new, not just the techniques. See [Foundations](Foundations.md).
+**Format:** ~2 hours, you drive every demo, the room watches.
+**Scope:** vector RAG only. GraphRAG is deliberately out — it is not in the title, and a room
+meeting embeddings for the first time cannot absorb community detection in the same sitting.
+
 ## The spine
 
-Do not present this as a tour of techniques. Present it as **one dataset and five questions**,
-of which the naive pipeline answers exactly one. Then fix them one at a time. Every section
-earns its place by killing a specific failing question, and the graph half arrives as the
-answer to the two questions that retrieval tuning *cannot* fix.
+One dataset, five questions, of which the naive pipeline answers exactly one. Each fix kills
+a specific question. The **fifth is never fixed** — it is the cliffhanger that earns a second
+session.
 
-The dataset is consultant data from BambooHR plus CVs and project sheets — see
-[Demo Data](Demo-Data.md), including what not to export.
+Dataset: consultant data from BambooHR plus CVs and project sheets — see
+[Demo Data](Demo-Data.md), including what must not be exported.
 
-Put the five questions on screen in part 2 and leave them up as a scoreboard all session.
+Put the questions on screen in part 3 and leave them up as a scoreboard.
 
 | # | Question | Naive RAG does | Fixed in |
 | --- | --- | --- | --- |
 | 1 | "What is our policy on training budget?" | ✅ **answers it correctly** | — the baseline |
-| 2 | "Who has the **AZ-204** certification?" | returns the AZ-104 and AZ-400 people | Part 4 — hybrid + BM25 + RRF |
-| 3 | "Who is our **strongest** Kubernetes consultant?" | five people who mention it once in passing | Part 4 — reranking |
-| 4 | "**How many** consultants are available from October?" | invents a confident number | Part 6 — graph + text2cypher |
-| 5 | "Which skills are we **collectively** short on?" | generic waffle about upskilling | Part 7 — GraphRAG global search |
+| 2 | "Who has the **AZ-204** certification?" | returns the AZ-104 and AZ-400 people | Part 4 — hybrid search |
+| 3 | "Who is our **strongest** Kubernetes consultant?" | five people who mention it once | Part 4 — reranking |
+| 4 | "Who can take over the ACME work **in October**?" | finds nothing useful | Part 4 — query rewriting |
+| 5 | "**How many** consultants are free from October?" | invents a confident number | ❌ **never** — next session |
 
-Question 1 works from the start — that matters, because a session where nothing works is a
-session nobody believes. It is a policy document: prose, semantically distinctive, and the
-answer lives in one chunk. This is genuinely what vector RAG is good at.
+Question 1 working matters: a session where nothing works is a session nobody believes, and
+it shows what vector RAG is genuinely good at. Question 5 failing *permanently* is the point
+of the ending — see part 6.
 
-Question 2 is the cheap fix that makes people feel clever. Question 3 is the one they will
-recognise from their own systems. **Question 4 is the pivot** — where the room sees that no
-amount of retrieval tuning helps. Question 5 sells GraphRAG.
-
-Everyone in the room is *in* this dataset, which is worth a great deal. Nobody has to be
-persuaded that the questions matter.
+Everyone in the room is in this dataset. Nobody needs persuading that the questions matter.
 
 ---
 
-## 2-hour version
+## Part 0 — The problem (15 min)
 
-### Part 0 — Why we are here (10 min) · theory
-LLM limitations, finetuning vs RAG, retrieval + augmented generation.
-Source: [Essential GraphRAG](Essential-GraphRAG.md), [LLM Training](LLM-Training.md).
+**No architecture yet.** Open by asking a model a question about itenium and letting the room
+watch it invent a fluent, confident, wrong answer. That is the motivation, and it is more
+persuasive than any slide.
 
-Keep it short. Most of the room already believes RAG is worth doing — do not spend twenty
-minutes selling something nobody is arguing against.
+Then: the model learned from text up to a cutoff, knows nothing private, and answers anyway.
+Two fixes — retrain it (expensive, slow, still unreliable for facts) or **show it the
+documents at question time**. The second is RAG.
 
-### Part 1 — Embeddings (20 min) · theory + demo
-Source: [Embedding Models](Embedding-Models.md), [Vector Similarity Search](Vector-Similarity-Search.md).
+Land the **open-book exam** analogy and use nothing else all session. Pre-empt the three
+things people are already thinking: this is not training, it does not remember, and it can
+still be wrong.
 
-> **Demo** — embed a dozen sentences from the CVs, print the cosine similarity matrix. Show
-> two sentences with no shared words scoring high. Then show `AZ-204` and `AZ-104` scoring
-> ~0.99 despite being different certifications. That one result sets up question 2 and the
-> entire hybrid search section two parts later.
+Source: [Foundations](Foundations.md) §1–2.
 
-Cover: encoder → pooling → vector, and that the geometry reflects *what the model was trained
-to consider similar*; the model lineup and MTEB; dimensions and cost; normalization
-(dot product ≡ cosine); the query/passage prefix gotcha; token limits.
+## Part 1 — Embeddings (25 min)
 
-### Part 2 — Naive RAG, end to end (20 min) · demo-led
-Build the whole pipeline in front of them: chunk → embed → store → retrieve → generate.
-Keep it under ~50 lines and resist adding anything clever.
+The longest theory block, because the session is named after it and it is the one idea
+everything else rests on.
 
-Then run the five questions. **One works. Four fail.** Put the scoreboard up.
+Keyword search first — everyone knows it — and where it breaks: "who knows container
+orchestration" misses a CV that says "5 years Kubernetes". So we need to match meaning.
 
-Worth naming explicitly here: the BambooHR records chunk into near-identical blobs
-("Name: … Title: … Department: …") that sit on top of each other in vector space. That is
-not a bug in your pipeline, it is structured data being forced through a text-retrieval
-pipe — and it is the thesis of the whole session.
+**Show a real vector before defining one.** Then: an embedding model gives text *coordinates
+on a map of meaning*, and near means similar.
 
-### Part 3 — Where the vectors live (10 min) · theory
-Source: [Vector Indexes](Vector-Indexes.md), [Vector Stores](Vector-Stores.md).
+> **The demo that makes the session work.** Embed thirty sentences from the CVs, squash to
+> 2D, plot. Infrastructure people cluster here, frontend there, data over there — and nobody
+> wrote those groupings. Let the room look at it in silence. A beginner who *sees* the
+> clustering understands embeddings; one who only hears "high-dimensional vector space" does
+> not.
 
-Flat vs HNSW and the `ef_search` recall dial, quantization as the cost lever, and the
-pre-filter vs post-filter trap. Then the storage menu with an opinion: **if Postgres is
-already in your stack, start with pgvector.**
+Then vector search: embed the question too, return the nearest chunks.
 
-> **Ninety-second demo** — same query, same data, add a selective metadata filter, watch the
-> results go empty. It is the kind of bug people recognise from their own logs.
+Two honesty points, both cheap: the map is **learned** from training examples, not
+discovered, so it is poor at your internal jargon; and there are **two different models** in
+play — one makes coordinates, one writes answers. Draw them as separate boxes and keep them
+separate all session.
 
-### Part 4 — Fixing retrieval (30 min) · demo-led
-The heart of the session and the part people will actually use.
-Source: [Hybrid Search](Hybrid-Search.md), [Reranking](Reranking.md),
-[Step-back prompting](Step-back-Prompting.md).
+Source: [Foundations](Foundations.md) §3–4, [Embedding Models](Embedding-Models.md) for depth
+you will mostly not use.
 
-- **Hybrid search** — BM25 alongside vectors, merged with RRF (`1/(k+rank)`, k≈60). Show the
-  ten-line RRF function; people expect something harder. Question 2 passes. ✅
-- **Reranking** — retrieve 50, cross-encode, keep 5. The Kubernetes expert was at rank 12
-  under a pile of passing mentions. Question 3 passes. ✅
-- **Query rewriting** — take question 3's harder phrasing ("who can take over the Kubernetes
-  work at ACME in October") and show [step-back prompting](Step-back-Prompting.md) broadening
-  it. Mention HyDE and multi-query as siblings.
-- **Context assembly** — "lost in the middle": fewer, better-ordered chunks beat more chunks.
+## Part 2 — Chunking and the pipeline (15 min)
 
-Three of five now pass. Questions 4 and 5 are still broken **and no amount of retrieval
-tuning will fix them.** Say that out loud — it is the pivot of the whole session.
+Why documents get chopped: you cannot put a 40-page document at one point on the map. **Index
+cards.** Size, overlap, and where to cut.
 
-### Part 5 — Break (10 min)
+Then build the whole thing live, under ~50 lines, and draw the six-box diagram
+([Foundations](Foundations.md) §6). Refer back to it every time something changes later —
+"this modifies *this* box" is what keeps a beginner room oriented.
 
-### Part 6 — Structure: knowledge graphs (25 min) · theory + demo
-Source: [Essential GraphRAG](Essential-GraphRAG.md).
+## Part 3 — Run the questions (10 min)
 
-Counting, filtering, sorting and aggregating are simply not what chunk retrieval does.
-Question 4 does not fail by returning nothing — it fails by returning a **confident wrong
-number**, which is worse and much scarier to watch.
+One works. Four fail. Scoreboard up, and leave it up.
 
-Build the graph: consultants, skills, certifications, projects, clients, availability. Most
-of it comes from BambooHR fields directly; the manager field gives you a real org hierarchy
-for free. Extract the rest from CVs with a JSON schema.
+Worth naming: the BambooHR records chunk into near-identical blobs (`Name: … Title: …`) that
+sit on top of each other on the map. That is structured data being forced through a
+text-retrieval pipe, and it is why question 5 is doomed — foreshadow it here, do not explain
+it yet.
 
-**Entity resolution** earns its slide here: `Wouter Van Schandevijl` in BambooHR,
-`W. Van Schandevijl` on the project sheet, `wouter.van.schandevijl@itenium.be` in the
-timesheet export. Three nodes, one person, and your count is wrong until they merge.
+## Break (10 min)
 
-Then text2cypher — two minutes of Cypher syntax first, then the prompt template from the
-book notes. Question 4 passes. ✅
+## Part 4 — Making it work (30 min)
 
-> Cypher is not Neo4j-only: openCypher runs on Memgraph, Neptune and Apache AGE, and ISO GQL
-> (2024) derives from it. See gap 12 in [Gaps](Gaps.md).
+The heart of the session. Three fixes, each demoed against its failing question. Keep every
+explanation at the level of *what it does*, not *how it is built*.
 
-### Part 7 — GraphRAG (20 min) · theory + demo
-Entity extraction, then community detection and summaries. Global search — map over community
-summaries, reduce to an answer — handles question 5, because "which skills are we collectively
-short on" is not in any single chunk. ✅
+- **Hybrid search** (question 2 ✅) — run old-fashioned keyword search alongside the meaning
+  search and merge the results, because they fail at different things. Vectors are hopeless
+  at `AZ-204` versus `AZ-104`; keyword search is perfect at it. Show the ten-line merge
+  function — people expect something harder.
+  → [Hybrid Search](Hybrid-Search.md)
+- **Reranking** (question 3 ✅) — retrieval is fast and rough, so fetch 50 candidates and let
+  a slower, more careful model re-sort them and keep the best 5. The real Kubernetes expert
+  was sitting at rank 12 under CVs that mention it once.
+  → [Reranking](Reranking.md)
+- **Query rewriting** (question 4 ✅) — the question as typed is often a bad search query.
+  Have the model rewrite it first: broaden the over-specific ones
+  ([step-back prompting](Step-back-Prompting.md)), split the compound ones.
 
-Be honest about cost: an LLM call per chunk plus one per community summary. Then local search
-as the cheaper everyday path, and LazyGraphRAG / DRIFT as where Microsoft took it next.
+Four of five now pass.
 
-### Part 8 — Did any of this work? (15 min) · theory
-Source: gap 10 in [Gaps](Gaps.md).
+## Part 5 — "How do I know it isn't making this up?" (10 min)
 
-Retrieval metrics first (recall@k, MRR, nDCG@k) — if retrieval is broken, generation metrics
-only tell you *that* something is wrong. Then RAGAS for answer quality. Then the honest part:
-building the golden dataset is the actual work, and there is no shortcut.
+Someone will have been waiting to ask this since part 0. Answer it properly: keep track of
+which chunk every claim came from, show the citation, link back to the source document.
 
-Your five questions are the beginning of that golden set. Say so — it closes the loop.
+Two things worth saying plainly — a citation is not proof (models cite plausibly and
+wrongly, so it needs checking), and a system that says **"I don't know"** on unanswerable
+questions is more useful than one that never does. Demo the refusal on a question the corpus
+genuinely cannot answer.
 
-### Part 9 — Production and when not to (10 min) · theory
-Source: gaps 6–9 and 11 in [Gaps](Gaps.md), and [Demo Data](Demo-Data.md).
+Source: [Citations](Citations.md).
 
-Ingestion beyond chunking, citations, caching and cost. **Access control gets top billing
-here** — with this dataset it is not hypothetical: should a consultant be able to retrieve a
-chunk about a colleague? Consider demoing per-user filtering rather than only describing it.
-It is the most production-relevant thing in the session and almost nobody covers it.
+## Part 6 — Where this stops (10 min)
 
-Close on **when not to reach for this**: long context sometimes just wins, keyword search is
-sometimes enough, and GraphRAG's indexing bill is not always repaid. Ending on the limits is
-more credible than a victory lap.
+Point at question 5, still red.
+
+*How many consultants are free from October* is not a retrieval problem. There is no chunk
+that contains the answer — it has to be **counted** across records. You can improve chunking,
+embeddings, reranking and rewriting forever and it will never work, because retrieval finds
+passages that resemble the question and this question needs arithmetic.
+
+> **The line to leave them with: vectors cannot count.**
+
+Then name the answer without teaching it: pull the facts out into a network of things and
+relationships, and query that instead. That is GraphRAG, that is the book this came from, and
+that is the next session.
+
+Close with the honest limits from [When Not To RAG](When-Not-To-RAG.md) — sometimes plain
+keyword search is enough, and sometimes the whole corpus just fits in the prompt and none of
+this is needed. Ending on the limits is more credible than a victory lap.
 
 ---
 
 ## 60-minute cut
 
-Keep the spine, drop the depth.
-
 | Keep | Minutes |
 | --- | --- |
-| Part 1 — embeddings, with the AZ-204 similarity demo | 10 |
-| Part 2 — naive pipeline + the five questions | 15 |
-| Part 4 — hybrid + RRF, and reranking only | 15 |
-| Part 6 — graph + text2cypher, question 4 | 12 |
-| Part 9 — access control, cost, when not to | 8 |
+| Part 0 — the invented answer, open-book exam | 10 |
+| Part 1 — embeddings and the 2D cluster plot | 15 |
+| Parts 2–3 — pipeline and the five questions | 15 |
+| Part 4 — hybrid search and reranking only | 15 |
+| Part 6 — vectors cannot count | 5 |
 
-Cut parts 0, 3, 7 and 8 entirely. Say up front that evaluation and GraphRAG proper are the
-follow-up session — do not compress them, they will just land badly.
+Drop query rewriting and citations. Do **not** drop the cluster plot or the scoreboard —
+they are what the room remembers.
+
+---
+
+## Parked for later sessions
+
+None of this is lost; it is written up and waiting.
+
+**Session 2 — GraphRAG**, which the five-question cliffhanger sets up:
+[Essential GraphRAG](Essential-GraphRAG.md), [Cypher Primer](Cypher-Primer.md),
+[GraphRAG Since The Book](GraphRAG-Since-The-Book.md).
+
+**Session 3 — putting RAG in production**, for the people who want to build one:
+[Vector Indexes](Vector-Indexes.md), [Vector Stores](Vector-Stores.md),
+[Ingestion](Ingestion.md), [Access Control](Access-Control.md),
+[Cost and Caching](Cost-And-Caching.md), [Evaluation](Evaluation.md).
+
+Access control deserves a flag: with this dataset it is not theoretical, and it is the
+question that decides whether such a tool is allowed to exist at itenium at all.
 
 ---
 
 ## Practical notes
 
 - **Read [Demo Data](Demo-Data.md) before exporting anything.** Compensation, performance
-  reviews and leave reasons should never reach the vector store, and a pseudonymized snapshot
-  costs you nothing in the demo.
-- **Pre-compute every embedding and every graph build.** Do not run entity extraction live —
-  it is slow, costs money, and is non-deterministic in front of an audience. Commit the
-  artefacts and load them.
-- **Keep the name messiness.** If you pseudonymize, preserve the three-spellings-per-person
-  problem. Question 4's entity resolution moment depends on it.
+  reviews and leave reasons must not reach the vector store; a pseudonymized snapshot costs
+  nothing in the demo.
+- **Hand out the [Glossary](Glossary.md) on paper at the start.** A beginner room loses more
+  people to undefined vocabulary than to hard ideas.
+- **Pre-compute every embedding.** Do not embed live — it is slow and it fails in front of an
+  audience. Commit the artefacts and load them.
 - **Have the failing output saved.** If a "failing" query accidentally succeeds live, the
   narrative collapses. Screenshot the failures beforehand.
+- **One analogy, used consistently.** Open-book exam for RAG, map for embeddings, index cards
+  for chunks. Four clever metaphors are worse than one repeated.
+- **Offer the repo afterwards.** You drive during the session; hand out something runnable so
+  the hands-on people have somewhere to go.
 - **The five questions are the handout.** Anyone who leaves remembering only "vectors cannot
   count" has got their money's worth.
-- Sources for every section are in [Gaps](Gaps.md). **All thirteen gaps now have notes** —
-  the outline is deliverable as written.

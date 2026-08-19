@@ -97,8 +97,10 @@ performance one — and it fails silently, which is worse.
 
 ## For the session
 
-This is part 3 of the [outline](Session-Outline.md) — the shortest section, but the one
-people ask about afterwards.
+**Not session one.** This is session three material — see the parked list in the
+[outline](Session-Outline.md). A room meeting embeddings for the first time does not need
+`ef_search`, and putting it in front of them signals "this is complicated", which is the
+opposite of what a first session should leave behind.
 
 If you demo one thing here, demo the filter trap: same query, same data, add a selective
 metadata filter, watch the results go empty. It takes ninety seconds and it is the kind of

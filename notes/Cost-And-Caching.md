@@ -103,6 +103,7 @@ content that guessing produces budget surprises.
 
 ## For the session
 
-Part 9 of the [outline](Session-Outline.md), and the GraphRAG cost point belongs earlier —
-in part 7, right after the global search demo lands. That is the moment the room is most
-impressed, and therefore the moment to say what it costs.
+**Session three material** — see the parked list in the [outline](Session-Outline.md). The
+GraphRAG cost point belongs in session two instead, right after the global search demo
+lands: that is the moment the room is most impressed, and therefore the moment to say what
+it costs.

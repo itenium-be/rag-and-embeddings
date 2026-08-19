@@ -73,8 +73,9 @@ few hundred thousand chunks. Almost none of the real decisions are about speed.
 
 ## For the session
 
-Part 3 of the [outline](Session-Outline.md), sharing a slot with
-[Vector Indexes](Vector-Indexes.md).
+**Not session one.** Session three material — see the parked list in the
+[outline](Session-Outline.md). Beginners need to know a store exists; the comparison matters
+only once someone is actually choosing one.
 
 Resist the urge to build a feature matrix — it will be out of date before you present it and
 nobody remembers a twelve-column table. Give them the opinion, the six questions, and the

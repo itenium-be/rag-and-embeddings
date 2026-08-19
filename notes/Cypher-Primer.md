@@ -96,7 +96,8 @@ Two failure modes to mention:
 
 ## For the session
 
-Part 6 of the [outline](Session-Outline.md), immediately before the text2cypher demo.
+**Session two material** — the GraphRAG session that the [outline](Session-Outline.md) sets
+up with its unfixable fifth question. Put this immediately before the text2cypher demo.
 
 Two slides: the ASCII-art idea, then the variable-length org hierarchy query next to the SQL
 recursive CTE it replaces. That contrast does more to explain why the graph half of the

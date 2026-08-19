@@ -72,8 +72,8 @@ shapes, and a serious system routes each shape to the retriever that fits it.
 
 ## For the session
 
-Part 7 of the [outline](Session-Outline.md), after the global search demo and alongside the
-cost discussion.
+**Session two material** — the GraphRAG session that the [outline](Session-Outline.md) sets
+up. Place it after the global search demo, alongside the cost discussion.
 
 Keep it short — this is context, not content. One slide: "the book is accurate; here is what
 happened next, and it is mostly about making it cheaper." Then the Leiden correction, which
