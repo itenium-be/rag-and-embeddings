@@ -78,3 +78,18 @@ For the source material the whole thing came from, read
 
 Wikilinks that are still `[[bracketed]]` point at notes that live in the wider Obsidian
 vault and were not part of this export.
+
+
+## Presentation
+
+```bash
+cd presentation
+bun install
+bun run dev
+```
+
+Update the theme:
+```bash
+cd presentation/theme
+git pull
+```
