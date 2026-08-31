@@ -55,7 +55,7 @@ when does the bakery close?</pre>
 
       <div class="sources reveal" :class="{ shown: clicks >= 6 }">
         Retrieval from:<br>
-        <span class="accent">database &middot; web search &middot; wiki &middot; SharePoint &middot; PDFs</span>
+        <span class="accent">database &middot; APIs &middot; web search &middot; wiki &middot; SharePoint &middot; PDFs</span>
       </div>
 
     </div>

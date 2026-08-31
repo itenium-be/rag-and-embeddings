@@ -2,7 +2,7 @@
   <div class="use-case">
 
     <div class="sources">
-      <div class="head">Sources</div>
+      <div class="head reveal" :class="{ shown: clicks >= 1 }">Sources</div>
 
       <div class="card reveal" :class="{ shown: clicks >= 1 }">
         <img class="logo" :src="sharepoint" alt="SharePoint">
@@ -24,7 +24,7 @@
     </div>
 
     <div class="questions">
-      <div class="head">Prompts</div>
+      <div class="head reveal" :class="{ shown: clicks >= 2 }">Prompts</div>
       <div
         v-for="q in asked"
         :key="q"
