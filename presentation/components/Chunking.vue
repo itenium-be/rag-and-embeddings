@@ -7,7 +7,10 @@
           <span v-for="n in 8" :key="n" class="rule" :class="{ short: n % 4 === 0 }"></span>
         </div>
         <div class="name">Arbeidsreglement.pdf</div>
-        <div class="count">37 pages</div>
+        <div class="counts">
+          <span class="count">37 pages</span>
+          <span class="count">92k chars</span>
+        </div>
       </div>
 
       <span class="arrow reveal" :class="{ shown: clicks >= 2 }">&darr;</span>
@@ -17,7 +20,9 @@
           <span v-for="n in 5" :key="n" class="card" :style="cardStyle(n)"></span>
         </div>
         <div class="name">index cards</div>
-        <div class="count">133 chunks</div>
+        <div class="counts">
+          <span class="count">133 chunks</span>
+        </div>
       </div>
     </div>
 
@@ -46,6 +51,11 @@
         &rarr; <code>word</code>. Chunk at max 800 chars.
       </div>
     </div>
+
+    <span class="link reveal" :class="{ shown: clicks >= 4 }">
+      <span class="link-line"></span>
+      <span class="link-head"></span>
+    </span>
 
   </div>
 </template>
@@ -84,6 +94,7 @@ const cardStyle = (n) => ({
 
 <style scoped>
 .chunking {
+  position: relative;
   display: grid;
   grid-template-columns: 18rem 1fr;
   gap: 1.6rem;
@@ -151,11 +162,15 @@ const cardStyle = (n) => ({
   margin-top: 0.65rem;
   color: #1c1c1c;
 }
+.counts {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
 .count {
   font-family: var(--font-code);
   font-size: 0.9rem;
   font-weight: 600;
-  margin-top: 0.35rem;
   padding: 0.2rem 0.6rem 0.25rem;
   border-radius: 0.35rem;
   background: #343434;
@@ -219,7 +234,7 @@ const cardStyle = (n) => ({
 }
 
 .note {
-  margin-top: 0.5rem;
+  margin-top: 2.4rem;
   font-size: 0.88rem;
   color: #5f6066;
 }
@@ -227,5 +242,33 @@ const cardStyle = (n) => ({
   font-family: var(--font-code);
   font-size: 0.85rem;
   color: #fefefe;
+}
+
+/* Spans the grid gutter from the chunk count to the note, so the two columns read as
+   one sentence rather than as unrelated panels. */
+.link {
+  position: absolute;
+  left: 12.8rem;
+  bottom: 0.85rem;
+  width: 6.2rem;
+  height: 0;
+}
+.link-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1px;
+  height: 2px;
+  background: var(--color-primary);
+}
+.link-head {
+  position: absolute;
+  right: 0;
+  top: -0.3rem;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-top: 2px solid var(--color-primary);
+  border-right: 2px solid var(--color-primary);
+  transform: rotate(45deg);
 }
 </style>
