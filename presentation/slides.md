@@ -15,7 +15,7 @@ aspectRatio: 16/10
 
 ::image::
 
-![](./images/cover-art.jpg)
+![](./images/cover-art.webp)
 
 ---
 layout: agenda
@@ -65,6 +65,21 @@ h1:
 
 ---
 layout: default
+clicks: 5
+h1:
+  type: braces
+  color: primary
+  position: all
+---
+
+# RAG
+
+## Adding the answer to the prompt
+
+<WithRag :clicks="$clicks" />
+
+---
+layout: default
 ---
 
 # Slide Title
@@ -89,7 +104,7 @@ layout: break
 
 ::image::
 
-![](./images/cover-art.jpg)
+![](./images/cover-art.webp)
 
 
 ---
