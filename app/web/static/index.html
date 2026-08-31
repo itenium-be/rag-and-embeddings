@@ -1,1 +1,253 @@
-<h1>RAG demo</h1>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAG &amp; Embeddings</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+<style>
+  :root {
+    --bg: #12141a; --panel: #1a1d25; --line: #2c313d;
+    --ink: #e8eaf0; --dim: #8d94a5; --accent: #6ea8fe;
+    --pass: #4ade80; --fail: #f87171;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  header {
+    display: flex; align-items: center; gap: 1.5rem;
+    padding: 1rem 1.5rem; border-bottom: 1px solid var(--line);
+  }
+  header h1 { font-size: 1.1rem; margin: 0; font-weight: 600; letter-spacing: .01em; }
+  .steps { display: flex; gap: .5rem; margin-left: auto; }
+  .steps button {
+    background: var(--panel); color: var(--dim); border: 1px solid var(--line);
+    border-radius: 6px; padding: .45rem .9rem; font: inherit; font-size: .85rem;
+    cursor: pointer;
+  }
+  .steps button.on { background: var(--accent); border-color: var(--accent); color: #0b0d12; font-weight: 600; }
+  .steps button.done { color: var(--ink); border-color: var(--accent); }
+  main { display: grid; grid-template-columns: 300px 1fr; gap: 1.5rem; padding: 1.5rem; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 1.1rem; }
+  h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); margin: 0 0 .8rem; }
+  .scoreboard li { list-style: none; display: flex; gap: .55rem; padding: .3rem 0; font-size: .9rem; }
+  .scoreboard ul { margin: 0; padding: 0; }
+  .scoreboard .v { width: 1.2rem; }
+  .pass { color: var(--pass); } .fail { color: var(--fail); }
+  .scoreboard button {
+    background: none; border: none; color: inherit; font: inherit; text-align: left;
+    cursor: pointer; padding: 0; flex: 1;
+  }
+  .ask { display: flex; gap: .6rem; margin-bottom: 1.2rem; }
+  .ask input {
+    flex: 1; background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: .7rem .9rem; color: var(--ink); font: inherit;
+  }
+  .ask button {
+    background: var(--accent); color: #0b0d12; border: 0; border-radius: 8px;
+    padding: .7rem 1.4rem; font: inherit; font-weight: 600; cursor: pointer;
+  }
+  .blurb { color: var(--dim); font-size: .9rem; margin: 0 0 1rem; }
+  .rewritten { border-left: 3px solid var(--accent); padding-left: .8rem; margin-bottom: 1rem; font-size: .9rem; }
+  .answer { white-space: pre-wrap; margin-bottom: 1.2rem; }
+  .chunk { border-top: 1px solid var(--line); padding: .8rem 0; font-size: .88rem; }
+  .chunk:first-of-type { border-top: 0; }
+  .chunk h3 { margin: 0 0 .25rem; font-size: .92rem; }
+  .chunk .meta { color: var(--dim); font-size: .78rem; margin-bottom: .4rem; }
+  .chunk .body { color: #c3c8d4; }
+  .rank { display: inline-block; background: #232733; border-radius: 4px; padding: .05rem .4rem; margin-right: .3rem; font-size: .72rem; }
+  .rank.up { background: #16351f; color: var(--pass); }
+  details.advanced { margin-top: 1.5rem; font-size: .85rem; color: var(--dim); }
+  details.advanced label { margin-right: 1rem; }
+  #map { height: 620px; }
+  .error { color: var(--fail); }
+</style>
+</head>
+<body x-data="demo()" x-init="init()">
+
+<header>
+  <h1>RAG &amp; Embeddings</h1>
+  <nav class="steps">
+    <button @click="goto(0)" :class="step === 0 ? 'on' : ''">0 · Map</button>
+    <template x-for="s in steps" :key="s.number">
+      <button @click="goto(s.number)"
+              :class="step === s.number ? 'on' : (step > s.number ? 'done' : '')"
+              x-text="s.number + ' · ' + s.name"></button>
+    </template>
+  </nav>
+</header>
+
+<main x-show="step === 0" style="grid-template-columns: 1fr">
+  <section class="panel">
+    <h2>The map of meaning</h2>
+    <form class="ask" @submit.prevent="plotQuery()">
+      <input x-model="mapQuestion" placeholder="Drop a question on the map…">
+      <button type="submit">Find nearest</button>
+    </form>
+    <div id="map"></div>
+  </section>
+</main>
+
+<main x-show="step > 0">
+  <aside class="panel scoreboard">
+    <h2>Scoreboard</h2>
+    <ul>
+      <template x-for="q in questions" :key="q.id">
+        <li>
+          <span class="v" :class="q.steps[step] ? 'pass' : 'fail'"
+                x-text="q.steps[step] ? '✅' : '❌'"></span>
+          <button @click="ask(q.question)" x-text="q.question"></button>
+        </li>
+      </template>
+    </ul>
+    <details class="advanced">
+      <summary>Advanced</summary>
+      <template x-for="flag in ['dense','bm25','rerank','rewrite','citations']" :key="flag">
+        <label>
+          <input type="checkbox" :checked="config()[flag]" @change="override(flag, $event.target.checked)">
+          <span x-text="flag"></span>
+        </label>
+      </template>
+    </details>
+  </aside>
+
+  <section class="panel">
+    <p class="blurb" x-text="current().blurb"></p>
+    <form class="ask" @submit.prevent="ask(question)">
+      <input x-model="question" placeholder="Ask something…">
+      <button type="submit" x-text="loading ? '…' : 'Ask'"></button>
+    </form>
+
+    <p class="error" x-show="error" x-text="error"></p>
+
+    <template x-if="result">
+      <div>
+        <p class="rewritten" x-show="result.rewritten">
+          Searched for: <em x-text="result.rewritten"></em>
+        </p>
+        <div class="answer" x-text="result.answer"></div>
+
+        <h2>Retrieved</h2>
+        <template x-for="c in result.used" :key="c.id">
+          <div class="chunk">
+            <h3 x-text="c.title"></h3>
+            <div class="meta">
+              <template x-for="[stage, rank] in Object.entries(c.ranks)" :key="stage">
+                <span class="rank" :class="rankImproved(c, stage) ? 'up' : ''"
+                      x-text="stage + ' #' + rank"></span>
+              </template>
+              <span x-text="c.location"></span>
+            </div>
+            <div class="body" x-text="c.text.slice(0, 320)"></div>
+          </div>
+        </template>
+      </div>
+    </template>
+  </section>
+</main>
+
+<script>
+function demo() {
+  return {
+    step: 0, steps: [], questions: [], question: '', mapQuestion: '',
+    result: null, loading: false, error: '', overrides: {}, points: [],
+
+    async init() {
+      this.steps = await (await fetch('/api/steps')).json();
+      this.questions = await (await fetch('/api/questions')).json();
+      this.points = await (await fetch('/api/map')).json();
+      this.drawMap();
+    },
+
+    current() { return this.steps[this.step - 1] || { blurb: '', config: {} }; },
+    config() { return { ...this.current().config, ...this.overrides }; },
+
+    goto(n) {
+      this.step = n;
+      this.overrides = {};
+      this.result = null;
+      if (n === 0) this.$nextTick(() => this.drawMap());
+    },
+
+    override(flag, value) {
+      this.overrides[flag] = value;
+      if (this.question) this.ask(this.question);
+    },
+
+    rankImproved(chunk, stage) {
+      const ranks = Object.entries(chunk.ranks);
+      const i = ranks.findIndex(([s]) => s === stage);
+      return i > 0 && ranks[i][1] < ranks[i - 1][1];
+    },
+
+    async ask(question) {
+      this.question = question;
+      this.loading = true;
+      this.error = '';
+      const body = { question, config: this.config() };
+      const response = await (await fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })).json();
+      this.loading = false;
+      if (response.error) { this.error = response.error; this.result = null; }
+      else { this.result = response; }
+    },
+
+    traces(highlight) {
+      const types = [...new Set(this.points.map(p => p.source_type))];
+      const colours = { policy: '#6ea8fe', cv: '#4ade80', bamboo: '#fbbf24', project: '#f472b6' };
+      return types.map(type => {
+        const pts = this.points.filter(p => p.source_type === type);
+        return {
+          x: pts.map(p => p.x), y: pts.map(p => p.y),
+          text: pts.map(p => p.title + '<br>' + p.text.slice(0, 160)),
+          hoverinfo: 'text', mode: 'markers', type: 'scatter', name: type,
+          marker: {
+            size: pts.map(p => highlight.includes(p.id) ? 16 : 8),
+            color: colours[type] || '#8d94a5',
+            line: { width: pts.map(p => highlight.includes(p.id) ? 2 : 0), color: '#fff' },
+          },
+        };
+      });
+    },
+
+    layout() {
+      return {
+        paper_bgcolor: '#1a1d25', plot_bgcolor: '#1a1d25',
+        font: { color: '#e8eaf0' }, margin: { t: 10, r: 10, b: 30, l: 30 },
+        xaxis: { gridcolor: '#2c313d', zeroline: false },
+        yaxis: { gridcolor: '#2c313d', zeroline: false },
+        legend: { orientation: 'h' },
+      };
+    },
+
+    drawMap(highlight = [], query = null) {
+      const traces = this.traces(highlight);
+      if (query) {
+        traces.push({
+          x: [query.x], y: [query.y], mode: 'markers+text', type: 'scatter',
+          name: 'your question', text: ['?'], textposition: 'top center',
+          marker: { size: 20, color: '#f87171', symbol: 'x' },
+        });
+      }
+      Plotly.newPlot('map', traces, this.layout(), { displayModeBar: false });
+    },
+
+    async plotQuery() {
+      const response = await (await fetch('/api/map/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: this.mapQuestion, k: 5 }),
+      })).json();
+      this.drawMap(response.neighbours, response);
+    },
+  };
+}
+</script>
+</body>
+</html>
