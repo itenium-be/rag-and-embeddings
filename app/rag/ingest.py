@@ -63,9 +63,11 @@ def person_name(filename: str) -> str:
     revision noise, and a trailing "(FA)" marks a variant of the same person.
     """
     stem = re.sub(r"^itenium\s*-\s*cv\s*", "", filename, flags=re.IGNORECASE)
-    stem = stem.split(" - ")[0]
+    # The separator is not always spaced the same way: one export is named
+    # "... Versonnen- NL.pdf", so splitting on " - " alone leaves "- NL" attached.
+    stem = re.split(r"\s*-\s+", stem)[0]
     stem = re.sub(r"\([^)]*\)", "", stem)
-    return stem.strip() or filename
+    return stem.strip(" -") or filename
 
 
 def swap_name(name: str) -> str:

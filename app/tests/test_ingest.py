@@ -66,6 +66,7 @@ def test_person_name_survives_the_real_filename_shapes():
         person_name("Itenium - CV Bram De Plekker - .NET Angular Cloud Developer - updated")
         == "Bram De Plekker"
     )
+    assert person_name("Itenium - CV Timo Versonnen- NL") == "Timo Versonnen"
 
 
 def test_swap_name_turns_the_export_order_around():
