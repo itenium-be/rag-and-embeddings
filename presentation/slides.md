@@ -124,6 +124,21 @@ h2:
 <ContextWindow :clicks="$clicks" />
 
 ---
+layout: default
+clicks: 3
+h2:
+  type: dot
+  color: secondary
+  position: end
+---
+
+# Embeddings
+
+## A real vector
+
+<RealVector :clicks="$clicks" />
+
+---
 layout: break
 ---
 
