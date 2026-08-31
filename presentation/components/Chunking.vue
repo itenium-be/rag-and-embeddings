@@ -42,8 +42,8 @@
       </div>
 
       <div class="note reveal" :class="{ shown: clicks >= 4 }">
-        We cut on <code>¶ &rarr; line &rarr; sentence &rarr; word</code>, whichever keeps a
-        card under 800.
+        Claude cut on <code>¶</code> &rarr; <code>line</code> &rarr; <code>sentence</code>
+        &rarr; <code>word</code>. Chunk at max 800 chars.
       </div>
     </div>
 
@@ -170,6 +170,7 @@ const cardStyle = (n) => ({
 }
 
 .group { margin-bottom: 0.9rem; }
+.group + .group { margin-top: 2.4rem; }
 
 .ghead {
   display: flex;
@@ -225,6 +226,6 @@ const cardStyle = (n) => ({
 .note code {
   font-family: var(--font-code);
   font-size: 0.85rem;
-  color: #33343a;
+  color: #fefefe;
 }
 </style>
