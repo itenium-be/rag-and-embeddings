@@ -1,0 +1,30 @@
+# Each question's expected verdict at each wizard step. The check is on retrieval, not
+# on generated prose: deterministic, no LLM call, and it fails for the right reason.
+#
+#   includes - `value` appears in a retrieved chunk's title or text
+#   first    - `value` appears in the top-ranked retrieved chunk
+
+- id: opleidingsbudget
+  question: Hoeveel opleidingsbudget heb ik per jaar?
+  check: {type: includes, value: "EUR 2000"}
+  steps: {1: true, 2: true, 3: true, 4: true, 5: true, 6: true}
+
+- id: xximo
+  question: Hoe geef ik mijn kilometerstand door aan XXimo?
+  check: {type: includes, value: "XXimo portaal"}
+  steps: {1: false, 2: true, 3: true, 4: true, 5: true, 6: true}
+
+- id: kubernetes-hulp
+  question: Wie kan me helpen met Kubernetes?
+  check: {type: first, value: "Dries Peeters"}
+  steps: {1: false, 2: false, 3: true, 4: true, 5: true, 6: true}
+
+- id: conferentie-lissabon
+  question: Mag ik mijn opleidingsbudget gebruiken voor een conferentie in Lissabon?
+  check: {type: includes, value: "congressen en vakbeurzen"}
+  steps: {1: false, 2: false, 3: false, 4: true, 5: true, 6: true}
+
+- id: creditsaldo
+  question: Hoeveel credits heeft Dries Peeters nog?
+  check: {type: includes, value: "Huidig saldo"}
+  steps: {1: false, 2: false, 3: false, 4: false, 5: false, 6: true}
