@@ -29,7 +29,7 @@ Two, both deliberate:
 | `app/rag/chunking.py` | Text splitting, deterministic chunk ids |
 | `app/rag/ingest.py` | Per-source-type parsing and chunking → `chunks.jsonl` |
 | `app/rag/embed.py` | sentence-transformers wrapper, L2-normalised vectors |
-| `app/rag/index.py` | `DenseIndex` (numpy cosine), `Bm25Index` (rank-bm25 + a tokenizer that keeps `az-204` whole) |
+| `app/rag/index.py` | `DenseIndex` (numpy cosine), `Bm25Index` (rank-bm25 + a tokenizer that keeps `az-204` and `xximo` whole) |
 | `app/rag/fuse.py` | Reciprocal rank fusion |
 | `app/rag/rerank.py` | `Reranker` protocol, cross-encoder implementation |
 | `app/rag/llm.py` | `LLM` protocol, Anthropic implementation, disk cache wrapper |
@@ -41,7 +41,7 @@ Two, both deliberate:
 | `app/scripts/build_index.py` | ingest + embed + project |
 | `app/scripts/warm_cache.py` | Every question × every wizard step |
 | `app/sample/` | Committed synthetic corpus |
-| `app/questions.yaml` | The five questions and their expected verdict per step |
+| `app/questions.yaml` | The five questions and their expected verdict per step (6 steps) |
 
 ---
 
@@ -148,13 +148,19 @@ git commit -m "Scaffold the RAG demo app"
 from rag.models import WIZARD_STEPS, Config
 
 
-def test_wizard_has_five_steps_and_accumulates():
-    assert len(WIZARD_STEPS) == 5
+def test_wizard_has_six_steps_and_accumulates():
+    assert len(WIZARD_STEPS) == 6
     assert WIZARD_STEPS[0].config == Config()
     assert WIZARD_STEPS[1].config.bm25
     assert WIZARD_STEPS[2].config.bm25 and WIZARD_STEPS[2].config.rerank
     assert WIZARD_STEPS[3].config.rewrite
     assert WIZARD_STEPS[4].config.citations
+    assert WIZARD_STEPS[5].config.aggregates
+
+
+def test_aggregates_are_off_until_the_last_step():
+    assert not Config().aggregates
+    assert all(not s.config.aggregates for s in WIZARD_STEPS[:5])
 ```
 
 - [ ] **Step 2: Run the tests to verify they fail**
@@ -209,6 +215,9 @@ class Config:
     rerank: bool = False
     rewrite: bool = False
     citations: bool = False
+    # Lets precomputed summary chunks into retrieval. Off for the first five steps so
+    # the room sees the ledger fail before it sees structure fix it.
+    aggregates: bool = False
     top_k: int = 50  # retrieve wide
     top_n: int = 5   # keep few
 
@@ -262,13 +271,20 @@ WIZARD_STEPS: list[WizardStep] = [
         "Track which chunk every claim came from.",
         Config(bm25=True, rerank=True, rewrite=True, citations=True),
     ),
+    WizardStep(
+        6,
+        "Structure",
+        "Compute the answer at ingest time instead of retrieving it. "
+        "This is not a retrieval technique — it is the next session.",
+        Config(bm25=True, rerank=True, rewrite=True, citations=True, aggregates=True),
+    ),
 ]
 ```
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `cd app && uv run pytest tests/test_models.py -v`
-Expected: 1 passed
+Expected: 2 passed
 
 - [ ] **Step 5: Commit**
 
@@ -425,114 +441,151 @@ git commit -m "Add recursive text splitting with deterministic chunk ids"
 
 ### Task 4: The sample corpus
 
-No tests in this task — it is content, and everything downstream tests against it. Design constraints, one per question:
+No tests in this task — it is content, and everything downstream tests against it. It
+mirrors the shape of `data/raw/` exactly (`pdfs/`, `cvs/`, `bamboo/*.csv`) so the ingest
+code is exercised identically by the sample and the real thing.
+
+Design constraints, one per question:
 
 | Question | What the corpus must contain |
 | --- | --- |
-| 1 — training budget | A policy section that states it plainly, easy to find by meaning |
-| 2 — AZ-204 | Exactly one holder, plus decoys holding AZ-104 and AZ-400 |
-| 3 — strongest Kubernetes | One deep expert whose CV chunk is diluted by other content, plus four shallow mentions in short chunks that score high on cosine |
-| 4 — ACME in October | A project sheet naming the technologies, and availability living in a different source from the skills |
-| 5 — how many free from October | The answer exists in no chunk; it has to be counted across records |
+| 1 — opleidingsbudget | A policy section stating the amount plainly, easy to find by meaning |
+| 2 — XXimo | A jargon term the embedding model has never seen, plus a semantically closer decoy document that dense retrieval grabs instead |
+| 3 — Kubernetes | One deep expert whose CV chunk is diluted by other content, plus four shallow mentions in short chunks that score high on cosine |
+| 4 — Lissabon | No chunk mentions Lisbon; a travel-expenses decoy does; the answer lives in a budget-scope section that only a broadened query reaches |
+| 5 — credits | A ledger of signed per-event rows. The balance is in no chunk — it has to be summed |
 
 **Files:**
-- Create: `app/sample/policies/training-and-development.md`
-- Create: `app/sample/policies/car-policy.md`
-- Create: `app/sample/projects/acme-integration.md`
+- Create: `app/sample/pdfs/opleidingsbeleid.md`
+- Create: `app/sample/pdfs/kilometervergoeding.md`
+- Create: `app/sample/pdfs/xximo-kilometerstand.md`
+- Create: `app/sample/pdfs/onkosten-en-reizen.md`
 - Create: `app/sample/cvs/{ana-meeus,bram-claes,caro-dhondt,dries-peeters,elke-vermeulen,frank-nolens,gita-raman,hugo-willems}.md`
-- Create: `app/sample/bamboo.json`
+- Create: `app/sample/bamboo/consultants.csv`
+- Create: `app/sample/bamboo/credits.csv`
 
 - [ ] **Step 1: Write the policy documents**
 
-`app/sample/policies/training-and-development.md`:
+`app/sample/pdfs/opleidingsbeleid.md`:
 
 ```markdown
-# Training and Development Policy
+# Opleidingsbeleid itenium
 
-## Training budget
+## Opleidingsbudget
 
-Every consultant has an annual training budget of EUR 2000. The budget covers course
-fees, exam fees, books and conference tickets. It resets on 1 January and does not
-carry over to the following year.
+Elke consultant beschikt over een jaarlijks opleidingsbudget van EUR 2000. Het budget
+wordt toegekend op 1 januari en wordt niet overgedragen naar het volgende jaar.
 
-Requests under EUR 500 need approval from your team lead only. Anything above that
-also needs approval from the practice manager. Submit requests through the HR portal
-at least two weeks before the booking date.
+Aanvragen onder EUR 500 worden goedgekeurd door je teamlead. Boven dat bedrag is ook
+de goedkeuring van de practice manager nodig.
 
-## Certification reimbursement
+## Waarvoor mag het budget gebruikt worden
 
-Exam fees are reimbursed in full on a first pass. A retake is reimbursed once. Study
-material for a certification counts against the training budget; the exam fee does not.
+Het opleidingsbudget dekt cursusgeld, examengeld, vakliteratuur, en deelname aan
+congressen en vakbeurzen, in binnen- en buitenland. Verplaatsing en verblijf bij een
+meerdaags evenement vallen eveneens onder het budget.
 
-## Conference days
+Niet gedekt: hardware, software-licenties voor persoonlijk gebruik, en lidmaatschappen
+van beroepsverenigingen.
 
-Five paid days per year are available for conferences and community events, on top of
-the training budget. Speaking at a conference does not consume a conference day.
+## Certificaten
 
-## Internal knowledge sharing
+Examengeld wordt volledig terugbetaald bij een eerste geslaagde poging. Een herkansing
+wordt eenmaal terugbetaald. Studiemateriaal telt mee voor het opleidingsbudget, het
+examengeld zelf niet.
 
-Sessions given internally are paid time. Preparation time up to twice the session
-length is also paid time.
+## Interne kennisdeling
+
+Sessies die intern gegeven worden zijn betaalde tijd. Voorbereidingstijd tot tweemaal
+de duur van de sessie is eveneens betaalde tijd.
 ```
 
-`app/sample/policies/car-policy.md`:
+`app/sample/pdfs/kilometervergoeding.md`:
 
 ```markdown
-# Company Car Policy
+# Kilometervergoeding
 
-## Eligibility
+## Vergoeding voor woon-werkverkeer
 
-Consultants become eligible for a company car after six months of employment. The
-category of car available depends on job level, as set out in the fleet matrix
-maintained by HR.
+Wie met de eigen wagen naar een klant rijdt, ontvangt een kilometervergoeding volgens
+het tarief dat de overheid jaarlijks publiceert. De vergoeding dekt brandstof, slijtage
+en verzekering.
 
-## Ordering and delivery
+## Welke kilometers tellen mee
 
-Orders are placed through the leasing partner. Delivery times vary between three and
-nine months depending on the model. A replacement vehicle is provided if delivery
-exceeds the end date of the current lease.
+Kilometers tussen de woonplaats en de standplaats van de klant tellen mee. Kilometers
+tussen kantoor en klant tellen mee. Privékilometers tellen niet mee.
 
-## Fuel and charging cards
+## Wanneer indienen
 
-Every company car comes with a fuel or charging card. Private use is permitted within
-Belgium and neighbouring countries. Charging at home is reimbursed at the rate
-published quarterly by the government.
+De kilometerstand en de gereden kilometers worden maandelijks ingediend, samen met de
+timesheet. Laattijdige indiening wordt verwerkt in de maand erna.
 
-## Damage and traffic fines
+## Bedrijfswagen
 
-Traffic fines are the responsibility of the driver. Damage not covered by insurance is
-recovered from the driver up to a maximum of EUR 500 per incident.
+Wie over een bedrijfswagen beschikt, heeft geen recht op kilometervergoeding voor
+dezelfde verplaatsingen. De tankkaart of laadpas dekt die kosten.
 ```
 
-- [ ] **Step 2: Write the project sheet**
-
-`app/sample/projects/acme-integration.md`:
+`app/sample/pdfs/xximo-kilometerstand.md`:
 
 ```markdown
-# ACME Integration Platform
+# XXimo kilometerstand ingeven
 
-**Client:** ACME Manufacturing
-**Started:** March 2025
-**Staffed:** Frank Nolens
+## Procedure
 
-## Scope
+Log in op het XXimo portaal met je werkmailadres. Ga naar Mijn Wagen en kies
+Kilometerstand doorgeven. Vul de stand in zoals die op de teller staat, zonder
+decimalen, en bevestig.
 
-Replacement of ACME's nightly file-drop integrations with an event-driven platform.
-Order, stock and shipment events flow from the ERP into Azure Service Bus and are
-projected into read models consumed by the customer portal.
+## Frequentie
 
-## Technology
+XXimo vraagt de stand elk kwartaal op. Je krijgt een herinnering per mail. Wie drie
+opeenvolgende kwartalen niet doorgeeft, verliest tijdelijk toegang tot de laadpas.
 
-.NET 8, Azure Service Bus, Azure Functions, Cosmos DB, Bicep for infrastructure.
-NServiceBus for the messaging patterns. Azure DevOps pipelines for deployment.
+## Foutieve stand
 
-## Current state
-
-Order and stock flows are live. The shipment flow is in development and is the main
-remaining scope for the rest of the year.
+Een verkeerd ingegeven stand kan niet zelf gecorrigeerd worden. Mail dan naar de
+fleetverantwoordelijke met de juiste stand en de datum van aflezing.
 ```
 
-- [ ] **Step 3: Write the eight CVs**
+> The whole point of question 2. `kilometervergoeding.md` is semantically the closest
+> thing to "hoe geef ik mijn kilometerstand door" and dense retrieval goes straight to
+> it. `XXimo` is a brand the embedding model has never seen, so meaning-search is blind
+> to it and BM25 is perfect at it.
+
+`app/sample/pdfs/onkosten-en-reizen.md`:
+
+```markdown
+# Onkosten en buitenlandse reizen
+
+## Verplaatsingen naar het buitenland
+
+Reizen naar het buitenland voor een klantopdracht worden vooraf goedgekeurd door de
+practice manager. Vluchten worden geboekt via het reisbureau, niet zelf.
+
+## Dagvergoeding
+
+Voor een verblijf in het buitenland geldt een forfaitaire dagvergoeding volgens de
+landenlijst van de FOD Buitenlandse Zaken. Voor Portugal, Spanje en Italië geldt het
+tarief voor Zuid-Europa.
+
+## Voorbeelden
+
+Een tweedaagse klantworkshop in Lissabon: vlucht en hotel via het reisbureau,
+dagvergoeding volgens de landenlijst, maaltijden inbegrepen in de dagvergoeding.
+
+## Bewijsstukken
+
+Alle onkosten worden ingediend met een leesbaar bewijsstuk binnen de maand na de uitgave.
+```
+
+> The Lisbon decoy. Question 4 asked literally lands here — a document about travel
+> expenses that genuinely mentions Lissabon — and never reaches the budget-scope section
+> that actually answers it. Broadening the query to "waarvoor mag het opleidingsbudget
+> gebruikt worden" is what fixes it.
+
+- [ ] **Step 2: Write the eight CVs**
 
 `app/sample/cvs/ana-meeus.md`:
 
@@ -638,9 +691,9 @@ AZ-900 Azure Fundamentals.
 
 ## Experience
 
-Eight years of .NET. Currently on the ACME integration platform, building event-driven
-flows with Azure Service Bus, Azure Functions and NServiceBus. Cosmos DB read models
-and Bicep for infrastructure.
+Eight years of .NET. Currently on an integration platform, building event-driven flows
+with Azure Service Bus, Azure Functions and NServiceBus. Cosmos DB read models and
+Bicep for infrastructure.
 
 Before that, four years on a payments platform. Deployed to Kubernetes.
 ```
@@ -670,29 +723,63 @@ CI/CD with Azure DevOps and GitHub Actions. Kubernetes. Deployed to Kubernetes.
 > word competes with nine years of other content. That is the failure question 3 needs,
 > and reranking is what undoes it.
 
-- [ ] **Step 4: Write the BambooHR export**
+- [ ] **Step 3: Write the BambooHR exports**
 
-`app/sample/bamboo.json`:
+`app/sample/bamboo/consultants.csv` — same header as the real export, including the
+columns ingestion drops:
 
-```json
-[
-  {"name": "Ana Meeus", "title": "Cloud Consultant", "department": "Cloud", "manager": "Dries Peeters", "location": "Antwerp", "hire_date": "2020-03-02", "status": "Active", "client": "RetailCo", "assignment_end": "2027-03-31"},
-  {"name": "Bram Claes", "title": "Azure Developer", "department": "Cloud", "manager": "Ana Meeus", "location": "Antwerp", "hire_date": "2021-09-01", "status": "Active", "client": "LogiTrans", "assignment_end": "2027-06-30"},
-  {"name": "Caro Dhondt", "title": "Data Consultant", "department": "Data", "manager": "Ana Meeus", "location": "Ghent", "hire_date": "2019-01-07", "status": "Active", "client": "Insura", "assignment_end": "2027-01-31"},
-  {"name": "Dries Peeters", "title": "Platform Engineer", "department": "Cloud", "manager": "Ana Meeus", "location": "Leuven", "hire_date": "2017-05-15", "status": "Active", "client": "Internal", "assignment_end": null},
-  {"name": "Elke Vermeulen", "title": "Frontend Consultant", "department": "Software", "manager": "Frank Nolens", "location": "Ghent", "hire_date": "2022-02-01", "status": "Active", "client": "MediaGroup", "assignment_end": "2026-10-15"},
-  {"name": "Frank Nolens", "title": "Backend Consultant", "department": "Software", "manager": "Ana Meeus", "location": "Antwerp", "hire_date": "2018-11-05", "status": "Active", "client": "ACME Manufacturing", "assignment_end": "2026-09-30"},
-  {"name": "Gita Raman", "title": "Data Engineer", "department": "Data", "manager": "Caro Dhondt", "location": "Brussels", "hire_date": "2023-04-03", "status": "Active", "client": "Insura", "assignment_end": "2026-12-31"},
-  {"name": "Hugo Willems", "title": "DevOps Consultant", "department": "Cloud", "manager": "Dries Peeters", "location": "Leuven", "hire_date": "2024-08-19", "status": "Active", "client": null, "assignment_end": null}
-]
+```csv
+"Last name, First name",Status,"First Name","Middle Name","Birth Date",Gender,City,State,"Zip Code",Country,"Work Email","LinkedIn URL",Degree,College/Institution,Major/Specialization,"Hire Date",Startdatum,Einddatum,Functie,Klant
+"Meeus, Ana",Active,Ana,,1990-04-11,Female,Antwerpen,Antwerpen,2000,Belgium,ana.meeus@example.be,,Master,KU Leuven,Informatica,2020-03-02,2024-01-08,2027-03-31,"Cloud Consultant",RetailCo
+"Claes, Bram",Active,Bram,,1993-08-02,Male,Mechelen,Antwerpen,2800,Belgium,bram.claes@example.be,,Bachelor,AP Hogeschool,Toegepaste Informatica,2021-09-01,2025-02-03,2027-06-30,"Azure Developer",LogiTrans
+"Dhondt, Caro",Active,Caro,,1988-12-19,Female,Gent,Oost-Vlaanderen,9000,Belgium,caro.dhondt@example.be,,Master,UGent,Wiskunde,2019-01-07,2024-09-02,2027-01-31,"Data Consultant",Insura
+"Peeters, Dries",Active,Dries,,1986-06-30,Male,Leuven,Vlaams-Brabant,3000,Belgium,dries.peeters@example.be,,Master,KU Leuven,Informatica,2017-05-15,2023-01-09,,"Platform Engineer",Internal
+"Vermeulen, Elke",Active,Elke,,1995-02-14,Female,Gent,Oost-Vlaanderen,9000,Belgium,elke.vermeulen@example.be,,Bachelor,HoGent,Multimedia,2022-02-01,2025-06-02,2026-10-15,"Frontend Consultant",MediaGroup
+"Nolens, Frank",Active,Frank,,1987-10-05,Male,Antwerpen,Antwerpen,2000,Belgium,frank.nolens@example.be,,Master,UAntwerpen,Informatica,2018-11-05,2025-03-03,2026-09-30,"Backend Consultant",ACME Manufacturing
+"Raman, Gita",Active,Gita,,1996-07-21,Female,Brussel,Brussel,1000,Belgium,gita.raman@example.be,,Master,VUB,Data Science,2023-04-03,2024-04-08,2026-12-31,"Data Engineer",Insura
+"Willems, Hugo",Active,Hugo,,1999-03-08,Male,Leuven,Vlaams-Brabant,3000,Belgium,hugo.willems@example.be,,Bachelor,UCLL,Toegepaste Informatica,2024-08-19,2024-08-19,,"DevOps Consultant",
 ```
 
-> Three people are free from October — Frank on 1 October, Elke on 16 October, Hugo now.
-> No chunk says "three". Getting there means filtering eight records by a date and
-> counting the survivors, which is why question 5 stays red no matter what is bolted
-> onto retrieval.
+`app/sample/bamboo/credits.csv` — a signed ledger, exactly as the real export:
 
-- [ ] **Step 5: Commit**
+```csv
+"Last name, First name","Effective Date",Event,"Event Type",Credits
+"Peeters, Dries",2025-01-02,"Nieuw jaar","Nieuw jaar - 2025",100
+"Peeters, Dries",2025-02-11,"Tech event bijwonen","Kubernetes Community Days",150
+"Peeters, Dries",2025-04-23,"Soft skill event bijwonen","Presenteren voor groepen",40
+"Peeters, Dries",2025-06-18,"Afgetekende timesheet tijdig verzonden","Januari - juni 2025",60
+"Peeters, Dries",2025-09-30,"Bootcamp","Platform engineering",120
+"Peeters, Dries",2025-11-14,"Fun event bijwonen",Personeelsfeest,10
+"Peeters, Dries",2025-12-02,"Credits ingeruild","Laptop upgrade",-210
+"Peeters, Dries",2026-01-02,"Nieuw jaar","Nieuw jaar - 2026",100
+"Peeters, Dries",2026-03-19,"Tech event bijwonen","Open Space Day",30
+"Peeters, Dries",2026-07-01,"Tech event bijwonen",AI,50
+"Meeus, Ana",2025-01-02,"Nieuw jaar","Nieuw jaar - 2025",100
+"Meeus, Ana",2025-05-07,"Tech event bijwonen","Azure Bootcamp",80
+"Meeus, Ana",2026-01-02,"Nieuw jaar","Nieuw jaar - 2026",100
+"Meeus, Ana",2026-04-15,"Credits ingeruild","Extra verlofdag",-135
+"Claes, Bram",2025-01-02,"Nieuw jaar","Nieuw jaar - 2025",100
+"Claes, Bram",2025-10-08,"Tech event bijwonen","Techorama",115
+"Claes, Bram",2026-01-02,"Nieuw jaar","Nieuw jaar - 2026",100
+"Dhondt, Caro",2025-01-02,"Nieuw jaar","Nieuw jaar - 2025",100
+"Dhondt, Caro",2025-11-14,"Fun event bijwonen",Personeelsfeest,10
+"Dhondt, Caro",2026-01-02,"Nieuw jaar","Nieuw jaar - 2026",100
+"Vermeulen, Elke",2025-01-02,"Nieuw jaar","Nieuw jaar - 2025",100
+"Vermeulen, Elke",2026-01-02,"Nieuw jaar","Nieuw jaar - 2026",100
+"Nolens, Frank",2025-01-02,"Nieuw jaar","Nieuw jaar - 2025",100
+"Nolens, Frank",2025-11-14,"Fun event bijwonen",Personeelsfeest,10
+"Nolens, Frank",2026-01-02,"Nieuw jaar","Nieuw jaar - 2026",100
+"Raman, Gita",2025-01-02,"Nieuw jaar","Nieuw jaar - 2025",100
+"Raman, Gita",2026-01-02,"Nieuw jaar","Nieuw jaar - 2026",100
+"Willems, Hugo",2026-01-02,"Nieuw jaar","Nieuw jaar - 2026",100
+```
+
+> Dries' balance is 100 + 150 + 40 + 60 + 120 + 10 − 210 + 100 + 30 + 50 = **450**, spread
+> over ten rows. No chunk says 450. Retrieval returns five of the ten rows and the model
+> adds up whatever it was handed, confidently. That is question 5, and no amount of
+> hybrid search, reranking or rewriting touches it.
+
+- [ ] **Step 4: Commit**
 
 ```bash
 git add app/sample
@@ -714,7 +801,7 @@ git commit -m "Add synthetic sample corpus reproducing all five demo questions"
 ```python
 from pathlib import Path
 
-from rag.ingest import ingest_corpus
+from rag.ingest import ingest_corpus, person_name, swap_name
 
 SAMPLE = Path(__file__).resolve().parents[1] / "sample"
 
@@ -722,37 +809,10 @@ SAMPLE = Path(__file__).resolve().parents[1] / "sample"
 def test_ingests_every_source_type():
     chunks = ingest_corpus(SAMPLE)
     types = {c.source_type for c in chunks}
-    assert types == {"policy", "project", "cv", "bamboo"}
-
-
-def test_bamboo_record_is_exactly_one_chunk():
-    chunks = ingest_corpus(SAMPLE)
-    bamboo = [c for c in chunks if c.source_type == "bamboo"]
-    assert len(bamboo) == 8
-    assert all(c.text.startswith("Name: ") for c in bamboo)
-
-
-def test_cv_chunks_carry_the_person_name_as_title():
-    chunks = ingest_corpus(SAMPLE)
-    titles = {c.title for c in chunks if c.source_type == "cv"}
-    assert "Dries Peeters" in titles
-    assert "Bram Claes" in titles
-
-
-def test_policy_chunks_carry_a_heading_path():
-    chunks = ingest_corpus(SAMPLE)
-    locations = [c.location for c in chunks if c.source_type == "policy"]
-    assert any("Training budget" in loc for loc in locations)
-
-
-def test_chunk_ids_are_unique():
-    chunks = ingest_corpus(SAMPLE)
-    assert len({c.id for c in chunks}) == len(chunks)
+    assert types == {"policy", "cv", "assignment", "credit", "aggregate"}
 
 
 def test_person_name_survives_the_real_filename_shapes():
-    from rag.ingest import person_name
-
     assert person_name("Itenium - CV Alexander Ryckeboer") == "Alexander Ryckeboer"
     assert person_name("Itenium - CV Bernard Giorgino (FA)") == "Bernard Giorgino"
     assert person_name("Itenium - CV Bert Maes - Business Architect ") == "Bert Maes"
@@ -763,11 +823,58 @@ def test_person_name_survives_the_real_filename_shapes():
     )
 
 
-def test_no_chunk_states_the_october_count():
-    """Question 5's whole point: the answer is in no chunk."""
+def test_swap_name_turns_the_export_order_around():
+    assert swap_name("Peeters, Dries") == "Dries Peeters"
+    assert swap_name("De Plekker, Bram") == "Bram De Plekker"
+    assert swap_name("Madonna") == "Madonna"
+
+
+def test_assignment_chunks_drop_personal_data():
+    chunks = [c for c in ingest_corpus(SAMPLE) if c.source_type == "assignment"]
+    joined = "\n".join(c.text for c in chunks)
+    for leaked in ("1990-04-11", "Female", "Antwerpen", "2000", "ana.meeus@example.be"):
+        assert leaked not in joined
+    assert "Klant: RetailCo" in joined
+
+
+def test_credit_rows_are_one_chunk_each():
+    chunks = [c for c in ingest_corpus(SAMPLE) if c.source_type == "credit"]
+    assert len(chunks) == 28
+    assert all(c.title for c in chunks)
+
+
+def test_no_credit_chunk_contains_a_balance():
+    """Question 5's whole point: the answer is in no retrievable chunk."""
+    chunks = [c for c in ingest_corpus(SAMPLE) if c.source_type == "credit"]
+    assert all("450" not in c.text for c in chunks)
+
+
+def test_aggregate_chunk_states_the_summed_balance():
+    chunks = [c for c in ingest_corpus(SAMPLE) if c.source_type == "aggregate"]
+    dries = next(c for c in chunks if c.title == "Dries Peeters")
+    assert "450" in dries.text
+
+
+def test_aggregates_cover_every_person_in_the_ledger():
     chunks = ingest_corpus(SAMPLE)
-    for c in chunks:
-        assert "three consultants" not in c.text.lower()
+    ledger_people = {c.title for c in chunks if c.source_type == "credit"}
+    summary_people = {c.title for c in chunks if c.source_type == "aggregate"}
+    assert ledger_people == summary_people
+
+
+def test_cv_chunks_carry_the_person_name_as_title():
+    titles = {c.title for c in ingest_corpus(SAMPLE) if c.source_type == "cv"}
+    assert {"Dries Peeters", "Bram Claes"} <= titles
+
+
+def test_policy_chunks_carry_a_heading_path():
+    locations = [c.location for c in ingest_corpus(SAMPLE) if c.source_type == "policy"]
+    assert any("Opleidingsbudget" in loc for loc in locations)
+
+
+def test_chunk_ids_are_unique():
+    chunks = ingest_corpus(SAMPLE)
+    assert len({c.id for c in chunks}) == len(chunks)
 ```
 
 - [ ] **Step 2: Run the tests to verify they fail**
@@ -784,24 +891,26 @@ Expected: FAIL with `ModuleNotFoundError: No module named 'rag.ingest'`
 
 from __future__ import annotations
 
+import csv
 import json
 import re
+from collections import defaultdict
+from dataclasses import asdict
 from pathlib import Path
 
 from rag.chunking import chunk_id, split_text
 from rag.models import Chunk
 
-BAMBOO_FIELDS = [
-    ("name", "Name"),
-    ("title", "Title"),
-    ("department", "Department"),
-    ("manager", "Manager"),
-    ("location", "Location"),
-    ("hire_date", "Hire date"),
-    ("status", "Status"),
-    ("client", "Client"),
-    ("assignment_end", "Assignment end"),
-]
+# Both spellings are supported: `sample/` and the real `data/raw/` use the same names,
+# and `policies/` stays accepted so an English-named drop still works.
+PROSE_DIRS = [("policy", ["pdfs", "policies"]), ("cv", ["cvs"]), ("project", ["projects"])]
+
+# Date of birth and home address are on the leave-out list in the spec, and no question
+# needs them. Dropping at ingest means they never reach the vector store at all.
+ASSIGNMENT_DROP = {
+    "Birth Date", "Gender", "City", "State", "Zip Code", "Country",
+    "Work Email", "LinkedIn URL", "First Name", "Middle Name",
+}
 
 
 def read_document(path: Path) -> str:
@@ -816,14 +925,34 @@ def read_document(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+def person_name(filename: str) -> str:
+    """Pull the consultant's name out of a CV filename.
+
+    The real exports are named "Itenium - CV Bram De Plekker - .NET Angular Cloud
+    Developer - updated.pdf". Everything after the first " - " is role, language or
+    revision noise, and a trailing "(FA)" marks a variant of the same person.
+    """
+    stem = re.sub(r"^itenium\s*-\s*cv\s*", "", filename, flags=re.IGNORECASE)
+    stem = stem.split(" - ")[0]
+    stem = re.sub(r"\([^)]*\)", "", stem)
+    return stem.strip() or filename
+
+
+def swap_name(name: str) -> str:
+    """"Peeters, Dries" -> "Dries Peeters", so records read like the CVs do."""
+    if "," not in name:
+        return name.strip()
+    last, first = name.split(",", 1)
+    return f"{first.strip()} {last.strip()}".strip()
+
+
 def _sections(text: str) -> list[tuple[str, str]]:
     """Split markdown on headings, returning (heading path, body) pairs."""
-    lines = text.splitlines()
     doc_title = ""
     sections: list[tuple[str, list[str]]] = []
     current = ""
     body: list[str] = []
-    for line in lines:
+    for line in text.splitlines():
         match = re.match(r"^(#{1,6})\s+(.*)$", line)
         if match:
             if body:
@@ -840,9 +969,9 @@ def _sections(text: str) -> list[tuple[str, str]]:
     if body:
         sections.append((current, body))
     return [
-        (f"{doc_title} > {head}" if head else doc_title, "\n".join(lines_).strip())
-        for head, lines_ in sections
-        if "\n".join(lines_).strip()
+        (f"{doc_title} > {head}" if head else doc_title, "\n".join(lines).strip())
+        for head, lines in sections
+        if "\n".join(lines).strip()
     ]
 
 
@@ -854,31 +983,19 @@ def _document_title(text: str, fallback: str) -> str:
     return match.group(1).split("—")[0].strip()
 
 
-def person_name(filename: str) -> str:
-    """Pull the consultant's name out of a CV filename.
-
-    The real exports are named "Itenium - CV Bram De Plekker - .NET Angular Cloud
-    Developer - updated.pdf". Everything after the first " - " is role, language or
-    revision noise, and a trailing "(FA)" marks a variant of the same person.
-    """
-    stem = re.sub(r"^itenium\s*-\s*cv\s*", "", filename, flags=re.IGNORECASE)
-    stem = stem.split(" - ")[0]
-    stem = re.sub(r"\([^)]*\)", "", stem)
-    return stem.strip() or filename
-
-
 def _prose_chunks(path: Path, root: Path, source_type: str) -> list[Chunk]:
     text = read_document(path)
+    if not text.strip():
+        return []
     source = str(path.relative_to(root))
     fallback = person_name(path.stem) if source_type == "cv" else path.stem
     title = _document_title(text, fallback)
     chunks: list[Chunk] = []
-    ordinal = 0
-    for heading_path, body in _sections(text):
+    for ordinal, (heading_path, body) in enumerate(_sections(text)):
         for part in split_text(body):
             chunks.append(
                 Chunk(
-                    id=chunk_id(source, ordinal, part),
+                    id=chunk_id(source, len(chunks), part),
                     text=part,
                     source=source,
                     source_type=source_type,
@@ -886,49 +1003,122 @@ def _prose_chunks(path: Path, root: Path, source_type: str) -> list[Chunk]:
                     location=heading_path or title,
                 )
             )
-            ordinal += 1
     return chunks
 
 
-def _bamboo_chunks(path: Path, root: Path) -> list[Chunk]:
-    """One record, one chunk, rendered as fields.
+def _rows(path: Path) -> list[dict]:
+    with path.open(encoding="utf-8-sig", newline="") as handle:
+        return list(csv.DictReader(handle))
+
+
+def _assignment_chunks(path: Path, root: Path) -> list[Chunk]:
+    """One row per assignment, rendered as fields.
 
     This is the wrong way to index structured data, and that is the point: the records
     come out as near-identical blobs sitting on top of each other in vector space.
     """
-    records = json.loads(path.read_text(encoding="utf-8"))
     source = str(path.relative_to(root))
     chunks: list[Chunk] = []
-    for ordinal, record in enumerate(records):
-        text = "\n".join(
-            f"{label}: {record.get(field) or 'none'}" for field, label in BAMBOO_FIELDS
+    for ordinal, row in enumerate(_rows(path)):
+        name = swap_name(row.get("Last name, First name", ""))
+        fields = [f"Naam: {name}"] + [
+            f"{key}: {value}"
+            for key, value in row.items()
+            if key and key not in ASSIGNMENT_DROP and key != "Last name, First name" and value
+        ]
+        text = "\n".join(fields)
+        chunks.append(
+            Chunk(
+                id=chunk_id(source, ordinal, text),
+                text=text,
+                source=source,
+                source_type="assignment",
+                title=name,
+                location="BambooHR opdracht",
+            )
+        )
+    return chunks
+
+
+def _credit_chunks(path: Path, root: Path) -> list[Chunk]:
+    source = str(path.relative_to(root))
+    chunks: list[Chunk] = []
+    for ordinal, row in enumerate(_rows(path)):
+        name = swap_name(row.get("Last name, First name", ""))
+        text = (
+            f"Naam: {name}\n"
+            f"Datum: {row.get('Effective Date', '')}\n"
+            f"Event: {row.get('Event', '')}\n"
+            f"Type: {row.get('Event Type', '')}\n"
+            f"Credits: {row.get('Credits', '')}"
         )
         chunks.append(
             Chunk(
                 id=chunk_id(source, ordinal, text),
                 text=text,
                 source=source,
-                source_type="bamboo",
-                title=record["name"],
-                location="BambooHR record",
-                metadata=record,
+                source_type="credit",
+                title=name,
+                location=f"Creditsboeking {row.get('Effective Date', '')}",
             )
         )
     return chunks
 
 
-# Both spellings are supported: `sample/` uses the first of each pair, the real
-# `data/raw/` uses the second.
-PROSE_DIRS = [
-    ("policy", ["policies", "pdfs"]),
-    ("project", ["projects"]),
-    ("cv", ["cvs"]),
-]
+def _credit_aggregate_chunks(path: Path, root: Path) -> list[Chunk]:
+    """The answer, computed at ingest time.
+
+    Nothing here is a retrieval technique. Summing a ledger is arithmetic over records,
+    which is exactly what vector search cannot do — so it happens before the vectors
+    exist. Hidden until wizard step 6.
+    """
+    source = str(path.relative_to(root))
+    earned: dict[str, float] = defaultdict(float)
+    spent: dict[str, float] = defaultdict(float)
+    events: dict[str, int] = defaultdict(int)
+    latest: dict[str, str] = defaultdict(str)
+
+    for row in _rows(path):
+        name = swap_name(row.get("Last name, First name", ""))
+        try:
+            credits = float(row.get("Credits") or 0)
+        except ValueError:
+            continue
+        (earned if credits >= 0 else spent)[name] += credits
+        events[name] += 1
+        latest[name] = max(latest[name], row.get("Effective Date") or "")
+
+    chunks: list[Chunk] = []
+    for ordinal, name in enumerate(sorted(events)):
+        balance = earned[name] + spent[name]
+        text = (
+            f"Creditsaldo voor {name}.\n"
+            f"Huidig saldo: {balance:g} credits.\n"
+            f"Verdiend: {earned[name]:g}. Ingeruild: {abs(spent[name]):g}.\n"
+            f"Aantal boekingen: {events[name]}. Laatste boeking: {latest[name] or 'onbekend'}."
+        )
+        chunks.append(
+            Chunk(
+                id=chunk_id(f"{source}#aggregate", ordinal, text),
+                text=text,
+                source=source,
+                source_type="aggregate",
+                title=name,
+                location="Berekend creditsaldo",
+            )
+        )
+    return chunks
+
+
+def _bamboo_dir(root: Path) -> Path | None:
+    directory = root / "bamboo"
+    return directory if directory.is_dir() else None
 
 
 def ingest_corpus(root: Path) -> list[Chunk]:
     root = Path(root)
     chunks: list[Chunk] = []
+
     for source_type, names in PROSE_DIRS:
         for name in names:
             directory = root / name
@@ -937,22 +1127,20 @@ def ingest_corpus(root: Path) -> list[Chunk]:
             for path in sorted(directory.iterdir()):
                 if path.suffix.lower() in {".md", ".txt", ".pdf", ".docx"}:
                     chunks.extend(_prose_chunks(path, root, source_type))
-    for bamboo in _bamboo_files(root):
-        chunks.extend(_bamboo_chunks(bamboo, root))
+
+    bamboo = _bamboo_dir(root)
+    if bamboo:
+        for path in sorted(bamboo.glob("*.csv")):
+            if "credit" in path.stem.lower():
+                chunks.extend(_credit_chunks(path, root))
+                chunks.extend(_credit_aggregate_chunks(path, root))
+            else:
+                chunks.extend(_assignment_chunks(path, root))
+
     return chunks
 
 
-def _bamboo_files(root: Path) -> list[Path]:
-    if (root / "bamboo.json").is_file():
-        return [root / "bamboo.json"]
-    if (root / "bamboo").is_dir():
-        return sorted((root / "bamboo").glob("*.json"))
-    return []
-
-
 def write_chunks(chunks: list[Chunk], path: Path) -> None:
-    from dataclasses import asdict
-
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as handle:
         for chunk in chunks:
@@ -967,13 +1155,13 @@ def read_chunks(path: Path) -> list[Chunk]:
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `cd app && uv run pytest tests/test_ingest.py -v`
-Expected: 7 passed
+Expected: 11 passed
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add app/rag/ingest.py app/tests/test_ingest.py
-git commit -m "Add corpus ingestion with per-source-type chunking"
+git commit -m "Add corpus ingestion with per-source-type chunking and credit aggregates"
 ```
 
 ---
@@ -1270,10 +1458,14 @@ import functools
 
 import numpy as np
 
-MODEL_NAME = "BAAI/bge-small-en-v1.5"
-# bge asks for this prefix on queries but not on passages. Getting it wrong costs a few
-# points of recall and produces no error, so it is worth stating once, here.
-QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
+# The corpus is Dutch (arbeidsreglement, opleidingsplan, kilometervergoeding) and English
+# (CVs, AI policy) in one index, and a Dutch question has to reach an English CV. An
+# English-only model would fail every question for the wrong reason.
+MODEL_NAME = "intfloat/multilingual-e5-small"
+# e5 requires these prefixes and is measurably worse without them. Asymmetric on
+# purpose: a question and the passage answering it are different kinds of text.
+QUERY_PREFIX = "query: "
+PASSAGE_PREFIX = "passage: "
 
 
 @functools.lru_cache(maxsize=1)
@@ -1285,7 +1477,9 @@ def _model():
 
 def embed_passages(texts: list[str]) -> np.ndarray:
     return _model().encode(
-        texts, normalize_embeddings=True, show_progress_bar=True
+        [PASSAGE_PREFIX + t for t in texts],
+        normalize_embeddings=True,
+        show_progress_bar=True,
     ).astype(np.float32)
 
 
@@ -1305,7 +1499,8 @@ from typing import Protocol
 
 from rag.models import Scored
 
-MODEL_NAME = "BAAI/bge-reranker-base"
+# Multilingual, to match the embedding model.
+MODEL_NAME = "BAAI/bge-reranker-v2-m3"
 
 
 class Reranker(Protocol):
@@ -1793,6 +1988,26 @@ def test_rewrite_on_sets_rewritten_and_searches_with_it():
     assert result.rewritten == "rewritten query"
 
 
+def test_aggregate_chunks_are_hidden_until_enabled():
+    chunks = [
+        _chunk("a", "AZ-104 and AZ-400 azure administration"),
+        Chunk(id="agg", text="Current balance: 340 credits", source="s",
+              source_type="aggregate", title="Dries", location="summary"),
+    ]
+    vectors = np.array([[1.0, 0.0], [1.0, 0.0]], dtype=np.float32)
+    engine = Engine(
+        dense=DenseIndex(chunks, vectors),
+        bm25=Bm25Index(chunks),
+        reranker=WordCountReranker(),
+        llm=StubLLM(),
+        embed_query=lambda _: np.array([1.0, 0.0], dtype=np.float32),
+    )
+    hidden = engine.run("credits", Config(top_n=5))
+    assert all(s.chunk.source_type != "aggregate" for s in hidden.used)
+    shown = engine.run("credits", Config(aggregates=True, top_n=5))
+    assert any(s.chunk.source_type == "aggregate" for s in shown.used)
+
+
 def test_citations_only_extracted_when_enabled():
     assert _engine().run("azure", Config(top_n=2)).citations == []
     with_citations = _engine().run("azure", Config(citations=True, top_n=2))
@@ -1835,13 +2050,18 @@ class Engine:
     embed_query: Callable[[str], np.ndarray]
 
     def retrieve(self, query: str, config: Config) -> list[Scored]:
+        def visible(hits) -> list[Chunk]:
+            return [
+                chunk
+                for chunk, _ in hits
+                if config.aggregates or chunk.source_type != "aggregate"
+            ]
+
         rankings: dict[str, list[Chunk]] = {}
         if config.dense:
-            hits = self.dense.search(self.embed_query(query), config.top_k)
-            rankings["dense"] = [chunk for chunk, _ in hits]
+            rankings["dense"] = visible(self.dense.search(self.embed_query(query), config.top_k))
         if config.bm25:
-            hits = self.bm25.search(query, config.top_k)
-            rankings["bm25"] = [chunk for chunk, _ in hits]
+            rankings["bm25"] = visible(self.bm25.search(query, config.top_k))
         return reciprocal_rank_fusion(rankings)
 
     def run(self, question: str, config: Config) -> Result:
@@ -1874,7 +2094,7 @@ class Engine:
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `cd app && uv run pytest tests/test_pipeline.py -v`
-Expected: 7 passed
+Expected: 8 passed
 
 - [ ] **Step 5: Commit**
 
@@ -2068,34 +2288,33 @@ This is the task that protects the talk. Everything before it tested components;
 # Each question's expected verdict at each wizard step. The check is on retrieval, not
 # on generated prose: deterministic, no LLM call, and it fails for the right reason.
 #
-#   includes - `value` appears in the text of a retrieved chunk
+#   includes - `value` appears in a retrieved chunk's title or text
 #   first    - `value` appears in the top-ranked retrieved chunk
-#   absent   - `value` appears nowhere in the whole corpus
 
-- id: training-budget
-  question: What is our policy on training budget?
+- id: opleidingsbudget
+  question: Hoeveel opleidingsbudget heb ik per jaar?
   check: {type: includes, value: "EUR 2000"}
-  steps: {1: true, 2: true, 3: true, 4: true, 5: true}
+  steps: {1: true, 2: true, 3: true, 4: true, 5: true, 6: true}
 
-- id: az-204
-  question: Who has the AZ-204 certification?
-  check: {type: includes, value: "Bram Claes"}
-  steps: {1: false, 2: true, 3: true, 4: true, 5: true}
+- id: xximo
+  question: Hoe geef ik mijn kilometerstand door aan XXimo?
+  check: {type: includes, value: "XXimo portaal"}
+  steps: {1: false, 2: true, 3: true, 4: true, 5: true, 6: true}
 
-- id: strongest-kubernetes
-  question: Who is our strongest Kubernetes consultant?
+- id: kubernetes-hulp
+  question: Wie kan me helpen met Kubernetes?
   check: {type: first, value: "Dries Peeters"}
-  steps: {1: false, 2: false, 3: true, 4: true, 5: true}
+  steps: {1: false, 2: false, 3: true, 4: true, 5: true, 6: true}
 
-- id: acme-october
-  question: Who can take over the ACME work in October?
-  check: {type: includes, value: "Assignment end: 2026-09-30"}
-  steps: {1: false, 2: false, 3: false, 4: true, 5: true}
+- id: conferentie-lissabon
+  question: Mag ik mijn opleidingsbudget gebruiken voor een conferentie in Lissabon?
+  check: {type: includes, value: "congressen en vakbeurzen"}
+  steps: {1: false, 2: false, 3: false, 4: true, 5: true, 6: true}
 
-- id: count-free-october
-  question: How many consultants are free from October?
-  check: {type: absent, value: "three consultants"}
-  steps: {1: false, 2: false, 3: false, 4: false, 5: false}
+- id: creditsaldo
+  question: Hoeveel credits heeft Dries Peeters nog?
+  check: {type: includes, value: "Huidig saldo"}
+  steps: {1: false, 2: false, 3: false, 4: false, 5: false, 6: true}
 ```
 
 - [ ] **Step 2: Write the failing test**
@@ -2128,22 +2347,20 @@ def engine():
     return build_engine(APP / "data" / "index", APP / "data" / "cache")
 
 
-def _passes(check: dict, result, corpus_text: str) -> bool:
-    value = check["value"]
-    if check["type"] == "absent":
-        return value.lower() not in corpus_text.lower()
+def _passes(check: dict, result) -> bool:
+    value = check["value"].lower()
     if check["type"] == "first":
-        return bool(result.used) and value.lower() in result.used[0].chunk.text.lower()
-    return any(value.lower() in s.chunk.text.lower() for s in result.used)
+        top = result.used[0].chunk if result.used else None
+        return bool(top) and value in f"{top.title} {top.text}".lower()
+    return any(value in f"{s.chunk.title} {s.chunk.text}".lower() for s in result.used)
 
 
 @pytest.mark.parametrize("spec", QUESTIONS, ids=[q["id"] for q in QUESTIONS])
 @pytest.mark.parametrize("step", WIZARD_STEPS, ids=[f"step{s.number}" for s in WIZARD_STEPS])
 def test_scoreboard(engine, spec, step):
-    corpus_text = "\n".join(c.text for c in engine.dense.chunks)
     result = engine.run(spec["question"], step.config)
     expected = spec["steps"][step.number]
-    actual = _passes(spec["check"], result, corpus_text)
+    actual = _passes(spec["check"], result)
     assert actual == expected, (
         f"{spec['id']} at step {step.number} ({step.name}): "
         f"expected {'pass' if expected else 'fail'}, got {'pass' if actual else 'fail'}"
@@ -2198,7 +2415,7 @@ def load_projection(index_dir: Path = INDEX_DIR):
 
 Run: `cd app && uv run pytest tests/test_scoreboard.py -m slow -v`
 
-Expected: 25 tests. **Some will fail**, and that is information, not a defect. Work through failures in this order:
+Expected: 30 tests. **Some will fail**, and that is information, not a defect. Work through failures in this order:
 
 1. If a question passes at a step where it should fail, the question is too easy against this corpus. Sharpen it, or make the corpus more realistic — do not weaken the check.
 2. If a question fails at the step that should fix it, the technique is not doing what the notes claim here. Check `result.candidates` ranks first: if the right chunk is in `candidates` but not `used`, the problem is `top_n`; if it is absent from `candidates`, the problem is retrieval.
@@ -2814,7 +3031,7 @@ cd app
 uv run python scripts/warm_cache.py
 ```
 
-Expected: 25 lines and a final count. Requires a working `ant auth login` profile.
+Expected: 30 lines and a final count. Requires a working `ant auth login` profile.
 
 - [ ] **Step 3: Write the README**
 
@@ -2858,7 +3075,7 @@ Compensation, performance reviews and leave reasons stay out of the export.
 ## Before the talk
 
 ```bash
-uv run pytest -m slow                  # the 25-assertion scoreboard
+uv run pytest -m slow                  # the 30-assertion scoreboard
 uv run python scripts/warm_cache.py    # every question at every step
 ```
 
@@ -2895,9 +3112,9 @@ git commit -m "Add cache warming script and app README"
 ## Done when
 
 - `uv run pytest` is green with no network access.
-- `uv run pytest -m slow` produces a green 25-assertion scoreboard, or the disagreements
+- `uv run pytest -m slow` produces a green 30-assertion scoreboard, or the disagreements
   are understood and `questions.yaml` and the spec's Risks section are updated to match.
 - The app runs from a clean clone against `sample/` with no credential, once the index
   is built.
-- Every one of the five questions can be clicked through all five wizard steps with no
+- Every one of the five questions can be clicked through all six wizard steps with no
   network call.
