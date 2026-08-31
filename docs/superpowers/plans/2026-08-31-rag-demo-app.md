@@ -1219,10 +1219,18 @@ def test_bm25_matches_the_exact_code_only():
     assert hits[0][0].id == "b"
 
 
-def test_bm25_drops_zero_scoring_chunks():
+def test_bm25_keeps_a_match_whose_idf_is_zero():
+    # rank_bm25 gives a term appearing in exactly half the corpus an idf of 0.0, so
+    # every score is 0.0 and a score filter would throw the real match away.
     chunks = [_chunk("a", "kubernetes platform"), _chunk("b", "angular frontend")]
     hits = Bm25Index(chunks).search("kubernetes", k=5)
     assert [c.id for c, _ in hits] == ["a"]
+    assert hits[0][1] == 0.0
+
+
+def test_bm25_returns_nothing_when_no_chunk_shares_a_term():
+    chunks = [_chunk("a", "kubernetes platform"), _chunk("b", "angular frontend")]
+    assert Bm25Index(chunks).search("terraform", k=5) == []
 
 
 def test_dense_returns_nearest_first():
@@ -1286,18 +1294,28 @@ class DenseIndex:
 class Bm25Index:
     def __init__(self, chunks: list[Chunk]) -> None:
         self.chunks = chunks
+        self._tokens = [set(tokenize(c.text)) for c in chunks]
         self._bm25 = BM25Okapi([tokenize(c.text) for c in chunks])
 
     def search(self, query: str, k: int) -> list[tuple[Chunk, float]]:
-        scores = self._bm25.get_scores(tokenize(query))
+        tokens = tokenize(query)
+        scores = self._bm25.get_scores(tokens)
         top = np.argsort(-scores)[:k]
-        return [(self.chunks[i], float(scores[i])) for i in top if scores[i] > 0]
+        # Discarding on `score > 0` would be wrong. rank_bm25 computes
+        # idf = log(N - f + 0.5) - log(f + 0.5), which is exactly zero for a term in
+        # half the corpus, so a real match can score 0.0 and become indistinguishable
+        # from no match at all. Whether the chunk contains a query term is the actual
+        # question, and it is the one worth asking.
+        wanted = set(tokens)
+        return [
+            (self.chunks[i], float(scores[i])) for i in top if wanted & self._tokens[i]
+        ]
 ```
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `cd app && uv run pytest tests/test_index.py -v`
-Expected: 5 passed
+Expected: 6 passed
 
 - [ ] **Step 5: Commit**
 
