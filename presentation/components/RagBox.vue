@@ -1,14 +1,8 @@
 <template>
   <div class="rag-box">
-    <div class="snake">
+    <div class="stage">
 
-      <div class="cell q">
-        <span class="terminal">your<br>question</span>
-        <span class="arrow">&rarr;</span>
-      </div>
-
-      <div class="cell box">
-        <div class="mystery" :class="{ opened: clicks >= 1 }">
+      <div class="mystery" :class="{ opened: clicks >= 1 }">
           <div class="marks" aria-hidden="true">
             <span class="m m1">?</span>
             <span class="m m2">?</span>
@@ -43,18 +37,26 @@
               </div>
             </div>
           </div>
-        </div>
       </div>
 
-      <div class="cell down"><span class="arrow">&darr;</span></div>
+      <div class="risers">
+        <div class="riser"><span class="arrow">&uarr;</span></div>
+        <div class="riser"><span class="arrow">&darr;</span></div>
+      </div>
 
-      <div class="cell out">
-        <div class="llm">
-          <StochasticParrot />
-          <div class="llm-name">LLM</div>
+      <div class="actors">
+        <div class="actor">
+          <ProgrammerGlyph />
+          <div class="actor-label"><span class="caret">&gt;</span> question</div>
         </div>
-        <span class="arrow">&rarr;</span>
-        <span class="terminal">your<br>answer</span>
+        <div class="link">
+          <div class="link-label">answer</div>
+          <div class="link-line"></div>
+        </div>
+        <div class="actor">
+          <StochasticParrot />
+          <div class="actor-label">LLM</div>
+        </div>
       </div>
 
     </div>
@@ -66,35 +68,36 @@ defineProps({ clicks: { type: Number, default: 0 } })
 </script>
 
 <style scoped>
-.snake {
-  display: grid;
-  grid-template-columns: max-content max-content;
-  justify-content: center;
-  align-items: center;
+.rag-box { text-align: center; }
+
+/* Shrinks to the .mystery's width, so the rows below can be 100% wide and stay
+   locked to the box's edges. */
+.stage {
+  display: inline-flex;
+  flex-direction: column;
   margin: 0.7rem -2.5rem 0 -6rem;
 }
 
-.cell { display: flex; align-items: center; }
-.q    { grid-column: 1; grid-row: 1; gap: 0.6rem; }
-.box  { grid-column: 2; grid-row: 1; }
-.down { grid-column: 2; grid-row: 2; }
-.out  { grid-column: 2; grid-row: 3; gap: 0.9rem; }
-
-.terminal {
-  font-family: var(--font-code);
-  font-size: 1rem;
-  line-height: 1.4;
-  font-weight: 500;
-  color: #2f2f2f;
-  white-space: nowrap;
+/* The padding clears the .mystery border + padding, so these rows span exactly
+   the slot strip: space-between then lands the outer children on R and G. */
+.risers,
+.actors {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 calc(1.1rem + 2px);
 }
 
+.riser,
+.actor { flex: 0 0 10.8rem; text-align: center; }
+
 .arrow {
-  font-size: 2rem;
+  font-size: 2.2rem;
   line-height: 1;
   color: var(--color-primary);
 }
-.down .arrow { font-size: 2.2rem; width: 8.2rem; text-align: center; }
 
 .mystery {
   position: relative;
@@ -191,30 +194,36 @@ defineProps({ clicks: { type: Number, default: 0 } })
   color: #5b5c62;
 }
 
-.llm { flex: 0 0 8.2rem; text-align: center; }
-.llm :deep(.parrot) { width: 4.2rem; height: auto; margin: 0 auto 0.25rem; }
-.llm-name {
-  font-family: var(--font-heading);
-  font-size: 1.2rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+.actor :deep(svg) { width: 8rem; height: auto; margin: 0 auto 0.3rem; }
+.actor-label {
+  font-family: var(--font-code);
+  font-size: 1.1rem;
+  font-weight: 500;
   color: #232323;
 }
-.llm-desc {
-  font-size: 0.78rem;
-  line-height: 1.4;
-  margin-top: 0.25rem;
-  color: #5b5c62;
-}
+.caret { color: var(--color-primary); }
 
-.rag-kicker {
-  text-align: center;
-  margin: 0.7rem -2.5rem 0 -6rem;
+.link { flex: 1; padding: 0 1.2rem; }
+.link-label {
+  font-family: var(--font-code);
   font-size: 1.1rem;
-  color: #2f2f2f;
-  opacity: 0;
-  transition: opacity 400ms ease;
+  font-weight: 500;
+  color: var(--color-primary);
+  margin-bottom: 0.45rem;
 }
-.rag-kicker.shown { opacity: 1; }
-.rag-kicker b { color: var(--color-primary); }
+.link-line {
+  position: relative;
+  height: 2px;
+  background: var(--color-primary);
+}
+.link-line::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-right: 11px solid var(--color-primary);
+}
 </style>

@@ -50,20 +50,6 @@ h1:
 
 ---
 layout: default
-clicks: 3
-h1:
-  type: braces
-  color: primary
-  position: all
----
-
-# RAG
-
-<RagContrast :clicks="$clicks" />
-
-
----
-layout: default
 ---
 
 # Slide Title
