@@ -4,17 +4,17 @@
 
       <svg class="lines" viewBox="0 0 100 100" preserveAspectRatio="none">
         <line
-          class="near reveal" :class="{ shown: clicks >= 2 }"
+          class="near reveal" :class="{ shown: clicks === 2 }"
           x1="19" y1="26" x2="32" y2="14"
         />
         <line
-          class="far reveal" :class="{ shown: clicks >= 2 }"
-          x1="19" y1="26" x2="62" y2="90"
+          class="far reveal" :class="{ shown: clicks === 2 }"
+          x1="19" y1="26" x2="44" y2="76"
         />
         <line
           v-for="p in nearest" :key="p.x"
           class="hit reveal" :class="{ shown: clicks >= 3 }"
-          x1="27" y1="37" :x2="p.x" :y2="p.y"
+          x1="36" y1="37" :x2="p.x" :y2="p.y"
         />
       </svg>
 
@@ -29,14 +29,14 @@
         <span class="label">{{ p.label }}</span>
       </div>
 
-      <div class="pt query reveal" :class="{ shown: clicks >= 3 }" style="left: 27%; top: 37%">
+      <div class="pt query reveal" :class="{ shown: clicks >= 3 }" style="left: 36%; top: 37%">
         <span class="dot"></span>
       </div>
 
       <div class="query-label reveal" :class="{ shown: clicks >= 3 }">wie kent container orchestration?</div>
 
-      <div class="verdict near-label reveal" :class="{ shown: clicks >= 2 }">near = similar</div>
-      <div class="verdict far-label reveal" :class="{ shown: clicks >= 2 }">far = different</div>
+      <div class="verdict near-label reveal" :class="{ shown: clicks === 2 }">near = similar</div>
+      <div class="verdict far-label reveal" :class="{ shown: clicks === 2 }">far = different</div>
 
     </div>
   </div>
@@ -133,13 +133,12 @@ const nearest = [
 }
 
 /* The marker is the dot alone, so it centres on its coordinate exactly like every
-   other point; the label is placed separately below, because a label running
-   rightwards from here would cross the very points the question landed among. */
+   other point; the label hangs off it down and to the right, the one quadrant none of
+   the three nearest-neighbour lines runs through. */
 .query-label {
   position: absolute;
-  left: 27%;
-  top: 45%;
-  transform: translateX(-50%);
+  left: 37.5%;
+  top: 40%;
   font-size: 1.1rem;
   font-weight: 700;
   white-space: nowrap;
@@ -160,17 +159,24 @@ const nearest = [
 .verdict {
   position: absolute;
   font-family: var(--font-code);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   letter-spacing: 0.03em;
+  white-space: nowrap;
+  border-radius: 0.4rem;
+  padding: 0.25rem 0.6rem;
 }
 .near-label {
-  left: 36%;
-  top: 22%;
+  left: 4.5%;
+  top: 12%;
   color: #276b2e;
+  background: #edf6ee;
+  border: 2px solid #3f8a46;
 }
 .far-label {
-  left: 31%;
-  top: 63%;
+  left: 36%;
+  top: 47%;
   color: #5f6066;
+  background: #f4f4f4;
+  border: 2px solid #a8a8a8;
 }
 </style>
