@@ -148,17 +148,6 @@ git commit -m "Scaffold the RAG demo app"
 from rag.models import WIZARD_STEPS, Config
 
 
-def test_config_key_is_stable_across_equal_values():
-    a = Config(dense=True, bm25=True, top_k=50)
-    b = Config(top_k=50, bm25=True, dense=True)
-    assert a.key() == b.key()
-
-
-def test_config_key_changes_with_any_flag():
-    assert Config().key() != Config(bm25=True).key()
-    assert Config().key() != Config(top_n=3).key()
-
-
 def test_wizard_has_five_steps_and_accumulates():
     assert len(WIZARD_STEPS) == 5
     assert WIZARD_STEPS[0].config == Config()
@@ -182,9 +171,7 @@ Expected: FAIL with `ModuleNotFoundError: No module named 'rag.models'`
 
 from __future__ import annotations
 
-import hashlib
-import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
@@ -224,11 +211,6 @@ class Config:
     citations: bool = False
     top_k: int = 50  # retrieve wide
     top_n: int = 5   # keep few
-
-    def key(self) -> str:
-        return hashlib.sha256(
-            json.dumps(asdict(self), sort_keys=True).encode()
-        ).hexdigest()[:16]
 
 
 @dataclass(frozen=True)
@@ -286,7 +268,7 @@ WIZARD_STEPS: list[WizardStep] = [
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `cd app && uv run pytest tests/test_models.py -v`
-Expected: 3 passed
+Expected: 1 passed
 
 - [ ] **Step 5: Commit**
 
@@ -319,7 +301,8 @@ def test_long_text_splits_on_paragraph_boundaries():
     text = "\n\n".join(f"Paragraph {i}. " + "word " * 40 for i in range(6))
     parts = split_text(text, size=400, overlap=50)
     assert len(parts) > 1
-    assert all(len(p) <= 400 for p in parts)
+    # A chunk carries its predecessor's tail, so the ceiling is size + overlap.
+    assert all(len(p) <= 400 + 50 + 1 for p in parts)
 
 
 def test_consecutive_chunks_overlap():
@@ -767,6 +750,19 @@ def test_chunk_ids_are_unique():
     assert len({c.id for c in chunks}) == len(chunks)
 
 
+def test_person_name_survives_the_real_filename_shapes():
+    from rag.ingest import person_name
+
+    assert person_name("Itenium - CV Alexander Ryckeboer") == "Alexander Ryckeboer"
+    assert person_name("Itenium - CV Bernard Giorgino (FA)") == "Bernard Giorgino"
+    assert person_name("Itenium - CV Bert Maes - Business Architect ") == "Bert Maes"
+    assert person_name("Itenium - CV Bert Vermorgen - ENG") == "Bert Vermorgen"
+    assert (
+        person_name("Itenium - CV Bram De Plekker - .NET Angular Cloud Developer - updated")
+        == "Bram De Plekker"
+    )
+
+
 def test_no_chunk_states_the_october_count():
     """Question 5's whole point: the answer is in no chunk."""
     chunks = ingest_corpus(SAMPLE)
@@ -858,10 +854,24 @@ def _document_title(text: str, fallback: str) -> str:
     return match.group(1).split("—")[0].strip()
 
 
+def person_name(filename: str) -> str:
+    """Pull the consultant's name out of a CV filename.
+
+    The real exports are named "Itenium - CV Bram De Plekker - .NET Angular Cloud
+    Developer - updated.pdf". Everything after the first " - " is role, language or
+    revision noise, and a trailing "(FA)" marks a variant of the same person.
+    """
+    stem = re.sub(r"^itenium\s*-\s*cv\s*", "", filename, flags=re.IGNORECASE)
+    stem = stem.split(" - ")[0]
+    stem = re.sub(r"\([^)]*\)", "", stem)
+    return stem.strip() or filename
+
+
 def _prose_chunks(path: Path, root: Path, source_type: str) -> list[Chunk]:
     text = read_document(path)
     source = str(path.relative_to(root))
-    title = _document_title(text, path.stem)
+    fallback = person_name(path.stem) if source_type == "cv" else path.stem
+    title = _document_title(text, fallback)
     chunks: list[Chunk] = []
     ordinal = 0
     for heading_path, body in _sections(text):
@@ -907,20 +917,37 @@ def _bamboo_chunks(path: Path, root: Path) -> list[Chunk]:
     return chunks
 
 
+# Both spellings are supported: `sample/` uses the first of each pair, the real
+# `data/raw/` uses the second.
+PROSE_DIRS = [
+    ("policy", ["policies", "pdfs"]),
+    ("project", ["projects"]),
+    ("cv", ["cvs"]),
+]
+
+
 def ingest_corpus(root: Path) -> list[Chunk]:
     root = Path(root)
     chunks: list[Chunk] = []
-    for source_type, subdir in (("policy", "policies"), ("project", "projects"), ("cv", "cvs")):
-        directory = root / subdir
-        if not directory.is_dir():
-            continue
-        for path in sorted(directory.iterdir()):
-            if path.suffix.lower() in {".md", ".txt", ".pdf", ".docx"}:
-                chunks.extend(_prose_chunks(path, root, source_type))
-    bamboo = root / "bamboo.json"
-    if bamboo.is_file():
+    for source_type, names in PROSE_DIRS:
+        for name in names:
+            directory = root / name
+            if not directory.is_dir():
+                continue
+            for path in sorted(directory.iterdir()):
+                if path.suffix.lower() in {".md", ".txt", ".pdf", ".docx"}:
+                    chunks.extend(_prose_chunks(path, root, source_type))
+    for bamboo in _bamboo_files(root):
         chunks.extend(_bamboo_chunks(bamboo, root))
     return chunks
+
+
+def _bamboo_files(root: Path) -> list[Path]:
+    if (root / "bamboo.json").is_file():
+        return [root / "bamboo.json"]
+    if (root / "bamboo").is_dir():
+        return sorted((root / "bamboo").glob("*.json"))
+    return []
 
 
 def write_chunks(chunks: list[Chunk], path: Path) -> None:
@@ -940,7 +967,7 @@ def read_chunks(path: Path) -> list[Chunk]:
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `cd app && uv run pytest tests/test_ingest.py -v`
-Expected: 6 passed
+Expected: 7 passed
 
 - [ ] **Step 5: Commit**
 
@@ -1872,7 +1899,6 @@ git commit -m "Add the pipeline engine driven by Config presets"
 ```python
 import numpy as np
 
-from rag.ingest import write_chunks
 from rag.models import Chunk
 from rag.store import load_artefacts, save_artefacts
 
@@ -1989,6 +2015,11 @@ def main() -> None:
     )
     print(f"Ingesting {corpus}")
     chunks = ingest_corpus(corpus)
+    if not chunks:
+        raise SystemExit(
+            f"No documents found under {corpus}. Expected policies/, projects/, cvs/ "
+            "or bamboo.json."
+        )
     print(f"{len(chunks)} chunks")
 
     vectors = embed_passages([c.text for c in chunks])
@@ -2812,10 +2843,10 @@ invented policies. It reproduces every failure and every fix.
 Drop the real corpus into `app/data/raw/`, which is gitignored in full:
 
 ```
-data/raw/policies/*.pdf
-data/raw/cvs/*.pdf|*.docx
-data/raw/projects/*.pdf|*.md
-data/raw/bamboo.json
+data/raw/pdfs/*.pdf          policies — indexed as source_type "policy"
+data/raw/cvs/*.pdf|*.docx    consultant CVs
+data/raw/projects/*.pdf|*.md project sheets (optional)
+data/raw/bamboo/*.json       BambooHR export, one array of records per file
 ```
 
 `build_index.py` prefers `data/raw/` over `sample/` when it exists. Nothing under
