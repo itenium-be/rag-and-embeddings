@@ -65,7 +65,11 @@ h1:
 
 ---
 layout: default
-clicks: 5
+clicks: 6
+h2:
+  type: dot
+  color: secondary
+  position: end
 ---
 
 # RAG

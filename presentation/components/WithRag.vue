@@ -19,51 +19,42 @@
       </div>
 
       <div class="ragbox">
-        <div class="grid">
-          <div class="cell top-left">
-            <div class="step reveal" :class="{ shown: clicks >= 2 }">
-              <div class="step-name"><span class="step-letter">R</span>ETRIEVAL</div>
-              <div class="step-body">query an authoritative source</div>
-            </div>
+        <div class="row">
+          <div class="step col-retrieval reveal" :class="{ shown: clicks >= 2 }">
+            <div class="step-name"><span class="step-letter">R</span>ETRIEVAL</div>
+            <div class="step-body">Deterministically query an authoritative source</div>
           </div>
 
-          <div class="cell mid">
-            <span class="arrow reveal" :class="{ shown: clicks >= 3 }">&rarr;</span>
-          </div>
+          <span class="arrow reveal" :class="{ shown: clicks >= 3 }">&rarr;</span>
 
-          <div class="cell top-right">
-            <div class="step reveal" :class="{ shown: clicks >= 3 }">
-              <div class="step-name"><span class="step-letter">A</span>UGMENTED</div>
-              <pre class="step-prompt"><span class="ctx">Bakery De Korenbloem
+          <div class="step col-augmented reveal" :class="{ shown: clicks >= 3 }">
+            <div class="step-name"><span class="step-letter">A</span>UGMENTED PROMPT</div>
+            <pre class="step-prompt"><span class="ctx">Bakery De Korenbloem
 Mon-Sat  07:00-18:30
 Sun + holidays: closed</span>
 
 when does the bakery close?</pre>
-            </div>
           </div>
 
-          <div class="cell drop">
-            <span class="riser reveal" :class="{ shown: clicks >= 4 }">&darr;</span>
-          </div>
+          <span class="arrow reveal" :class="{ shown: clicks >= 4 }">&rarr;</span>
 
-          <div class="cell bottom-right">
-            <div class="gen reveal" :class="{ shown: clicks >= 4 }">
-              <div class="gen-label"><span class="step-letter">G</span>ENERATION</div>
-              <StochasticParrot />
-            </div>
+          <div class="step col-generation reveal" :class="{ shown: clicks >= 4 }">
+            <div class="step-name"><span class="step-letter">G</span>ENERATION</div>
+            <StochasticParrot />
           </div>
         </div>
       </div>
 
-      <div class="band right">
-        <div class="col-augmented riser reveal" :class="{ shown: clicks >= 5 }">&darr;</div>
-      </div>
-
-      <div class="band right">
+      <div class="band outro">
         <div class="answer reveal" :class="{ shown: clicks >= 5 }">
           <div class="tag good">Answer</div>
           <div class="answer-text">closed today, it&rsquo;s a holiday</div>
         </div>
+        <div class="elbow reveal" :class="{ shown: clicks >= 5 }"><span class="head"></span></div>
+      </div>
+
+      <div class="sources reveal" :class="{ shown: clicks >= 6 }">
+        Retrieval from: database &middot; web search &middot; wiki &middot; SharePoint &middot; PDFs
       </div>
 
     </div>
@@ -92,8 +83,11 @@ defineProps({ clicks: { type: Number, default: 0 } })
 }
 .reveal.shown { opacity: 1; }
 
-.col-retrieval { flex: 0 0 19rem; }
-.col-augmented { flex: 0 0 24rem; }
+/* One width for all three boxes. The Prompt shares the retrieval column, so its
+   single line has to fit this too — see .prompt-text. */
+.col-retrieval,
+.col-augmented,
+.col-generation { flex: 0 0 16rem; }
 
 /* Matches .ragbox's border + padding so the risers line up with its columns. */
 .band {
@@ -104,7 +98,43 @@ defineProps({ clicks: { type: Number, default: 0 } })
 }
 .band.right { justify-content: flex-end; }
 
-.actor { flex: 0 0 7rem; text-align: center; }
+/* Elbow out of GENERATION: down its centre line, then left into the Answer.
+   The answer is nudged down half its height so it centres on the horizontal. */
+.outro {
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 1.4rem;
+  padding-bottom: 2rem;
+}
+.outro .answer { transform: translateY(50%); }
+
+/* border-box, so height includes the two legs and `100%` is the outer edge —
+   without it the legs sit outside the box the chevron is positioned against. */
+.elbow {
+  position: relative;
+  box-sizing: border-box;
+  width: 5rem;
+  height: 2.6rem;
+  margin-right: calc(8rem - 1px);
+  border-right: 2px solid var(--color-primary);
+  border-bottom: 2px solid var(--color-primary);
+}
+/* Open chevron, not a filled triangle, to match the &larr;/&rarr; glyphs. */
+.elbow .head {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 1px);
+  width: 10px;
+  height: 10px;
+  box-sizing: border-box;
+  border-left: 2px solid var(--color-primary);
+  border-bottom: 2px solid var(--color-primary);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+/* Shrink-to-fit, so the arrow sits the same distance from the glyph as from
+   the Prompt box instead of floating in a wide empty column. */
+.actor { flex: 0 0 auto; text-align: center; }
 .actor :deep(svg) { width: 3.2rem; height: auto; margin: 0 auto 0.1rem; }
 .actor-label {
   font-family: var(--font-heading);
@@ -151,7 +181,8 @@ defineProps({ clicks: { type: Number, default: 0 } })
   color: #1c1c1c;
   white-space: nowrap;
 }
-.prompt-text { font-family: var(--font-code); }
+/* Sized so the one line fits the shared 16rem column without wrapping. */
+.prompt-text { font-family: var(--font-code); font-size: 0.82rem; }
 .answer { flex: 0 0 auto; }
 .answer.shown {
   border-color: #3f8a46;
@@ -166,25 +197,24 @@ defineProps({ clicks: { type: Number, default: 0 } })
   box-shadow: 0 10px 26px rgba(232, 71, 0, 0.18);
 }
 
-/* X X
-     X   — bottom-left stays empty on purpose. */
-.grid {
-  display: grid;
-  grid-template-columns: 19rem auto 24rem;
-  align-items: start;
+/* stretch keeps all three boxes the same height; space-between puts
+   GENERATION's right edge on the box's content edge for the riser below. */
+.row {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
 }
-.top-left    { grid-column: 1; grid-row: 1; }
-.mid         { grid-column: 2; grid-row: 1; align-self: center; text-align: center; padding: 0 0.5rem; }
-.top-right   { grid-column: 3; grid-row: 1; }
-.drop        { grid-column: 3; grid-row: 2; text-align: center; }
-.bottom-right{ grid-column: 3; grid-row: 3; }
 
 .step {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
   border-radius: 0.55rem;
   background: #fefefe;
-  padding: 0.55rem 0.9rem 0.65rem;
+  padding: 0.8rem 0.9rem 0.9rem;
   box-sizing: border-box;
 }
+.row .arrow { align-self: center; padding: 0 0.25rem; }
 .step-name {
   font-family: var(--font-heading);
   font-size: 1.05rem;
@@ -217,13 +247,12 @@ defineProps({ clicks: { type: Number, default: 0 } })
   color: #8a2f00;
 }
 
-.gen { text-align: center; }
-.gen-label {
-  font-family: var(--font-heading);
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  color: #fefefe;
+.col-generation :deep(svg) { width: 4.2rem; height: auto; margin: 0.35rem auto 0; }
+
+.sources {
+  text-align: center;
+  font-family: var(--font-code);
+  font-size: 0.95rem;
+  color: #33343a;
 }
-.gen :deep(svg) { width: 2.8rem; height: auto; margin: 0.15rem auto 0; }
 </style>
