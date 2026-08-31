@@ -10,8 +10,8 @@ first: 2026-09-01
 aspectRatio: 16/10
 ---
 
-# Talk Title
-# Subtitle
+# RAG
+# Embeddings
 
 ::image::
 
@@ -20,32 +20,31 @@ aspectRatio: 16/10
 ---
 layout: agenda
 items:
-  - Topic One
-  - Topic Two
-  - Topic Three
+  - RAG
+  - Embeddings
 ---
 
 ---
 layout: section
 ---
 
-# Topic One
+# RAG
 
 ::subtitle::
 
-Optional subtitle
+Retrieval Augmented Generation
 
 ---
 layout: default
 ---
 
-# Slide Title
+# What is RAG
 
 <v-clicks depth="2">
 
-- First point
-- Second point
-- Third point
+- **Retrieval** — go find the data that answer this question
+- **Augmented** — staple that data to the question
+- **Generation** — the model answers from what was provided
 
 </v-clicks>
 
