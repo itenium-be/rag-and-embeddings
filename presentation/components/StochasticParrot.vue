@@ -14,8 +14,11 @@
 
 <style scoped>
 .parrot { display: block; }
-.body, .head, .crest { fill: var(--color-primary); }
-.wing, .tail { fill: #b83800; }
+.body { fill: #f0a11e; }
+.head { fill: #2f80c4; }
+.crest { fill: #45c0cf; }
+.wing { fill: #1c5fa3; }
+.tail { fill: #14457c; }
 .beak { fill: #343434; }
 .eye { fill: #fefefe; }
 .legs { stroke: #343434; stroke-width: 3.5; stroke-linecap: round; }

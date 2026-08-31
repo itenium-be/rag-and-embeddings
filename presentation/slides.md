@@ -50,6 +50,21 @@ h1:
 
 ---
 layout: default
+clicks: 6
+h1:
+  type: braces
+  color: primary
+  position: all
+---
+
+# RAG
+
+## An Example
+
+<WithoutRag :clicks="$clicks" />
+
+---
+layout: default
 ---
 
 # Slide Title
