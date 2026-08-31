@@ -92,3 +92,16 @@ def test_citations_only_extracted_when_enabled():
     assert _engine().run("azure", Config(top_n=2)).citations == []
     with_citations = _engine().run("azure", Config(citations=True, top_n=2))
     assert with_citations.citations[0].marker == 1
+
+
+def test_retrieval_survives_a_generation_failure():
+    """On stage, an unreachable model must not take the retrieved chunks down with it."""
+
+    class Broken:
+        def complete(self, system, prompt, **kwargs):
+            raise RuntimeError("credit balance is too low")
+
+    result = _engine(Broken()).run("azure", Config(bm25=True, top_n=2))
+    assert len(result.used) == 2
+    assert "credit balance is too low" in result.answer
+    assert result.citations == []

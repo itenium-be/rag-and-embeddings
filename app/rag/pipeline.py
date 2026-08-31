@@ -52,8 +52,14 @@ class Engine:
         else:
             used = candidates[: config.top_n]
 
-        answer = generate_answer(self.llm, question, used, fallback_to=question)
-        citations = extract_citations(answer, used) if config.citations else []
+        # Retrieval is the demo; generation is commentary on it. If the model is
+        # unreachable the room must still see which chunks came back and in what order.
+        try:
+            answer = generate_answer(self.llm, question, used, fallback_to=question)
+            citations = extract_citations(answer, used) if config.citations else []
+        except Exception as exc:
+            answer = f"(retrieval succeeded; generating an answer failed: {exc})"
+            citations = []
 
         return Result(
             question=question,

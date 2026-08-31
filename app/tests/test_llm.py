@@ -52,3 +52,36 @@ def test_upstream_failure_falls_back_to_any_cached_answer(tmp_path):
     CachedLLM(CountingLLM("earlier"), tmp_path).complete("sys", "hit")
     llm = CachedLLM(Broken(), tmp_path)
     assert llm.complete("sys", "miss", fallback_to="hit") == "earlier"
+
+
+class FakeCompleted:
+    def __init__(self, returncode=0, stdout="answer", stderr=""):
+        self.returncode, self.stdout, self.stderr = returncode, stdout, stderr
+
+
+def test_cli_llm_passes_system_prompt_and_disables_tools():
+    from rag.llm import ClaudeCliLLM
+
+    seen = {}
+
+    def runner(argv, **kwargs):
+        seen["argv"] = argv
+        return FakeCompleted(stdout="  answer  ")
+
+    assert ClaudeCliLLM(runner=runner).complete("sys", "prompt") == "answer"
+    argv = seen["argv"]
+    assert argv[:3] == ["claude", "-p", "prompt"]
+    assert argv[argv.index("--system-prompt") + 1] == "sys"
+    assert argv[argv.index("--allowed-tools") + 1] == ""
+
+
+def test_cli_llm_raises_with_stderr_when_the_cli_fails():
+    import pytest
+
+    from rag.llm import ClaudeCliLLM
+
+    def runner(argv, **kwargs):
+        return FakeCompleted(returncode=1, stdout="", stderr="not logged in")
+
+    with pytest.raises(RuntimeError, match="not logged in"):
+        ClaudeCliLLM(runner=runner).complete("sys", "prompt")

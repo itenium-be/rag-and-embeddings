@@ -9,11 +9,15 @@ from __future__ import annotations
 
 import hashlib
 import json
+import shutil
+import subprocess
 from pathlib import Path
 from typing import Protocol
 
 MODEL = "claude-opus-5"
 MAX_TOKENS = 2048
+# A cold CLI call on a long prompt is slow; a demo cache miss must not look like a hang.
+CLI_TIMEOUT = 180
 
 
 class NoAnswerAvailable(RuntimeError):
@@ -40,6 +44,39 @@ class AnthropicLLM:
             messages=[{"role": "user", "content": prompt}],
         )
         return "".join(b.text for b in message.content if b.type == "text")
+
+
+class ClaudeCliLLM:
+    """Runs prompts through the Claude Code CLI, which bills a Claude subscription.
+
+    The Messages API draws on org API credit, which is a different balance from a
+    subscription and has to be topped up separately. This path needs only `claude` on
+    PATH and an interactive login, so the demo runs on the same plan the presenter
+    already pays for.
+    """
+
+    def __init__(self, runner=subprocess.run, model: str = MODEL) -> None:
+        self._run = runner
+        self._model = model
+
+    def complete(self, system: str, prompt: str) -> str:
+        completed = self._run(
+            [
+                "claude", "-p", prompt,
+                "--system-prompt", system,
+                # An agent with tools would go exploring; this is a single completion.
+                "--allowed-tools", "",
+                "--model", self._model,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=CLI_TIMEOUT,
+        )
+        if completed.returncode != 0:
+            raise RuntimeError(
+                f"claude exited {completed.returncode}: {completed.stderr.strip()[:300]}"
+            )
+        return completed.stdout.strip()
 
 
 def cache_key(system: str, prompt: str) -> str:
@@ -91,8 +128,13 @@ class CachedLLM:
 
 
 def build_llm(cache_dir: Path) -> CachedLLM:
-    try:
-        inner: LLM | None = AnthropicLLM()
-    except Exception:
-        inner = None
+    """Prefer the CLI: it runs on a subscription, where the API needs org credit."""
+    inner: LLM | None = None
+    if shutil.which("claude"):
+        inner = ClaudeCliLLM()
+    else:
+        try:
+            inner = AnthropicLLM()
+        except Exception:
+            inner = None
     return CachedLLM(inner, cache_dir)

@@ -13,10 +13,21 @@ from rag.store import load_artefacts
 
 APP_DIR = Path(__file__).resolve().parents[1]
 INDEX_DIR = APP_DIR / "data" / "index"
+REAL_INDEX_DIR = APP_DIR / "data" / "index-real"
 CACHE_DIR = APP_DIR / "data" / "cache"
 
 
-def build_engine(index_dir: Path = INDEX_DIR, cache_dir: Path = CACHE_DIR) -> Engine:
+def default_index_dir() -> Path:
+    """The real corpus when it has been built, the committed sample otherwise.
+
+    Everything that reads an index goes through here, so the server, the cache warmer
+    and the scoreboard can never end up pointed at different corpora.
+    """
+    return REAL_INDEX_DIR if REAL_INDEX_DIR.is_dir() else INDEX_DIR
+
+
+def build_engine(index_dir: Path | None = None, cache_dir: Path = CACHE_DIR) -> Engine:
+    index_dir = index_dir or default_index_dir()
     chunks, vectors, _ = load_artefacts(index_dir)
     return Engine(
         dense=DenseIndex(chunks, vectors),
@@ -27,6 +38,7 @@ def build_engine(index_dir: Path = INDEX_DIR, cache_dir: Path = CACHE_DIR) -> En
     )
 
 
-def load_projection(index_dir: Path = INDEX_DIR):
+def load_projection(index_dir: Path | None = None):
+    index_dir = index_dir or default_index_dir()
     chunks, _, projection = load_artefacts(index_dir)
     return chunks, projection
