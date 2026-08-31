@@ -33,6 +33,25 @@ def read_document(path: Path) -> str:
         import docx
 
         return "\n\n".join(p.text for p in docx.Document(str(path)).paragraphs)
+    if path.suffix.lower() == ".xlsx":
+        from openpyxl import load_workbook
+
+        workbook = load_workbook(path, read_only=True, data_only=True)
+        sheets = []
+        for sheet in workbook.worksheets:
+            rows = [
+                "\t".join(str(cell) for cell in row if cell not in (None, ""))
+                for row in sheet.iter_rows(values_only=True)
+            ]
+            rows = [row for row in rows if row]
+            # "##", not "#": `_sections` keeps one doc_title variable, overwritten by
+            # every "#" line and applied to ALL sections at the end — one "#" per
+            # sheet would mislabel every sheet but the last with the wrong name.
+            if rows:
+                sheets.append(f"## {sheet.title}\n" + "\n".join(rows))
+        if not sheets:
+            return ""
+        return f"# {path.stem}\n\n" + "\n\n".join(sheets)
     return path.read_text(encoding="utf-8")
 
 
@@ -94,6 +113,40 @@ def _document_title(text: str, fallback: str) -> str:
     return match.group(1).split("—")[0].strip()
 
 
+def _strip_boilerplate(pages: list[list[str]]) -> list[list[str]]:
+    """Drop lines that repeat across at least half a document's pages: running headers
+    and footers, not content — real content varies page to page. Purely structural
+    (counts repetition, never looks at the text itself) so it works on any PDF.
+    """
+    if len(pages) < 3:
+        return pages
+    counts: dict[str, int] = defaultdict(int)
+    for lines in pages:
+        for stripped in {line.strip() for line in lines if len(line.strip()) >= 3}:
+            counts[stripped] += 1
+    boilerplate = {line for line, count in counts.items() if 2 * count >= len(pages)}
+    return [[line for line in lines if line.strip() not in boilerplate] for lines in pages]
+
+
+def _pdf_pages(path: Path, title: str) -> list[tuple[str, str]]:
+    from pypdf import PdfReader
+
+    pages = [(page.extract_text() or "").splitlines() for page in PdfReader(path).pages]
+    pages = _strip_boilerplate(pages)
+    return [
+        (f"{title} > p. {n}", body)
+        for n, lines in enumerate(pages, start=1)
+        if (body := "\n".join(lines).strip())
+    ]
+
+
+def _location_pairs(path: Path, text: str, title: str) -> list[tuple[str, str]]:
+    """(location, body) pairs for one document — how it's carved up depends on format."""
+    if path.suffix.lower() == ".pdf":
+        return _pdf_pages(path, title)
+    return _sections(text)
+
+
 def _prose_chunks(path: Path, root: Path, source_type: str) -> list[Chunk]:
     text = read_document(path)
     if not text.strip():
@@ -102,7 +155,7 @@ def _prose_chunks(path: Path, root: Path, source_type: str) -> list[Chunk]:
     fallback = person_name(path.stem) if source_type == "cv" else path.stem
     title = _document_title(text, fallback)
     chunks: list[Chunk] = []
-    for ordinal, (heading_path, body) in enumerate(_sections(text)):
+    for heading_path, body in _location_pairs(path, text, title):
         for part in split_text(body):
             chunks.append(
                 Chunk(
@@ -236,7 +289,7 @@ def ingest_corpus(root: Path) -> list[Chunk]:
             if not directory.is_dir():
                 continue
             for path in sorted(directory.iterdir()):
-                if path.suffix.lower() in {".md", ".txt", ".pdf", ".docx"}:
+                if path.suffix.lower() in {".md", ".txt", ".pdf", ".docx", ".xlsx"}:
                     chunks.extend(_prose_chunks(path, root, source_type))
 
     bamboo = _bamboo_dir(root)
