@@ -1,30 +1,43 @@
 # Each question's expected verdict at each wizard step. The check is on retrieval, not
-# on generated prose: deterministic, no LLM call, and it fails for the right reason.
+# on generated prose: deterministic, cheap, and it fails for the right reason.
 #
-#   includes - `value` appears in a retrieved chunk's title or text
-#   first    - `value` appears in the top-ranked retrieved chunk
+#   includes          - `value` appears in at least `min_matches` retrieved chunks
+#                       (title and text; `field: title` restricts it to the title, so a
+#                       document that merely cross-references another does not count)
+#   first             - `value` appears in the top-ranked chunk; an optional
+#                       `source_type` also constrains what kind of chunk it must be
+#
+# Every prediction below was measured against the real corpus, not assumed. Three of the
+# first draft's five questions did not survive that and were replaced.
 
-- id: opleidingsbudget
-  question: Hoeveel opleidingsbudget heb ik per jaar?
-  check: {type: includes, value: "EUR 2000"}
+- id: ai-tools
+  question: Welke AI tools mag ik gebruiken?
+  check: {type: includes, value: "AI Policy Itenium"}
   steps: {1: true, 2: true, 3: true, 4: true, 5: true, 6: true}
 
-- id: xximo
-  question: Hoe geef ik mijn kilometerstand door aan XXimo?
-  check: {type: includes, value: "XXimo portaal"}
+# Dense retrieval finds one holder in five; the exact code is a keyword problem and BM25
+# lifts it to four. The conversational framing is what dilutes the embedding.
+- id: az-900
+  question: Ik wil AZ-900 halen, wie heeft dat certificaat al?
+  check: {type: includes, value: "AZ-900", min_matches: 3}
   steps: {1: false, 2: true, 3: true, 4: true, 5: true, 6: true}
 
-- id: kubernetes-hulp
+# Naive retrieval answers with an onboarding deck and a credit-ledger row that merely
+# contains the word. Reranking is what puts an actual CV on top.
+- id: kubernetes
   question: Wie kan me helpen met Kubernetes?
-  check: {type: first, value: "Dries Peeters"}
+  check: {type: first, value: "Kubernetes", source_type: cv}
   steps: {1: false, 2: false, 3: true, 4: true, 5: true, 6: true}
 
-- id: conferentie-lissabon
-  question: Mag ik mijn opleidingsbudget gebruiken voor een conferentie in Lissabon?
-  check: {type: includes, value: "congressen en vakbeurzen"}
+# A compound question: one topic crowds the other out until the query is split.
+- id: wagens-en-laptops
+  question: Wat zijn de regels rond wagens en laptops?
+  check: {type: includes, value: "Car Policy", min_matches: 3, field: title}
   steps: {1: false, 2: false, 3: false, 4: true, 5: true, 6: true}
 
+# The balance is a sum over a ledger. No chunk contains it, so no retrieval technique
+# reaches it — only the summary computed at ingest time does.
 - id: creditsaldo
-  question: Hoeveel credits heeft Dries Peeters nog?
+  question: Hoeveel credits heeft Alexander Ryckeboer nog?
   check: {type: includes, value: "Huidig saldo"}
   steps: {1: false, 2: false, 3: false, 4: false, 5: false, 6: true}
