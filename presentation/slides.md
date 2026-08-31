@@ -124,6 +124,26 @@ layout: break
 
 
 ---
+layout: default
+---
+
+# What we left out
+
+| Technique                  | What it does                                                     | Why not today      |
+| -------------------------- | ---------------------------------------------------------------- | ------------------ |
+| Hypothetical questions     | Index a generated *question* per chunk, then match question to question | An ingest-time variant of what we did |
+| Parent document retriever  | Retrieve the small chunk, hand the model the whole section around it   | Needs a failure we do not have |
+| Metadata filters           | Constrain by source, person or date *before* ranking               | Session 3 — it is really access control |
+| Router, agents, critic     | Let a model pick the retriever, then check its own answer          | Session 2 |
+| Entity resolution          | Decide that `Gaëtan Boey` and `Gaetan Boey` are one person         | Session 2 |
+
+<br>
+
+That last one is not hypothetical: **36 CV names, 43 HR names, 29 that match.**
+Seven colleagues are unjoinable across two systems because of an accent, a capital
+and an apostrophe.
+
+---
 layout: socials
 ---
 
