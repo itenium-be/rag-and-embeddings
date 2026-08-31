@@ -25,26 +25,60 @@ items:
 ---
 
 ---
-layout: section
+layout: default
+clicks: 3
+h1:
+  type: braces
+  color: primary
+  position: all
 ---
 
 # RAG
 
+<RagBox :clicks="$clicks" />
+
+---
+layout: default
+clicks: 3
+h1:
+  type: braces
+  color: primary
+  position: all
+---
+
+# RAG
+
+<RagContrast :clicks="$clicks" />
+
+<!--
+Variant B. Same parrot in both rows - that is the point. RAG does not make the
+model smarter, it puts the page in front of it.
+
+Closed book: fluent, confident, invented.
+Open book: same bird, right answer.
+-->
+
+---
+layout: section
+---
+
+# Topic One
+
 ::subtitle::
 
-Retrieval Augmented Generation
+Optional subtitle
 
 ---
 layout: default
 ---
 
-# What is RAG
+# Slide Title
 
 <v-clicks depth="2">
 
-- **Retrieval** — go find the data that answer this question
-- **Augmented** — staple that data to the question
-- **Generation** — the model answers from what was provided
+- First point
+- Second point
+- Third point
 
 </v-clicks>
 

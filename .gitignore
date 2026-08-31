@@ -3,3 +3,5 @@ presentation/node_modules/
 presentation/dist/
 presentation/.slidev/
 presentation/migration/
+
+.playwright-mcp
