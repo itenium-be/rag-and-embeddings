@@ -278,3 +278,81 @@ whose balance is then read aloud. Worth deciding before the session whether that
 
 **`uv` is not installed** on the machine this will be built on. The project assumes it; a
 venv and pip work as a fallback.
+
+---
+
+## Measured against the real corpus (2026-08-31)
+
+The real corpus is 2194 chunks: 946 credit-ledger rows, 663 policy chunks from 24 documents,
+485 CV chunks from 37 CVs, 57 assignment rows and 43 computed balances.
+
+Everything below was measured with retrieval only — no LLM call, because the Anthropic
+account has no API credits. Steps 4–6 are therefore **unmeasured**.
+
+### The questions, revised
+
+The first draft was written before anyone had run it. Three of the five did not survive
+contact with the corpus.
+
+| # | Question | Verified |
+| --- | --- | --- |
+| 1 | Welke AI tools mag ik gebruiken? | ✅ works at step 1 — AI Policy and Approved AI Tools, cleanly |
+| 2 | Ik wil AZ-900 halen, wie heeft dat certificaat al? | ✅ 1/5 → 4/5 → 5/5 across steps 1–3 |
+| 3 | Wie kan me helpen met Kubernetes? | ✅ fails naive, reranking fixes it |
+| 4 | *step-back rewriting* | ⛔ unmeasured — needs credits |
+| 5 | Hoeveel credits heeft X nog? | ✅ no chunk contains a balance; only step 6 answers it |
+
+**Question 1 was replaced.** "Hoeveel opleidingsbudget heb ik per jaar?" fails: `Opleidingsplan
+itenium 2026` is a strategic HR document and states no amount. The baseline question has to be
+one the corpus genuinely answers, or the session opens by not working.
+
+**Question 2 was replaced twice.** The original premise — that an embedding model is blind to
+internal jargon like `XXimo` — is **false for this corpus**. `multilingual-e5` handles it
+through subword tokens, and the filename is the chunk title, so dense retrieval returns it at
+rank 1. What does work is a conversationally-phrased question containing an exact code: the
+chatty framing dilutes the embedding while the code stays a keyword problem.
+
+### Hybrid search fails in both directions, which is the better demo
+
+| Question | Dense | BM25 |
+| --- | --- | --- |
+| Ik wil AZ-900 halen, wie heeft dat certificaat al? | 1/5 | 3/5 |
+| Wat is een ontwikkelgesprek? | ✅ rank 1 | nothing — no stemming, the documents say *ontwikkelgesprekken* |
+
+Two questions on one corpus failing opposite ways is a stronger argument for running both
+retrievers than a single one-way flip.
+
+### Stopwords are not optional
+
+Without them BM25 returns the arbeidsreglement for "Wie heeft DP-600?". `rank_bm25` floors
+negative idf to a small positive epsilon, so Dutch function words still score and the long
+documents accumulate enough of them to bury an exact rare term.
+
+A document-frequency cutoff does not find those words **on this corpus specifically**: half of
+it is CVs and ledger rows containing no Dutch prose, so `wie` and `heeft` sit below any sane
+threshold. It needs an explicit list. Before this fix, hybrid search measured as useless and
+was nearly cut from the session.
+
+### Entity resolution, for the closing slide
+
+Names do not join across the two systems:
+
+| CV says | HR says |
+| --- | --- |
+| `Gaetan Boey` | `Gaëtan Boey` |
+| `Tom mennes` | `Tom Mennes` |
+
+36 CV names, 43 HR names, **29 exact matches**. Seven people are unjoinable because of an
+accent, a capital and an apostrophe. A second reason, independent of counting, that the next
+session exists. Not built — shown.
+
+### Still open
+
+- **Steps 4–6 are unverified.** Query rewriting produces the query retrieval then depends on,
+  so there is no way to measure it without credits.
+- **`sample/` no longer matches `questions.yaml`.** The sample corpus was built for the old
+  questions; it contains no AI-tools policy and no AZ-900. Either the sample is rebuilt to
+  reproduce the verified questions, or the public repo demonstrates something the talk does
+  not. The sample is the fixture the scoreboard test runs against, so this is not cosmetic.
+- **`_sections()` keeps one scalar document title** and the last `#` heading overwrites it for
+  every section. Dormant — each markdown file here has one `#` — but wrong.
