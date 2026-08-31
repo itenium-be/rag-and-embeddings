@@ -56,7 +56,7 @@
       <div class="card problem reveal" :class="{ shown: clicks >= 2 }">
         <div class="card-kicker">PROBLEM 1</div>
         <div class="card-title">LOST IN THE MIDDLE</div>
-        <div class="card-body">The answer is in here somewhere...</div>
+        <div class="card-body">The answer is in there somewhere...</div>
       </div>
       <div class="card problem reveal" :class="{ shown: clicks >= 3 }">
         <div class="card-kicker">PROBLEM 2</div>
