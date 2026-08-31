@@ -1313,9 +1313,17 @@ def _chunk(cid: str) -> Chunk:
 A, B, C = _chunk("a"), _chunk("b"), _chunk("c")
 
 
-def test_chunk_ranked_by_both_retrievers_wins():
+def test_chunk_found_by_both_retrievers_beats_one_found_by_one():
+    fused = reciprocal_rank_fusion({"dense": [A, B], "bm25": [B]})
+    assert [s.chunk.id for s in fused] == ["b", "a"]
+
+
+def test_first_and_third_beats_second_and_second():
+    # RRF is convex in rank: 1/(k+1) + 1/(k+3) > 2/(k+2). A chunk one retriever loves
+    # and the other dislikes outranks one that both merely tolerate. Surprising, and
+    # the reason RRF does not just average ranks.
     fused = reciprocal_rank_fusion({"dense": [A, B, C], "bm25": [C, B, A]})
-    assert fused[0].chunk.id == "b"
+    assert fused[-1].chunk.id == "b"
 
 
 def test_ranks_record_the_position_in_each_retriever():
@@ -1383,7 +1391,7 @@ def reciprocal_rank_fusion(
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run: `cd app && uv run pytest tests/test_fuse.py -v`
-Expected: 5 passed
+Expected: 6 passed
 
 - [ ] **Step 5: Commit**
 
