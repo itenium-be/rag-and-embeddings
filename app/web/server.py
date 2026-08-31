@@ -91,6 +91,10 @@ def create_app(engine: Engine, chunks: list[Chunk], projection: np.ndarray) -> F
             result = engine.run(request.question, _config_for(request))
         except NoAnswerAvailable as exc:
             return {"error": str(exc)}
+        except Exception as exc:
+            # A live LLM call can fail for reasons other than a missing credential
+            # (e.g. no API credit) — the room must see a message, never a stack trace.
+            return {"error": str(exc)}
         return _result_json(result)
 
     @app.get("/api/map")
