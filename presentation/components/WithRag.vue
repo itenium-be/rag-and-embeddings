@@ -54,7 +54,8 @@ when does the bakery close?</pre>
       </div>
 
       <div class="sources reveal" :class="{ shown: clicks >= 6 }">
-        Retrieval from: database &middot; web search &middot; wiki &middot; SharePoint &middot; PDFs
+        Retrieval from:<br>
+        <span class="accent">database &middot; web search &middot; wiki &middot; SharePoint &middot; PDFs</span>
       </div>
 
     </div>
@@ -251,8 +252,10 @@ defineProps({ clicks: { type: Number, default: 0 } })
 
 .sources {
   text-align: center;
+  padding-top: 1.6rem;
   font-family: var(--font-code);
   font-size: 0.95rem;
+  line-height: 1.6;
   color: #33343a;
 }
 </style>
