@@ -1,0 +1,9 @@
+"Last name, First name",Status,"First Name","Middle Name","Birth Date",Gender,City,State,"Zip Code",Country,"Work Email","LinkedIn URL",Degree,College/Institution,Major/Specialization,"Hire Date",Startdatum,Einddatum,Functie,Klant
+"Meeus, Ana",Active,Ana,,1990-04-11,Female,Antwerpen,Antwerpen,2000,Belgium,ana.meeus@example.be,,Master,KU Leuven,Informatica,2020-03-02,2024-01-08,2027-03-31,"Cloud Consultant",RetailCo
+"Claes, Bram",Active,Bram,,1993-08-02,Male,Mechelen,Antwerpen,2800,Belgium,bram.claes@example.be,,Bachelor,AP Hogeschool,Toegepaste Informatica,2021-09-01,2025-02-03,2027-06-30,"Azure Developer",LogiTrans
+"Dhondt, Caro",Active,Caro,,1988-12-19,Female,Gent,Oost-Vlaanderen,9000,Belgium,caro.dhondt@example.be,,Master,UGent,Wiskunde,2019-01-07,2024-09-02,2027-01-31,"Data Consultant",Insura
+"Peeters, Dries",Active,Dries,,1986-06-30,Male,Leuven,Vlaams-Brabant,3000,Belgium,dries.peeters@example.be,,Master,KU Leuven,Informatica,2017-05-15,2023-01-09,,"Platform Engineer",Internal
+"Vermeulen, Elke",Active,Elke,,1995-02-14,Female,Gent,Oost-Vlaanderen,9000,Belgium,elke.vermeulen@example.be,,Bachelor,HoGent,Multimedia,2022-02-01,2025-06-02,2026-10-15,"Frontend Consultant",MediaGroup
+"Nolens, Frank",Active,Frank,,1987-10-05,Male,Antwerpen,Antwerpen,2000,Belgium,frank.nolens@example.be,,Master,UAntwerpen,Informatica,2018-11-05,2025-03-03,2026-09-30,"Backend Consultant",ACME Manufacturing
+"Raman, Gita",Active,Gita,,1996-07-21,Female,Brussel,Brussel,1000,Belgium,gita.raman@example.be,,Master,VUB,Data Science,2023-04-03,2024-04-08,2026-12-31,"Data Engineer",Insura
+"Willems, Hugo",Active,Hugo,,1999-03-08,Male,Leuven,Vlaams-Brabant,3000,Belgium,hugo.willems@example.be,,Bachelor,UCLL,Toegepaste Informatica,2024-08-19,2024-08-19,,"DevOps Consultant",
