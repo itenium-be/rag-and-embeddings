@@ -184,6 +184,21 @@ h2:
 <Pipeline :clicks="$clicks" />
 
 ---
+layout: default
+clicks: 2
+h2:
+  type: dot
+  color: secondary
+  position: end
+---
+
+# Embeddings
+
+## Five questions
+
+<Scoreboard :clicks="$clicks" />
+
+---
 layout: break
 ---
 
