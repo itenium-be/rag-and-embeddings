@@ -25,6 +25,16 @@ items:
 ---
 
 ---
+layout: section
+---
+
+# RAG
+
+::subtitle::
+
+Retrieval Augmented Generation
+
+---
 layout: default
 clicks: 3
 h1:
@@ -34,6 +44,7 @@ h1:
 ---
 
 # RAG
+## RAG What?
 
 <RagBox :clicks="$clicks" />
 
@@ -50,23 +61,6 @@ h1:
 
 <RagContrast :clicks="$clicks" />
 
-<!--
-Variant B. Same parrot in both rows - that is the point. RAG does not make the
-model smarter, it puts the page in front of it.
-
-Closed book: fluent, confident, invented.
-Open book: same bird, right answer.
--->
-
----
-layout: section
----
-
-# Topic One
-
-::subtitle::
-
-Optional subtitle
 
 ---
 layout: default
