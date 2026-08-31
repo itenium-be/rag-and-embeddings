@@ -849,7 +849,15 @@ def test_swap_name_turns_the_export_order_around():
 def test_assignment_chunks_drop_personal_data():
     chunks = [c for c in ingest_corpus(SAMPLE) if c.source_type == "assignment"]
     joined = "\n".join(c.text for c in chunks)
-    for leaked in ("1990-04-11", "Female", "Antwerpen", "2000", "ana.meeus@example.be"):
+    # Assert on the field labels, not on bare values: "Antwerpen" is also a substring
+    # of "UAntwerpen" in the College column, and "2000" is a zip code, a year and part
+    # of "EUR 2000". A dropped column is one whose label never appears.
+    for label in (
+        "Birth Date", "Gender", "City", "State", "Zip Code", "Work Email", "LinkedIn URL",
+    ):
+        assert f"{label}:" not in joined
+    # Two values that cannot collide with anything legitimate.
+    for leaked in ("1990-04-11", "ana.meeus@example.be"):
         assert leaked not in joined
     assert "Klant: RetailCo" in joined
 
