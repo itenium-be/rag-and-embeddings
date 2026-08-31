@@ -12,12 +12,29 @@
 
 ---
 
+## Running commands
+
+**Every `uv` command in this plan needs these two exported first:**
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+export UV_PROJECT_ENVIRONMENT="$HOME/.venvs/rag-demo"
+```
+
+The repository lives inside a Dropbox folder on a `/mnt/c` drvfs mount. A default
+`app/.venv` would put several gigabytes of torch into Dropbox's sync set — `.gitignore`
+stops git seeing it and does nothing about Dropbox — and thousands of small files on
+drvfs are slow to write and slower to import. The environment therefore lives outside the
+synced tree. Nothing else about the project changes.
+
 ## Deviations from the spec
 
-Two, both deliberate:
+Three, all deliberate:
 
 1. **`rag/models.py` instead of `rag/chunks.py`.** The spec put the dataclasses in `chunks.py`, but `Config` has to be importable by both `retrieve.py` and `pipeline.py` without a cycle. One module of pure data types, no logic, no imports from the rest of the package.
-2. **8 sample consultants, not ~15.** Eight is enough for all five questions to behave: one AZ-204 holder plus two AZ-decoys, one deep Kubernetes expert plus four shallow mentions, one ACME assignment ending in September. Fifteen would be seven more CVs to hand-write with no extra demonstrative power.
+2. **The virtualenv lives at `~/.venvs/rag-demo`, not `app/.venv`.** See *Running
+   commands* above.
+3. **8 sample consultants, not ~15.** Eight is enough for all five questions to behave: one AZ-204 holder plus two AZ-decoys, one deep Kubernetes expert plus four shallow mentions, one ACME assignment ending in September. Fifteen would be seven more CVs to hand-write with no extra demonstrative power.
 
 ## File structure
 
@@ -3055,10 +3072,15 @@ questions, a five-step wizard, four of them go green.
 
 ```bash
 cd app
+export UV_PROJECT_ENVIRONMENT="$HOME/.venvs/rag-demo"   # keeps torch out of Dropbox
 uv sync
 uv run python scripts/build_index.py
 uv run uvicorn --factory web.server:build --port 8000
 ```
+
+The environment lives outside the repository on purpose: this checkout sits in a Dropbox
+folder, and a local `.venv` would sync several gigabytes of torch. Set the variable in
+your shell profile and forget about it.
 
 That runs against `sample/`, a synthetic corpus of eight invented consultants and two
 invented policies. It reproduces every failure and every fix.
