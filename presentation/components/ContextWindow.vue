@@ -60,13 +60,13 @@
       </div>
       <div class="card problem reveal" :class="{ shown: clicks >= 3 }">
         <div class="card-kicker">PROBLEM 2</div>
-        <div class="card-title">IT DOESN'T FIT</div>
+        <div class="card-title">SCALE</div>
         <div class="card-body">What if 400 consultants, 200 PDFs?</div>
       </div>
       <div class="card problem reveal" :class="{ shown: clicks >= 4 }">
         <div class="card-kicker">PROBLEM 3</div>
         <div class="card-title">MONEY</div>
-        <div class="card-body">you pay for all of it, every question</div>
+        <div class="card-body">You pay for all of it, every question</div>
       </div>
       <div class="card solution reveal" :class="{ shown: clicks >= 5 }">
         <div class="card-kicker">SOLUTION</div>
