@@ -18,7 +18,7 @@
         <div class="col-retrieval riser reveal" :class="{ shown: clicks >= 2 }">&darr;</div>
       </div>
 
-      <div class="ragbox">
+      <div class="ragbox reveal" :class="{ shown: clicks >= 2 }">
         <div class="row">
           <div class="step col-retrieval reveal" :class="{ shown: clicks >= 2 }">
             <div class="step-name"><span class="step-letter">R</span>ETRIEVAL</div>

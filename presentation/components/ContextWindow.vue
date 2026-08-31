@@ -4,39 +4,34 @@
     <div class="rail-wrap">
 
       <div class="above">
-        <div class="needle-note reveal" :class="{ shown: clicks >= 4 }">
-          the answer is in here somewhere
+        <div class="needle-note reveal" :class="{ shown: clicks >= 3 }">
+          <div class="needle-title">LOST IN THE MIDDLE</div>
+          <div class="needle-text">the answer is in here somewhere...</div>
           <span class="drop"></span>
         </div>
-        <div class="scale">context window <b>1 000 000 tokens</b></div>
+        <div class="scale">context window <span class="tokens">1M tokens</span></div>
       </div>
 
       <div class="rail">
         <div class="fill reveal" :class="{ shown: clicks >= 1 }"></div>
-        <div class="growth reveal" :class="{ shown: clicks >= 5 }"></div>
+        <div class="growth reveal" :class="{ shown: clicks >= 4 }"></div>
         <div class="sliver reveal" :class="{ shown: clicks >= 2 }"></div>
-        <div class="needle reveal" :class="{ shown: clicks >= 4 }"></div>
-        <div class="tail reveal" :class="{ shown: clicks >= 5 }"></div>
-        <div class="tail-note reveal" :class="{ shown: clicks >= 5 }">40 consultants &rarr; 400</div>
+        <div class="needle reveal" :class="{ shown: clicks >= 3 }"></div>
+        <div class="tail reveal" :class="{ shown: clicks >= 4 }"></div>
+        <div class="tail-note reveal" :class="{ shown: clicks >= 4 }">40 consultants &rarr; 400</div>
       </div>
 
       <div class="notes">
         <div class="note note-corpus reveal" :class="{ shown: clicks >= 1 }">
           <span class="elbow"></span>
-          <span class="txt">37 CVs &middot; 20 policy PDFs &middot; credits ledger <b>224 245 tokens</b></span>
+          <span class="txt">40 CVs &middot; 20 Policy PDFs <span class="tokens">220k tokens</span><span class="cost">$1.10</span></span>
         </div>
         <div class="note note-rag reveal" :class="{ shown: clicks >= 2 }">
           <span class="elbow"></span>
-          <span class="txt">5 retrieved chunks <b>500 tokens</b></span>
+          <span class="txt"><span class="kicker">with embeddings</span> 5 retrieved chunks <span class="tokens">500 tokens</span><span class="cost">$0.0025</span></span>
         </div>
       </div>
 
-    </div>
-
-    <div class="prices reveal" :class="{ shown: clicks >= 3 }">
-      <div class="price">$1.12 <span class="per">/ question</span></div>
-      <div class="ratio"><span class="rule"></span><span class="badge">450&times;</span><span class="rule"></span></div>
-      <div class="price good">$0.0025 <span class="per">/ question</span></div>
     </div>
 
   </div>
@@ -51,10 +46,10 @@ defineProps({ clicks: { type: Number, default: 0 } })
    the 1M-token context window, and --corpus is 224 245 of those tokens. Change the
    token counts and only this one number moves. */
 .context-window {
-  --corpus: 22.4%;
-  --needle: 12.3%;
+  --corpus: 22%;
+  --needle: 12%;
   width: 100%;
-  margin-top: 1.6rem;
+  margin-top: 2rem;
 }
 
 /* Nothing is ever dimmed: unrevealed items are fully transparent and keep their
@@ -73,7 +68,7 @@ defineProps({ clicks: { type: Number, default: 0 } })
 
 .above {
   position: relative;
-  height: 3.6rem;
+  height: 6.8rem;
 }
 .scale {
   position: absolute;
@@ -84,29 +79,41 @@ defineProps({ clicks: { type: Number, default: 0 } })
   letter-spacing: 0.03em;
   color: #5f6066;
 }
-.scale b { color: #1c1c1c; font-weight: 600; }
 
 .needle-note {
   position: absolute;
   left: var(--needle);
-  bottom: 0.35rem;
+  bottom: 0.4rem;
   transform: translateX(-1.2rem);
-  font-size: 1.1rem;
+  border: 2px solid #a8a8a8;
+  border-radius: 0.5rem;
+  background: #fefefe;
+  padding: 0.45rem 0.9rem 0.55rem;
   white-space: nowrap;
+}
+.needle-title {
+  font-family: var(--font-code);
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  color: #276b2e;
+}
+.needle-text {
+  font-size: 1.1rem;
+  margin-top: 0.1rem;
   color: #33343a;
 }
 .needle-note .drop {
   position: absolute;
-  left: 1.2rem;
-  top: 100%;
+  left: calc(1.2rem - 1px);
+  top: calc(100% + 2px);
   width: 0;
-  height: 0.35rem;
+  height: 0.4rem;
   border-left: 2px solid #276b2e;
 }
 
 .rail {
   position: relative;
-  height: 5rem;
+  height: 5.6rem;
   border: 2px solid #a8a8a8;
   border-radius: 0.4rem;
   background: #fefefe;
@@ -156,7 +163,7 @@ defineProps({ clicks: { type: Number, default: 0 } })
   position: absolute;
   left: auto;
   right: -3.2rem;
-  top: calc(100% + 4.5rem);
+  top: calc(100% + 5.2rem);
   text-align: right;
   font-family: var(--font-code);
   font-size: 0.9rem;
@@ -189,7 +196,7 @@ defineProps({ clicks: { type: Number, default: 0 } })
 
 .notes {
   position: relative;
-  height: 7.4rem;
+  height: 9rem;
   margin: 0 2px;
 }
 .note {
@@ -215,58 +222,48 @@ defineProps({ clicks: { type: Number, default: 0 } })
   white-space: nowrap;
   color: #33343a;
 }
-.note .txt b {
+.kicker {
   font-family: var(--font-code);
-  font-size: 1.05rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding-right: 0.4rem;
+  color: #5f6066;
+}
+/* Charcoal by default; the retrieved-chunks badge takes the colour of its sliver. */
+.tokens {
+  font-family: var(--font-code);
+  font-size: 0.95rem;
   font-weight: 600;
-  padding-left: 0.55rem;
-  color: #1c1c1c;
+  padding: 0.2rem 0.6rem 0.25rem;
+  margin-left: 0.6rem;
+  border-radius: 0.35rem;
+  background: #343434;
+  color: #fefefe;
 }
 
 .note-corpus { left: var(--corpus); }
-.note-corpus .elbow { height: 2.6rem; }
+.note-corpus .elbow { height: 3rem; }
 
 .note-rag { left: 0; }
-.note-rag .elbow { height: 6rem; }
+.note-rag .elbow { height: 7rem; }
 .note-rag .elbow { border-color: var(--color-primary); }
-.note-rag .txt b { color: var(--color-primary); }
+.note-rag .tokens { background: var(--color-primary); }
 
-.prices {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.8rem;
-  padding-top: 3.2rem;
-}
-.price {
+/* The price rides with the token count rather than on its own click. */
+.cost {
   font-family: var(--font-code);
-  font-size: 2.1rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  color: #1c1c1c;
+  padding: 0.2rem 0.6rem 0.25rem;
+  margin-left: 0.35rem;
+  border-radius: 0.35rem;
+  border: 2px solid #343434;
+  background: #fefefe;
+  color: #343434;
 }
-.price.good { color: #276b2e; }
-.price .per {
-  font-family: var(--font-heading);
-  font-size: 1.05rem;
-  font-weight: 400;
-  padding-left: 0.4rem;
-  color: #5f6066;
-}
-
-.ratio {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-}
-.ratio .rule {
-  width: 3.6rem;
-  border-top: 2px dashed #a8a8a8;
-}
-.ratio .badge {
-  font-family: var(--font-heading);
-  font-size: 1.9rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+.note-rag .cost {
+  border-color: var(--color-primary);
   color: var(--color-primary);
 }
 </style>

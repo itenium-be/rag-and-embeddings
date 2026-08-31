@@ -81,6 +81,21 @@ h2:
 
 
 ---
+layout: default
+clicks: 6
+h2:
+  type: dot
+  color: secondary
+  position: end
+---
+
+# Use Case
+
+## Consultants asking itenium anything
+
+<UseCase :clicks="$clicks" />
+
+---
 layout: section
 background: embeddings.webp
 ---
@@ -95,7 +110,7 @@ Search PDFs... How?
 
 ---
 layout: default
-clicks: 5
+clicks: 4
 h2:
   type: dot
   color: secondary
