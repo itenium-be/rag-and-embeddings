@@ -153,6 +153,18 @@ h2:
 
 <MeaningMap :clicks="$clicks" />
 
+<!--
+Nobody placed these points. The map is *learned* from public training text, not
+discovered - which is exactly why it is poor at anything only we say. Project
+codenames, "PS-3 formulier", an internal tool name: the model never saw them, so it
+puts them somewhere arbitrary and near stops meaning similar. Same reason AZ-204
+lands next to AZ-104 - question 2, fixed in part 4 by keyword search, which needs no
+map at all.
+
+What it *is* good at is the ordinary language of the trade, in both languages: the
+Dutch question above reaches an English CV because one multilingual model drew both.
+-->
+
 ---
 layout: default
 clicks: 4
@@ -212,6 +224,33 @@ layout: break
 
 ![](./images/cover-art.webp)
 
+
+---
+layout: default
+clicks: 4
+h2:
+  type: dot
+  color: secondary
+  position: end
+---
+
+# Making it work
+
+## Hybrid search
+
+<HybridSearch :clicks="$clicks" />
+
+<!--
+Two retrievers that fail on disjoint query types. `AZ-900` carries no meaning, so the
+vector lands next to every other Azure certification and the question's Dutch prose -
+"halen", "certificaat" - drags in the hospitalisatie folder instead. BM25 has never
+heard of meaning and gets it right by spelling.
+
+RRF throws the scores away - a cosine of 0.83 and a BM25 of 10.06 have no common
+ground - and votes on ranks alone. Jos Van Loock is 12th on one list and 9th on the
+other and ends up 4th; Thomas Janssens is BM25's number one and drops out of the top
+five, because the vectors never saw him. Agreement is the signal.
+-->
 
 ---
 layout: default
