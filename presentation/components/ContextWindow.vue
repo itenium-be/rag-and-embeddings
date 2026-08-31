@@ -4,34 +4,63 @@
     <div class="rail-wrap">
 
       <div class="above">
-        <div class="needle-note reveal" :class="{ shown: clicks >= 3 }">
-          <div class="needle-title">LOST IN THE MIDDLE</div>
-          <div class="needle-text">the answer is in here somewhere...</div>
-          <span class="drop"></span>
-        </div>
         <div class="scale">context window <span class="tokens">1M tokens</span></div>
       </div>
 
       <div class="rail">
         <div class="fill reveal" :class="{ shown: clicks >= 1 }"></div>
-        <div class="growth reveal" :class="{ shown: clicks >= 4 }"></div>
-        <div class="sliver reveal" :class="{ shown: clicks >= 2 }"></div>
-        <div class="needle reveal" :class="{ shown: clicks >= 3 }"></div>
-        <div class="tail reveal" :class="{ shown: clicks >= 4 }"></div>
-        <div class="tail-note reveal" :class="{ shown: clicks >= 4 }">40 consultants &rarr; 400</div>
+        <div class="growth reveal" :class="{ shown: clicks >= 3 }"></div>
+        <div class="window-edge"></div>
+        <div class="sliver reveal" :class="{ shown: clicks >= 4 }"></div>
+        <div class="needle reveal" :class="{ shown: clicks >= 2 }"></div>
       </div>
 
       <div class="notes">
-        <div class="note note-corpus reveal" :class="{ shown: clicks >= 1 }">
+        <!-- The size problem replaces the corpus line in place, so the leader keeps
+             pointing at the spot where the real corpus ends and the extra begins. -->
+        <div class="note note-corpus reveal" :class="{ shown: clicks === 1 || clicks === 2 }">
           <span class="elbow"></span>
-          <span class="txt">40 CVs &middot; 20 Policy PDFs <span class="tokens">220k tokens</span><span class="cost">$1.10</span></span>
+          <span class="txt">40 CVs &middot; 20 Policy PDFs <span class="tokens">220k tokens</span></span>
         </div>
-        <div class="note note-rag reveal" :class="{ shown: clicks >= 2 }">
+        <div class="note note-corpus reveal" :class="{ shown: clicks >= 3 }">
           <span class="elbow"></span>
-          <span class="txt"><span class="kicker">with embeddings</span> 5 retrieved chunks <span class="tokens">500 tokens</span><span class="cost">$0.0025</span></span>
+          <span class="txt">400 CVs &middot; 200 PDFs <span class="tokens">2.2M tokens</span></span>
+        </div>
+        <div class="note note-rag reveal" :class="{ shown: clicks >= 4 }">
+          <span class="elbow"></span>
+          <span class="txt"><span class="kicker">with embeddings</span> 5 retrieved chunks <span class="tokens">500 tokens</span></span>
         </div>
       </div>
 
+      <div class="money reveal" :class="{ shown: clicks >= 5 }">
+        <span class="cost cost-rag">$0.0025</span>
+        <span class="cost cost-corpus">$1.10</span>
+        <span class="arc"></span>
+        <span class="arc-label">440&times; the cost</span>
+      </div>
+
+    </div>
+
+    <div class="verdicts">
+      <div class="card problem reveal" :class="{ shown: clicks >= 2 }">
+        <div class="card-kicker">PROBLEM 1</div>
+        <div class="card-title">LOST IN THE MIDDLE</div>
+        <div class="card-body">the answer is in here somewhere...</div>
+      </div>
+      <div class="card problem reveal" :class="{ shown: clicks >= 3 }">
+        <div class="card-kicker">PROBLEM 2</div>
+        <div class="card-title">SIZE</div>
+        <div class="card-body">What if 400 consultants, 200 PDFs?</div>
+      </div>
+      <div class="card problem reveal" :class="{ shown: clicks >= 5 }">
+        <div class="card-kicker">PROBLEM 3</div>
+        <div class="card-title">MONEY</div>
+        <div class="card-body">you pay for all of it, every question</div>
+      </div>
+      <div class="card solution reveal" :class="{ shown: clicks >= 4 }">
+        <div class="card-kicker">SOLUTION</div>
+        <div class="card-title">EMBEDDINGS</div>
+      </div>
     </div>
 
   </div>
@@ -43,13 +72,13 @@ defineProps({ clicks: { type: Number, default: 0 } })
 
 <style scoped>
 /* Everything on this slide is positioned against one horizontal scale: the rail is
-   the 1M-token context window, and --corpus is 224 245 of those tokens. Change the
+   the 1M-token context window, and --corpus is 220k of those tokens. Change the
    token counts and only this one number moves. */
 .context-window {
   --corpus: 22%;
   --needle: 12%;
   width: 100%;
-  margin-top: 2rem;
+  margin-top: 1rem;
 }
 
 /* Nothing is ever dimmed: unrevealed items are fully transparent and keep their
@@ -60,7 +89,7 @@ defineProps({ clicks: { type: Number, default: 0 } })
 }
 .reveal.shown { opacity: 1; }
 
-/* Room to the right of the rail for the overflow tail to run off the window. */
+/* Room to the right of the rail for the overflowing bar to run off the window. */
 .rail-wrap {
   position: relative;
   margin-right: 6rem;
@@ -68,52 +97,21 @@ defineProps({ clicks: { type: Number, default: 0 } })
 
 .above {
   position: relative;
-  height: 6.8rem;
+  height: 2.4rem;
 }
 .scale {
   position: absolute;
   right: 0;
-  bottom: 0.35rem;
+  bottom: 0.3rem;
   font-family: var(--font-code);
   font-size: 0.95rem;
   letter-spacing: 0.03em;
   color: #5f6066;
 }
 
-.needle-note {
-  position: absolute;
-  left: var(--needle);
-  bottom: 0.4rem;
-  transform: translateX(-1.2rem);
-  border: 2px solid #a8a8a8;
-  border-radius: 0.5rem;
-  background: #fefefe;
-  padding: 0.45rem 0.9rem 0.55rem;
-  white-space: nowrap;
-}
-.needle-title {
-  font-family: var(--font-code);
-  font-size: 0.82rem;
-  letter-spacing: 0.06em;
-  color: #276b2e;
-}
-.needle-text {
-  font-size: 1.1rem;
-  margin-top: 0.1rem;
-  color: #33343a;
-}
-.needle-note .drop {
-  position: absolute;
-  left: calc(1.2rem - 1px);
-  top: calc(100% + 2px);
-  width: 0;
-  height: 0.4rem;
-  border-left: 2px solid #276b2e;
-}
-
 .rail {
   position: relative;
-  height: 5.6rem;
+  height: 5.4rem;
   border: 2px solid #a8a8a8;
   border-radius: 0.4rem;
   background: #fefefe;
@@ -130,45 +128,31 @@ defineProps({ clicks: { type: Number, default: 0 } })
   background: #343434;
 }
 
-/* The same corpus at ten times the headcount. Striped rather than solid so it
-   reads as projected, and it runs under .tail off the right-hand edge. */
+/* Ten times the corpus. One element rather than one inside the rail and one past
+   it, because a second gradient restarts its phase and the stripes jog at the seam. */
 .growth {
   position: absolute;
   left: var(--corpus);
   top: 0;
   bottom: 0;
-  right: 0;
+  right: -6rem;
   background: repeating-linear-gradient(
     -45deg,
     #343434 0 6px,
     #fefefe 6px 12px
   );
+  mask-image: linear-gradient(to right, #000 84%, transparent 100%);
 }
-.tail {
+
+/* The bar paints over the rail's right border on its way out, so the edge of the
+   context window is drawn back on top of it. */
+.window-edge {
   position: absolute;
-  left: 100%;
+  right: -2px;
   top: -2px;
   bottom: -2px;
-  width: 6rem;
-  background: repeating-linear-gradient(
-    -45deg,
-    #343434 0 6px,
-    #fefefe 6px 12px
-  );
-  mask-image: linear-gradient(to right, #000 45%, transparent 100%);
-}
-/* Right-aligned and dropped below the corpus label, so the overflow tail can run
-   toward the slide edge without its caption running off it. */
-.tail-note {
-  position: absolute;
-  left: auto;
-  right: -3.2rem;
-  top: calc(100% + 5.2rem);
-  text-align: right;
-  font-family: var(--font-code);
-  font-size: 0.9rem;
-  white-space: nowrap;
-  color: #33343a;
+  width: 2px;
+  background: #a8a8a8;
 }
 
 /* 500 tokens is 0.05% of the rail — a hairline, not a sub-pixel sliver. */
@@ -182,6 +166,8 @@ defineProps({ clicks: { type: Number, default: 0 } })
   background: var(--color-primary);
 }
 
+/* Red, like the problem card it appears with — there is no room for a leader down
+   to that card without crossing both note rows. */
 .needle {
   position: absolute;
   left: var(--needle);
@@ -190,13 +176,13 @@ defineProps({ clicks: { type: Number, default: 0 } })
   height: 0.85rem;
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  background: #3f8a46;
+  background: #b23c2c;
   box-shadow: 0 0 0 3px #fefefe;
 }
 
 .notes {
   position: relative;
-  height: 9rem;
+  height: 6.8rem;
   margin: 0 2px;
 }
 .note {
@@ -222,6 +208,7 @@ defineProps({ clicks: { type: Number, default: 0 } })
   white-space: nowrap;
   color: #33343a;
 }
+
 .kicker {
   font-family: var(--font-code);
   font-size: 0.82rem;
@@ -230,6 +217,7 @@ defineProps({ clicks: { type: Number, default: 0 } })
   padding-right: 0.4rem;
   color: #5f6066;
 }
+
 /* Charcoal by default; the retrieved-chunks badge takes the colour of its sliver. */
 .tokens {
   font-family: var(--font-code);
@@ -243,27 +231,101 @@ defineProps({ clicks: { type: Number, default: 0 } })
 }
 
 .note-corpus { left: var(--corpus); }
-.note-corpus .elbow { height: 3rem; }
+.note-corpus .elbow { height: 2.4rem; }
 
 .note-rag { left: 0; }
-.note-rag .elbow { height: 7rem; }
-.note-rag .elbow { border-color: var(--color-primary); }
+.note-rag .elbow { height: 5.8rem; border-color: var(--color-primary); }
 .note-rag .tokens { background: var(--color-primary); }
 
-/* The price rides with the token count rather than on its own click. */
+/* Both prices sit at the x of the bar they belong to, so the arc between them
+   spans the same distance the slide has been arguing about. */
+.money {
+  position: relative;
+  height: 4rem;
+  margin: 0 2px;
+}
 .cost {
+  position: absolute;
+  top: 0;
   font-family: var(--font-code);
-  font-size: 0.95rem;
+  font-size: 1.05rem;
   font-weight: 600;
-  padding: 0.2rem 0.6rem 0.25rem;
-  margin-left: 0.35rem;
+  padding: 0.2rem 0.65rem 0.25rem;
   border-radius: 0.35rem;
   border: 2px solid #343434;
   background: #fefefe;
   color: #343434;
 }
-.note-rag .cost {
+.cost-rag {
+  left: 0;
   border-color: var(--color-primary);
   color: var(--color-primary);
+}
+.cost-corpus {
+  left: var(--corpus);
+  transform: translateX(-50%);
+}
+
+/* Two legs and a curve, drawn with borders like the elbows, so it stays an open
+   line at the same 2px weight as every other connector in the deck. */
+.arc {
+  position: absolute;
+  left: 3.15rem;
+  width: calc(var(--corpus) - 3.15rem);
+  top: 2.45rem;
+  height: 1rem;
+  box-sizing: border-box;
+  border: 2px solid var(--color-primary);
+  border-top: 0;
+  border-radius: 0 0 0.8rem 0.8rem;
+}
+.arc-label {
+  position: absolute;
+  left: calc(var(--corpus) + 3.6rem);
+  top: 2.5rem;
+  font-size: 1.05rem;
+  white-space: nowrap;
+  color: var(--color-primary);
+}
+
+.verdicts {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  padding-top: 0.2rem;
+}
+.card {
+  flex: 1;
+  border: 2px solid #e0cbc6;
+  border-top: 4px solid #b23c2c;
+  border-radius: 0.5rem;
+  background: #fefefe;
+  padding: 0.55rem 0.9rem 0.7rem;
+}
+.card.solution {
+  border-color: #cfe3d1;
+  border-top-color: #3f8a46;
+  background: #f4faf5;
+}
+.card-kicker {
+  font-family: var(--font-code);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  color: #b23c2c;
+}
+.card.solution .card-kicker { color: #276b2e; }
+.card-title {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-top: 0.1rem;
+  color: #1c1c1c;
+}
+.card-body {
+  font-size: 0.95rem;
+  line-height: 1.3;
+  margin-top: 0.25rem;
+  color: #33343a;
 }
 </style>
