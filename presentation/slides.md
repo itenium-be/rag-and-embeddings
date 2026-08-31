@@ -169,6 +169,21 @@ h2:
 <Chunking :clicks="$clicks" />
 
 ---
+layout: default
+clicks: 5
+h2:
+  type: dot
+  color: secondary
+  position: end
+---
+
+# Embeddings
+
+## The whole pipeline
+
+<Pipeline :clicks="$clicks" />
+
+---
 layout: break
 ---
 
