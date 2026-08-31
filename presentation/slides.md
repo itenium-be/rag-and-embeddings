@@ -139,6 +139,21 @@ h2:
 <RealVector :clicks="$clicks" />
 
 ---
+layout: default
+clicks: 3
+h2:
+  type: dot
+  color: secondary
+  position: end
+---
+
+# Embeddings
+
+## A map of meaning
+
+<MeaningMap :clicks="$clicks" />
+
+---
 layout: break
 ---
 
