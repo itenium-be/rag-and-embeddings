@@ -82,7 +82,7 @@ h2:
 
 ---
 layout: default
-clicks: 6
+clicks: 2
 h2:
   type: dot
   color: secondary

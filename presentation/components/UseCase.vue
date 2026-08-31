@@ -12,6 +12,7 @@
 
       <div class="card reveal" :class="{ shown: clicks >= 1 }">
         <img class="logo wordmark" :src="bamboohr" alt="BambooHR">
+        <div class="name" aria-hidden="true">&nbsp;</div>
         <div class="sub">40 consultants &middot; credits ledger</div>
       </div>
 
@@ -20,21 +21,15 @@
         <div class="name">Consultant CVs</div>
         <div class="sub">40 PDFs</div>
       </div>
-
-      <div class="asker reveal" :class="{ shown: clicks >= 2 }">
-        <ProgrammerGlyph />
-        <div class="asker-label">consultant</div>
-        <span class="arrow">&rarr;</span>
-      </div>
     </div>
 
     <div class="questions">
-      <div class="head">What they ask</div>
+      <div class="head">Prompts</div>
       <div
-        v-for="(q, i) in asked"
+        v-for="q in asked"
         :key="q"
         class="q reveal"
-        :class="{ shown: clicks >= i + 2 }"
+        :class="{ shown: clicks >= 2 }"
       >{{ q }}</div>
     </div>
 
@@ -49,10 +44,10 @@ defineProps({ clicks: { type: Number, default: 0 } })
 
 const asked = [
   'Welke AI tools mag ik gebruiken?',
-  'Hoe geef ik mijn kilometerstand door aan XXimo?',
+  'Ik wil AZ-900 halen, wie heeft dat certificaat al?',
   'Wie kan me helpen met Kubernetes?',
-  'Mag ik mijn opleidingsbudget gebruiken voor een conferentie in Lissabon?',
-  'Hoeveel credits heeft Dries Peeters nog?',
+  'Wat zijn de regels rond wagens en laptops?',
+  'Hoeveel credits heeft Simon nog?',
 ]
 </script>
 
@@ -90,8 +85,8 @@ const asked = [
   background: #fefefe;
   padding: 0.75rem 1rem 0.85rem;
   margin-bottom: 0.45rem;
-  /* BambooHR's wordmark spells its own name, so that card has no name line —
-     a floor keeps the three the same height anyway. */
+  /* BambooHR's wordmark spells its own name, so that card's name line is an empty
+     spacer: every card keeps the same structure and the subs line up on their own. */
   min-height: 7.2rem;
   box-sizing: border-box;
 }
@@ -128,25 +123,6 @@ const asked = [
   color: #5f6066;
 }
 
-.asker {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  padding: 0.3rem 0 0 0.4rem;
-}
-.asker :deep(svg) { width: 2.8rem; height: auto; }
-.asker-label {
-  font-family: var(--font-heading);
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: #1c1c1c;
-}
-.asker .arrow {
-  font-size: 1.7rem;
-  line-height: 1;
-  color: var(--color-primary);
-}
 
 .q {
   border: 2px solid #a8a8a8;
