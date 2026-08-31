@@ -185,7 +185,7 @@ class Chunk:
     id: str
     text: str
     source: str
-    source_type: str  # "policy" | "cv" | "bamboo" | "project"
+    source_type: str  # policy | cv | project | assignment | credit | aggregate
     title: str
     location: str
     metadata: dict = field(default_factory=dict)
