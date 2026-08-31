@@ -26,6 +26,7 @@ items:
 
 ---
 layout: section
+background: rag.webp
 ---
 
 # RAG
@@ -78,19 +79,34 @@ h2:
 
 <WithRag :clicks="$clicks" />
 
+
+---
+layout: section
+background: embeddings.webp
+---
+
+# Embeddings
+
+::subtitle::
+
+Search PDFs... How?
+
+
+
 ---
 layout: default
+clicks: 5
+h2:
+  type: dot
+  color: secondary
+  position: end
 ---
 
-# Slide Title
+# Embeddings
 
-<v-clicks depth="2">
+## Just paste them all in?
 
-- First point
-- Second point
-- Third point
-
-</v-clicks>
+<ContextWindow :clicks="$clicks" />
 
 ---
 layout: break
