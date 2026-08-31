@@ -12,9 +12,27 @@ from rag.models import Chunk
 # search is supposed to fix.
 TOKEN = re.compile(r"[a-z0-9][a-z0-9._-]*")
 
+# Without these, BM25 is useless on this corpus. Function words score positively —
+# rank_bm25 floors negative idf to a small positive epsilon — and the long Dutch
+# documents accumulate enough of them to bury an exact rare term, so "Wie heeft DP-600?"
+# returns the arbeidsreglement. A frequency threshold does not find them either: the
+# corpus is half CVs and ledger rows, which contain no Dutch prose at all, so "wie" and
+# "heeft" sit below any sane document-frequency cutoff.
+STOPWORDS = frozenset("""
+ik jij hij zij wij het de een en van is dat die te in op voor met als aan er om ook bij
+maar dan heeft hebben heb zijn was worden wordt mijn je ze niet naar uit over al wil moet
+moeten kan kunnen mag mogen wie wat waar hoe wanneer waarom welke welk dit deze hun ons
+onze uw men zich meer nog wel geen door tot na onder boven tussen per
+the a an of to in for with is are was be and or my i you it this that
+""".split())
+
 
 def tokenize(text: str) -> list[str]:
     return TOKEN.findall(text.lower())
+
+
+def query_terms(query: str) -> list[str]:
+    return [t for t in tokenize(query) if t not in STOPWORDS]
 
 
 class DenseIndex:
@@ -39,7 +57,9 @@ class Bm25Index:
         self._bm25 = BM25Okapi([tokenize(c.text) for c in chunks])
 
     def search(self, query: str, k: int) -> list[tuple[Chunk, float]]:
-        tokens = tokenize(query)
+        tokens = query_terms(query)
+        if not tokens:
+            return []
         scores = self._bm25.get_scores(tokens)
         top = np.argsort(-scores)[:k]
         # Discarding on `score > 0` would be wrong. rank_bm25 computes

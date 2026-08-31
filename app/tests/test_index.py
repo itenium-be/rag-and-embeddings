@@ -1,6 +1,6 @@
 import numpy as np
 
-from rag.index import Bm25Index, DenseIndex, tokenize
+from rag.index import Bm25Index, DenseIndex, query_terms, tokenize
 from rag.models import Chunk
 
 
@@ -49,3 +49,20 @@ def test_dense_respects_k():
     chunks = [_chunk("a", "x"), _chunk("b", "y")]
     vectors = np.array([[1.0, 0.0], [0.0, 1.0]], dtype=np.float32)
     assert len(DenseIndex(chunks, vectors).search(np.array([1.0, 0.0], dtype=np.float32), k=1)) == 1
+
+
+def test_query_terms_drop_function_words_but_keep_codes():
+    assert query_terms("Wie heeft het AZ-900 certificaat?") == ["az-900", "certificaat"]
+
+
+def test_bm25_finds_an_exact_code_a_long_document_would_otherwise_bury():
+    chunks = [
+        _chunk("long", " ".join(["wie heeft het dat de een en van is"] * 60)),
+        _chunk("cv", "Certificaten: AZ-900 Azure Fundamentals"),
+    ]
+    hits = Bm25Index(chunks).search("Wie heeft het AZ-900 certificaat?", k=2)
+    assert hits[0][0].id == "cv"
+
+
+def test_bm25_returns_nothing_for_an_all_stopword_query():
+    assert Bm25Index([_chunk("a", "iets")]).search("wie is dat?", k=5) == []
