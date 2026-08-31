@@ -154,6 +154,21 @@ h2:
 <MeaningMap :clicks="$clicks" />
 
 ---
+layout: default
+clicks: 4
+h2:
+  type: dot
+  color: secondary
+  position: end
+---
+
+# Embeddings
+
+## Index cards
+
+<Chunking :clicks="$clicks" />
+
+---
 layout: break
 ---
 
