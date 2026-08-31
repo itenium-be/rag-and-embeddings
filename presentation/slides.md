@@ -66,10 +66,6 @@ h1:
 ---
 layout: default
 clicks: 5
-h1:
-  type: braces
-  color: primary
-  position: all
 ---
 
 # RAG
