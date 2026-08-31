@@ -22,7 +22,7 @@
       <div class="issues">
         <div class="issue" :class="{ shown: clicks >= 1 }">
           <div class="issue-title">Hallucinations</div>
-          <div class="issue-body">Is that answer correct?<br>who knows!</div>
+          <div class="issue-body">Is that answer correct?<br>Who knows!</div>
         </div>
         <div class="issue" :class="{ shown: clicks >= 2 }">
           <div class="issue-title">Training Cutoff</div>
