@@ -11,8 +11,9 @@
         <div class="fill reveal" :class="{ shown: clicks >= 1 }"></div>
         <div class="growth reveal" :class="{ shown: clicks >= 3 }"></div>
         <div class="window-edge"></div>
-        <div class="sliver reveal" :class="{ shown: clicks >= 4 }"></div>
+        <div class="sliver reveal" :class="{ shown: clicks >= 5 }"></div>
         <div class="needle reveal" :class="{ shown: clicks >= 2 }"></div>
+        <div class="link-needle reveal" :class="{ shown: clicks === 2 }"></div>
       </div>
 
       <div class="notes">
@@ -22,21 +23,31 @@
           <span class="elbow"></span>
           <span class="txt">40 CVs &middot; 20 Policy PDFs <span class="tokens">220k tokens</span></span>
         </div>
+
         <div class="note note-corpus reveal" :class="{ shown: clicks >= 3 }">
           <span class="elbow"></span>
-          <span class="txt">400 CVs &middot; 200 PDFs <span class="tokens">2.2M tokens</span></span>
+          <span class="txt">400 CVs &middot; 200 PDFs <span class="tokens">2.2M tokens</span><span
+            class="cost reveal" :class="{ shown: clicks >= 4 }"
+          >$11.00<span class="link-cost reveal" :class="{ shown: clicks === 4 }"></span></span>
+            <span class="brace reveal" :class="{ shown: clicks === 3 }">
+              <svg viewBox="0 0 100 8" preserveAspectRatio="none">
+                <path
+                  d="M0,0 Q0,3 2,3 L47,3 Q50,3 50,8 Q50,3 53,3 L98,3 Q100,3 100,0"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  vector-effect="non-scaling-stroke"
+                />
+              </svg>
+              <span class="brace-stem"></span>
+            </span></span>
         </div>
-        <div class="note note-rag reveal" :class="{ shown: clicks >= 4 }">
-          <span class="elbow"></span>
-          <span class="txt"><span class="kicker">with embeddings</span> 5 retrieved chunks <span class="tokens">500 tokens</span></span>
-        </div>
-      </div>
 
-      <div class="money reveal" :class="{ shown: clicks >= 5 }">
-        <span class="cost cost-rag">$0.0025</span>
-        <span class="cost cost-corpus">$1.10</span>
-        <span class="arc"></span>
-        <span class="arc-label">440&times; the cost</span>
+        <div class="note note-rag reveal" :class="{ shown: clicks >= 5 }">
+          <span class="elbow"></span>
+          <span class="txt"><span class="kicker">embeddings</span> 5 retrieved chunks <span class="tokens">500 tokens</span><span class="cost">$0.0025</span></span>
+        </div>
+
       </div>
 
     </div>
@@ -45,21 +56,22 @@
       <div class="card problem reveal" :class="{ shown: clicks >= 2 }">
         <div class="card-kicker">PROBLEM 1</div>
         <div class="card-title">LOST IN THE MIDDLE</div>
-        <div class="card-body">the answer is in here somewhere...</div>
+        <div class="card-body">The answer is in here somewhere...</div>
       </div>
       <div class="card problem reveal" :class="{ shown: clicks >= 3 }">
         <div class="card-kicker">PROBLEM 2</div>
-        <div class="card-title">SIZE</div>
+        <div class="card-title">IT DOESN'T FIT</div>
         <div class="card-body">What if 400 consultants, 200 PDFs?</div>
       </div>
-      <div class="card problem reveal" :class="{ shown: clicks >= 5 }">
+      <div class="card problem reveal" :class="{ shown: clicks >= 4 }">
         <div class="card-kicker">PROBLEM 3</div>
         <div class="card-title">MONEY</div>
         <div class="card-body">you pay for all of it, every question</div>
       </div>
-      <div class="card solution reveal" :class="{ shown: clicks >= 4 }">
+      <div class="card solution reveal" :class="{ shown: clicks >= 5 }">
         <div class="card-kicker">SOLUTION</div>
         <div class="card-title">EMBEDDINGS</div>
+        <div class="card-body">Split text up in chunks and turn each into a vector</div>
       </div>
     </div>
 
@@ -73,10 +85,13 @@ defineProps({ clicks: { type: Number, default: 0 } })
 <style scoped>
 /* Everything on this slide is positioned against one horizontal scale: the rail is
    the 1M-token context window, and --corpus is 220k of those tokens. Change the
-   token counts and only this one number moves. */
+   token counts and only this one number moves.
+   --notes-h is shared by the connectors, which all run from something on the bar
+   down to the card row and so need to know how far that is. */
 .context-window {
   --corpus: 22%;
   --needle: 12%;
+  --notes-h: 9rem;
   width: 100%;
   margin-top: 1rem;
 }
@@ -135,13 +150,17 @@ defineProps({ clicks: { type: Number, default: 0 } })
   left: var(--corpus);
   top: 0;
   bottom: 0;
-  right: -6rem;
+  /* Runs past the layout's padding and off the slide: the bar does not stop, the
+     screen does. */
+  right: -10rem;
   background: repeating-linear-gradient(
     -45deg,
     #343434 0 6px,
     #fefefe 6px 12px
   );
-  mask-image: linear-gradient(to right, #000 84%, transparent 100%);
+  /* Solid inside the window, dissolving over the run from the window's edge to
+     the screen's — the bar does not stop, it goes out of view. */
+  mask-image: linear-gradient(to right, #000 77%, transparent 97%);
 }
 
 /* The bar paints over the rail's right border on its way out, so the edge of the
@@ -166,8 +185,6 @@ defineProps({ clicks: { type: Number, default: 0 } })
   background: var(--color-primary);
 }
 
-/* Red, like the problem card it appears with — there is no room for a leader down
-   to that card without crossing both note rows. */
 .needle {
   position: absolute;
   left: var(--needle);
@@ -180,9 +197,19 @@ defineProps({ clicks: { type: Number, default: 0 } })
   box-shadow: 0 0 0 3px #fefefe;
 }
 
+/* Dot down to its card. Hung off the rail rather than the dot so it starts at the
+   bar's edge instead of behind the dot's white ring. */
+.link-needle {
+  position: absolute;
+  left: var(--needle);
+  top: 100%;
+  height: var(--notes-h);
+  border-left: 2px solid #b23c2c;
+}
+
 .notes {
   position: relative;
-  height: 6.8rem;
+  height: var(--notes-h);
   margin: 0 2px;
 }
 .note {
@@ -201,6 +228,7 @@ defineProps({ clicks: { type: Number, default: 0 } })
   border-bottom: 2px solid #a8a8a8;
 }
 .note .txt {
+  position: relative;
   font-size: 1.15rem;
   line-height: 1;
   padding-left: 0.6rem;
@@ -218,7 +246,7 @@ defineProps({ clicks: { type: Number, default: 0 } })
   color: #5f6066;
 }
 
-/* Charcoal by default; the retrieved-chunks badge takes the colour of its sliver. */
+/* Charcoal by default; the retrieved-chunks badges take the colour of their sliver. */
 .tokens {
   font-family: var(--font-code);
   font-size: 0.95rem;
@@ -229,63 +257,60 @@ defineProps({ clicks: { type: Number, default: 0 } })
   background: #343434;
   color: #fefefe;
 }
-
-.note-corpus { left: var(--corpus); }
-.note-corpus .elbow { height: 2.4rem; }
-
-.note-rag { left: 0; }
-.note-rag .elbow { height: 5.8rem; border-color: var(--color-primary); }
-.note-rag .tokens { background: var(--color-primary); }
-
-/* Both prices sit at the x of the bar they belong to, so the arc between them
-   spans the same distance the slide has been arguing about. */
-.money {
-  position: relative;
-  height: 4rem;
-  margin: 0 2px;
-}
 .cost {
-  position: absolute;
-  top: 0;
+  position: relative;
   font-family: var(--font-code);
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  padding: 0.2rem 0.65rem 0.25rem;
+  padding: 0.2rem 0.6rem 0.25rem;
+  margin-left: 0.35rem;
   border-radius: 0.35rem;
   border: 2px solid #343434;
   background: #fefefe;
   color: #343434;
 }
-.cost-rag {
-  left: 0;
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-}
-.cost-corpus {
-  left: var(--corpus);
-  transform: translateX(-50%);
+
+/* Money badge down to its card. Anchored inside the badge so it stays centred on
+   it however wide the row's text runs. */
+.link-cost {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 2px);
+  height: calc(var(--notes-h) - 4rem);
+  border-left: 2px solid #b23c2c;
 }
 
-/* Two legs and a curve, drawn with borders like the elbows, so it stays an open
-   line at the same 2px weight as every other connector in the deck. */
-.arc {
+.note-corpus { left: var(--corpus); }
+.note-corpus .elbow { height: 2.4rem; }
+
+.note-rag { left: 0; }
+.note-rag .elbow { height: 7.4rem; border-color: var(--color-primary); }
+.note-rag .tokens { background: var(--color-primary); }
+.note-rag .cost { border-color: var(--color-primary); color: var(--color-primary); }
+
+/* Hung off the row's text so it spans exactly that row; the stem carries its
+   centre spike down to the card. */
+.brace {
   position: absolute;
-  left: 3.15rem;
-  width: calc(var(--corpus) - 3.15rem);
-  top: 2.45rem;
-  height: 1rem;
-  box-sizing: border-box;
-  border: 2px solid var(--color-primary);
-  border-top: 0;
-  border-radius: 0 0 0.8rem 0.8rem;
+  left: 0.6rem;
+  /* Stops at the token badge: the price badge is still transparent on this click
+     but already holds its space, and the brace should not span empty room. */
+  right: 4.4rem;
+  top: calc(100% + 0.5rem);
+  color: #b23c2c;
 }
-.arc-label {
+.brace svg {
+  display: block;
+  width: 100%;
+  height: 0.8rem;
+  overflow: visible;
+}
+.brace-stem {
   position: absolute;
-  left: calc(var(--corpus) + 3.6rem);
-  top: 2.5rem;
-  font-size: 1.05rem;
-  white-space: nowrap;
-  color: var(--color-primary);
+  left: 50%;
+  top: 0.8rem;
+  height: calc(var(--notes-h) - 4rem);
+  border-left: 2px solid #b23c2c;
 }
 
 .verdicts {
