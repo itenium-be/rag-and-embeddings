@@ -1,8 +1,8 @@
 <template>
-  <div class="compound">
+  <div class="over-specific">
 
     <div class="query">
-      <span class="q-text">Wat zijn de regels rond wagens en laptops?</span>
+      <span class="q-text">Ik ben mijn laptoplader kwijt op de trein, wat nu?</span>
       <span class="q-fact">top 5 chunks per step</span>
     </div>
 
@@ -10,17 +10,17 @@
       <span class="h-step">step</span>
       <span class="h-bar">
         <span class="key laptop">laptop policy</span>
-        <span class="key car">car policy</span>
+        <span class="key avis">avis rental terms</span>
         <span class="key other">elsewhere</span>
       </span>
-      <span class="h-mark">wagens?</span>
+      <span class="h-mark">lader?</span>
     </div>
 
     <div v-for="row in steps" :key="row.step" class="row reveal" :class="{ shown: clicks >= row.at }">
       <span class="step">{{ row.step }}</span>
       <span class="bar">
         <span
-          v-for="(seg, kind) in { laptop: row.laptop, car: row.car, other: row.other }"
+          v-for="(seg, kind) in { laptop: row.laptop, avis: row.avis, other: row.other }"
           :key="kind"
           class="seg"
           :class="kind"
@@ -33,8 +33,8 @@
     </div>
 
     <div class="rewritten reveal" :class="{ shown: clicks >= 4 }">
-      <span class="label">one question in, two questions out</span>
-      <code>Wat is het bedrijfswagenbeleid (…)? Wat is het laptop- en IT-materiaalbeleid (…)?</code>
+      <span class="label">the question the corpus can answer</span>
+      <code>Verloren of gestolen bedrijfsmateriaal melden — procedure (…)</code>
     </div>
 
   </div>
@@ -44,23 +44,23 @@
 defineProps({ clicks: { type: Number, default: 0 } })
 
 // Measured against data/index-real: the five chunks each wizard step retrieves for the
-// question above, counted by which document they came from. `other` is the
-// arbeidsreglement at step 2 and the Avis rental conditions at step 3 — both plausible
-// neighbours of a car policy, neither an answer.
+// question above, counted by which document they came from. `avis` is the two Avis
+// documents together — they are one rental contract split in two files. `other` is the
+// car policy and the HR & fleet FAQ.
 //
-// Reranking scoring worse than naive is the point of the row, not a mistake: a
-// cross-encoder re-sorts what it is given, and it was given a question about two
-// things. Only splitting the question fixes a question that asks for two things.
+// The Avis block barely moves across the four rows, and that is the row to sit on: three
+// techniques agreeing on one wrong document. Avis really does have a lost-property
+// section, so every ranker is right about the words and wrong about the question.
 const steps = [
-  { step: 'Naive', at: 0, laptop: 4, car: 1, other: 0, verdict: 'no' },
-  { step: 'Hybrid search', at: 1, laptop: 2, car: 2, other: 1, verdict: 'no' },
-  { step: 'Reranking', at: 2, laptop: 4, car: 0, other: 1, verdict: 'no' },
-  { step: 'Query rewriting', at: 3, laptop: 1, car: 4, other: 0, verdict: 'ok' },
+  { step: 'Naive', at: 0, laptop: 0, avis: 3, other: 2, verdict: 'no' },
+  { step: 'Hybrid search', at: 1, laptop: 0, avis: 3, other: 2, verdict: 'no' },
+  { step: 'Reranking', at: 2, laptop: 0, avis: 4, other: 1, verdict: 'no' },
+  { step: 'Query rewriting', at: 3, laptop: 2, avis: 3, other: 0, verdict: 'ok' },
 ]
 </script>
 
 <style scoped>
-.compound {
+.over-specific {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -129,7 +129,7 @@ const steps = [
   border: 2px solid #a8a8a8;
 }
 .key.laptop::before { background: #b9d3ef; border-color: #5c8fc4; }
-.key.car::before { background: #ffd4bb; border-color: var(--color-primary); }
+.key.avis::before { background: #ffd4bb; border-color: var(--color-primary); }
 .key.other::before { background: #f4f4f4; border-style: dashed; }
 
 .row {
@@ -149,8 +149,8 @@ const steps = [
   color: #33343a;
 }
 
-/* One cell per chunk: the widths are the counts, so "laptops crowded out wagens" is
-   readable from the back of the room without doing arithmetic. */
+/* One cell per chunk: the widths are the counts, so "the laptop policy is not in there"
+   is readable from the back of the room without doing arithmetic. */
 .bar {
   flex: 1;
   display: flex;
@@ -168,7 +168,7 @@ const steps = [
   overflow: hidden;
 }
 .seg.laptop { background: #b9d3ef; border-color: #5c8fc4; color: #23405e; }
-.seg.car { background: #ffd4bb; border-color: var(--color-primary); color: #8a2f00; }
+.seg.avis { background: #ffd4bb; border-color: var(--color-primary); color: #8a2f00; }
 .seg.other {
   background: #f4f4f4;
   border-color: #a8a8a8;

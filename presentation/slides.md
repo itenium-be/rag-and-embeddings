@@ -340,24 +340,25 @@ clicks: 4
 
 # Use Case
 
-## One question, two topics
+## The question is the problem
 
-<CompoundQuestion :clicks="$clicks" />
+<OverSpecificQuestion :clicks="$clicks" />
 
 <!--
-Every step before rewriting is a way of re-ordering what the retriever was given, and
-the retriever was given one vector for two subjects. "Laptops" wins it: four of the five
-chunks are the same page of the laptop policy, out of a car policy that runs eight pages
-and 36 chunks.
+The word "lader" does not occur anywhere in the corpus. Not once. So there is nothing to
+retrieve, and every step before rewriting is a way of re-ordering what was retrieved
+anyway. What it retrieves is the Avis rental conditions - which genuinely do have a
+lost-property section, because that is what a rental contract is for.
 
-Reranking makes it worse, and that is the row to sit on. A cross-encoder re-reads the
-question against each candidate and re-sorts - but it re-sorts what fusion handed it,
-and nothing in the question tells it that "wagens" needs its own share of the five
-slots. It picks four laptop chunks and the Avis rental conditions, and the car policy
-disappears entirely.
+Sit on the fact that the orange block barely moves. Dense, BM25 and the cross-encoder
+disagree about almost everything else in this session, and here all three land on the
+same wrong document. They are right about the words. Nobody asked them about the
+question.
 
-Rewriting is the first step that changes what is asked rather than what comes back. Two
-questions, two searches, and the split is what fixes it - not a better ranker.
+Rewriting is the first step that changes what is asked rather than what comes back. Drop
+"lader" and "trein", ask what the corpus can answer - lost company equipment, how to
+report it - and the laptop policy shows up. The room should notice that the fix was to
+ask a vaguer question.
 -->
 
 ---

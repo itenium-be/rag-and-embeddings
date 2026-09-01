@@ -42,8 +42,8 @@ def _verdict(check: dict, result) -> bool | str:
     # CV in four to three, and a bare substring test cannot tell those two apart.
     #
     # `field: title` asks which document came back rather than which text mentions it.
-    # The laptop policy says "met uitzondering van de wagens en de Car Policy", and that
-    # cross-reference was being counted as a car-policy result.
+    # These policies cross-reference each other by name, so a substring test over the text
+    # counts a document that merely points at the answer as the answer.
     value = check["value"].lower()
     field = check.get("field", "any")
 

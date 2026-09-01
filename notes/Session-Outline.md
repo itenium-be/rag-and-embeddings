@@ -111,8 +111,10 @@ explanation at the level of *what it does*, not *how it is built*.
   was sitting at rank 12 under CVs that mention it once.
   → [Reranking](Reranking.md)
 - **Query rewriting** (question 4 ✅) — the question as typed is often a bad search query.
-  Have the model rewrite it first: broaden the over-specific ones
-  ([step-back prompting](Step-back-Prompting.md)), split the compound ones.
+  Have the model rewrite it first, broadening the over-specific ones
+  ([step-back prompting](Step-back-Prompting.md)). "Laptoplader" is in nobody's policy, so
+  all three retrievers land on the Avis rental terms, which do have a lost-property
+  section. Ask the vaguer question and the laptop policy comes back.
 
 Four of five now pass.
 

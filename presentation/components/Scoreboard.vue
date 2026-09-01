@@ -49,7 +49,7 @@ const MARK = { ok: '✓', part: '!', no: '✗' }
 // amount of fusion tuning reaches Yannick Manfroy, whose CV chunk buries the
 // certificate under tool lists and puts him at dense rank 106. The cross-encoder does.
 // Question 3 is not here: it needs a step-by-step table of its own, and lives in
-// CompoundQuestion.vue.
+// OverSpecificQuestion.vue.
 const questions = [
   { n: 1, text: 'Welke AI tools mag ik gebruiken?',
     stages: [{ at: 0, verdict: 'ok', detail: '', fix: 'Naive' }] },

@@ -46,7 +46,7 @@ const asked = [
   'Welke AI tools mag ik gebruiken?',
   'Ik wil AZ-900 halen, wie heeft dat certificaat al?',
   'Wie kan me helpen met Kubernetes?',
-  'Wat zijn de regels rond wagens en laptops?',
+  'Ik ben mijn laptoplader kwijt op de trein, wat nu?',
   'Hoeveel credits heeft Simon nog?',
 ]
 </script>

@@ -55,19 +55,25 @@
     values: [Igor Romy, Jorn Meeusen, Jos Van Loock, Yannick Manfroy]
   steps: {1: false, 2: partial, 3: true, 4: true, 5: true, 6: true}
 
-# A compound question: one topic crowds the other out until the query is split.
-- id: wagens-en-laptops
-  question: Wat zijn de regels rond wagens en laptops?
+# An over-specific question. `lader` occurs nowhere in the corpus, and `kwijt` on `trein`
+# lands dense, BM25 and the cross-encoder alike on the Avis rental conditions, which do
+# have a lost-property section. Three techniques agreeing on one wrong document; only
+# broadening the question to lost company equipment reaches Laptop policy p. 2, article 3.
+#
+# The reference deliberately stops where the policy does. It names no document, because
+# the generator cites `[3]` and never a title; it leaves out the damage-percentage table,
+# which lives in a p. 2 chunk that does not come back; and it states that a lost charger
+# is not covered, because the honest answer says so and the room should see that ticked.
+- id: laptoplader
+  question: Ik ben mijn laptoplader kwijt op de trein, wat nu?
   answer: |
-    Het zijn twee aparte policies. De Car Policy regelt de bedrijfswagen: itenium beslist welke
-    functies er een krijgen en welk merk en type, een bedrijfswagen is nooit een verworven recht,
-    de wagen mag ook privé gebruikt worden als voordeel alle aard via de loonadministratie, en de
-    werkgever kan de policy eenzijdig herzien. De Laptop & Assets Policy regelt de laptop en het
-    overige materiaal: het blijft eigendom van itenium en wordt in bruikleen gegeven, de werknemer
-    beschermt en onderhoudt het en geeft het niet aan derden, diefstal of schade moet binnen 24 uur
-    gemeld worden en kan bij nalatigheid aangerekend worden, en alles wordt teruggegeven bij einde
-    dienstverband.
-  check: {type: includes, value: "Car Policy", min_matches: 3, field: title}
+    De werknemer moet alle zorgvuldigheid in acht nemen om beschadiging, diefstal of verlies
+    te voorkomen. Schade of diefstal meld je zo spoedig mogelijk en uiterlijk binnen 24 uur bij
+    de werkgever, en je laat het gebruik onmiddellijk blokkeren via de interne contactpersoon.
+    Bij verwijtbare nalatigheid kan een schadebedrag aangerekend worden dat afhangt van hoe lang
+    de laptop in gebruik is. De policy gaat over de laptop zelf; een verloren lader wordt niet
+    apart geregeld.
+  check: {type: includes, value: "Laptop policy", min_matches: 2, field: title}
   steps: {1: false, 2: false, 3: false, 4: true, 5: true, 6: true}
 
 # The balance is a sum over a ledger. No chunk contains it, so no retrieval technique
