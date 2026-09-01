@@ -6,6 +6,7 @@
 <title>RAG &amp; Embeddings</title>
 <link rel="icon" href="/static/favicon.ico" sizes="any">
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@14.1.2/marked.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 <style>
   :root {
@@ -54,7 +55,30 @@
   }
   .blurb { color: var(--dim); font-size: .9rem; margin: 0 0 1rem; }
   .rewritten { border-left: 3px solid var(--accent); padding-left: .8rem; margin-bottom: 1rem; font-size: .9rem; }
-  .answer { white-space: pre-wrap; }
+  .answer > :first-child { margin-top: 0; }
+  .answer > :last-child { margin-bottom: 0; }
+  .answer h1, .answer h2, .answer h3 {
+    font-size: 1rem; font-weight: 600; color: var(--ink); text-transform: none;
+    letter-spacing: 0; margin: 1.2rem 0 .5rem;
+  }
+  .answer ul, .answer ol { padding-left: 1.3rem; margin: .6rem 0; }
+  .answer li { margin: .25rem 0; }
+  .answer code {
+    background: #0f1116; border: 1px solid var(--line); border-radius: 4px;
+    padding: .1rem .3rem; font-size: .88em;
+  }
+  .answer pre {
+    background: #0f1116; border: 1px solid var(--line); border-radius: 6px;
+    padding: .8rem; overflow-x: auto;
+  }
+  .answer pre code { background: none; border: 0; padding: 0; }
+  .answer blockquote {
+    margin: .8rem 0; padding-left: .8rem; border-left: 3px solid var(--line);
+    color: var(--dim);
+  }
+  .answer table { width: 100%; border-collapse: collapse; margin: .8rem 0; font-size: .9rem; }
+  .answer th, .answer td { text-align: left; padding: .35rem .6rem; border-bottom: 1px solid var(--line); }
+  .answer th { color: var(--dim); font-weight: 500; font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; }
   .cite { color: var(--accent); font-weight: 600; }
   .source { display: flex; gap: .6rem; align-items: baseline; padding: .2rem 0; }
   .source .loc { color: var(--dim); font-size: .85rem; }
@@ -515,11 +539,9 @@ function demo() {
     // step 1. Only the citations step resolves them, and until it does they are
     // deliberately left as plain text: an unresolvable [3] is the argument for the step.
     answerHtml() {
-      const escaped = this.result.answer.replace(
-        /[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]),
-      );
-      if (!this.result.citations.length) return escaped;
-      return escaped.replace(/\[(\d+)\]/g, '<span class="cite">[$1]</span>');
+      const html = marked.parse(this.result.answer);
+      if (!this.result.citations.length) return html;
+      return html.replace(/\[(\d+)\]/g, '<span class="cite">[$1]</span>');
     },
 
     // Numbered order, not order of first mention: this is a reference list, and the
