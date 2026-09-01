@@ -6,3 +6,5 @@ presentation/migration/
 
 .playwright-mcp
 midjourney-raw/
+
+.claude/worktrees/
