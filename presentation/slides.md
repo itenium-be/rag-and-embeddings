@@ -269,13 +269,14 @@ retrieval failure, not a model failure.
 
 ---
 layout: default
+clicks: 1
 ---
 
 # Embeddings
 
 ## Five questions
 
-<Scoreboard />
+<Scoreboard :clicks="$clicks" />
 
 ---
 layout: break

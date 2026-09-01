@@ -1,33 +1,47 @@
 <template>
   <div class="scoreboard">
 
-    <div class="head">
+    <div class="head reveal" :class="{ shown: clicks >= 1 }">
       <span class="head-label">naive RAG</span>
     </div>
 
-    <div v-for="(q, i) in asked" :key="q" class="row">
+    <div v-for="(q, i) in asked" :key="q.text" class="row">
       <span class="num">{{ i + 1 }}</span>
-      <span class="q">{{ q }}</span>
-      <span class="verdict"></span>
+      <span class="q">{{ q.text }}</span>
+      <span
+        class="verdict reveal"
+        :class="[q.ok ? 'ok' : 'no', { shown: clicks >= 1 }]"
+      >{{ q.ok ? '✓' : '✗' }}</span>
     </div>
 
   </div>
 </template>
 
 <script setup>
+defineProps({ clicks: { type: Number, default: 0 } })
+
 // Same five as the use case slide. Kept in step by hand — if one list changes, change
-// the other.
+// the other. `ok` is wizard step 1 measured against data/index-real, and it is the same
+// verdict `app/questions.yaml` holds and `tests/test_scoreboard.py` asserts.
 const asked = [
-  'Welke AI tools mag ik gebruiken?',
-  'Ik wil AZ-900 halen, wie heeft dat certificaat al?',
-  'Wie kan me helpen met Kubernetes?',
-  'Wat zijn de regels rond wagens en laptops?',
-  'Hoeveel credits heeft Simon nog?',
+  { text: 'Welke AI tools mag ik gebruiken?', ok: true },
+  { text: 'Ik wil AZ-900 halen, wie heeft dat certificaat al?', ok: false },
+  { text: 'Wie kan me helpen met Kubernetes?', ok: false },
+  { text: 'Wat zijn de regels rond wagens en laptops?', ok: false },
+  { text: 'Hoeveel credits heeft Simon nog?', ok: false },
 ]
 </script>
 
 <style scoped>
 .scoreboard { margin-top: 1.4rem; }
+
+/* Nothing is ever dimmed: unrevealed items are fully transparent and keep their
+   space, so the layout never shifts and nothing on screen looks washed out. */
+.reveal {
+  opacity: 0;
+  transition: opacity 350ms ease;
+}
+.reveal.shown { opacity: 1; }
 
 .head {
   display: flex;
@@ -67,13 +81,27 @@ const asked = [
   color: #33343a;
 }
 
-/* Left empty on purpose: the app fills this column in, one technique at a time. */
+/* One column only: the app carries the other five techniques, one at a time. */
 .verdict {
   flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 2rem;
   height: 2rem;
   margin: 0 3.5rem;
-  border: 2px dashed #a8a8a8;
+  border: 2px solid #a8a8a8;
   border-radius: 0.35rem;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+.verdict.ok {
+  border-color: #3f8a46;
+  background: #edf6ee;
+  color: #276b2e;
+}
+.verdict.no {
+  border-color: #b23c2c;
+  color: #b23c2c;
 }
 </style>
