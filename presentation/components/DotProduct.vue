@@ -81,16 +81,21 @@
       <div class="stitle">our corpus</div>
       <div class="scount">every pair of the 2194 chunks — 2 405 721 comparisons</div>
       <div class="bar">
-        <span class="band"></span>
-        <span class="mark" style="left: 81.15%"></span>
+        <span class="box"></span>
+        <span class="medline"></span>
+        <span class="mark"></span>
         <span class="pin"></span>
+        <span class="avglabel">avg 0.812</span>
         <span class="pinlabel">0.887</span>
       </div>
       <div class="ticks">
-        <span class="tick edge" style="left: 66.1%">0.661</span>
-        <span class="tick" style="left: 81.15%">avg 0.812</span>
+        <span class="tick min">0.661</span>
+        <span class="tick" style="left: 20.4%">p1 0.730</span>
+        <span class="tick" style="left: 41.1%">median 0.800</span>
+        <span class="tick" style="left: 79.3%">p99 0.929</span>
         <span class="tick max">0.999</span>
       </div>
+      <div class="boxnote">box = 1st to 99th percentile</div>
     </div>
 
 
@@ -145,7 +150,7 @@ const productCells = swapIn(products, 'product')
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.55rem 0;
+  padding: 0.45rem 0;
 }
 .crow.ops { padding: 0; }
 
@@ -259,7 +264,14 @@ const productCells = swapIn(products, 'product')
   color: #b23c2c;
 }
 
-.scale { padding-top: 2rem; }
+.scale { padding-top: 1.5rem; }
+.boxnote {
+  font-family: var(--font-code);
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  margin-top: 0.5rem;
+  color: #5f6066;
+}
 .stitle {
   font-family: var(--font-heading);
   font-size: 1.1rem;
@@ -280,36 +292,57 @@ const productCells = swapIn(products, 'product')
   border-radius: 0.4rem;
   background: #fefefe;
 }
-/* The corpus occupies the right third and nothing else: the empty left two thirds is
-   the whole point of the slide, so the band is drawn, not described. */
-.band {
+/* The axis runs from the corpus floor to its ceiling, so the bar ends are the whiskers.
+   Positions are computed from the printed values, not from the underlying floats, so the
+   marks land where the labels say they do. */
+.box {
   position: absolute;
-  left: 66.1%;
-  right: 0.1%;
+  left: 20.4%;
+  right: 20.7%;
   top: 0;
   bottom: 0;
   background: #edf6ee;
   border-left: 2px solid #3f8a46;
   border-right: 2px solid #3f8a46;
 }
+.medline {
+  position: absolute;
+  left: 41.1%;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #276b2e;
+}
 .mark {
   position: absolute;
+  left: 44.7%;
   top: 0;
   bottom: 0;
   width: 2px;
-  background: #3f8a46;
+  background: #343434;
 }
 .pin {
   position: absolute;
-  left: 88.7%;
+  left: 66.9%;
   top: -0.4rem;
   bottom: -0.4rem;
   width: 3px;
   background: var(--color-primary);
 }
+.avglabel {
+  position: absolute;
+  left: 44.7%;
+  bottom: 100%;
+  transform: translateX(-50%);
+  margin-bottom: 0.5rem;
+  font-family: var(--font-code);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  color: #343434;
+}
 .pinlabel {
   position: absolute;
-  left: 88.7%;
+  left: 66.9%;
   bottom: 100%;
   transform: translateX(-50%);
   margin-bottom: 0.5rem;
@@ -332,11 +365,15 @@ const productCells = swapIn(products, 'product')
   font-size: 0.8rem;
   color: #5f6066;
 }
-.tick.edge { color: #276b2e; }
 .tick.max {
   left: auto;
   right: 0;
   transform: none;
+}
+.tick.min {
+  left: 0;
+  transform: none;
+  color: #276b2e;
 }
 
 </style>

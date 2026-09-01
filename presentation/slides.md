@@ -195,14 +195,6 @@ The `.npy` file holds no index and no notion of similarity - it is a header and 
 of raw floats. The comparison is one line: `vectors @ query_vector`, then sort. 2194 dot
 products, sub-millisecond, no clever data structure anywhere.
 
-The band is the honest part. Nothing in this corpus is ever *unrelated* to anything
-else - the floor is 0.672, and that is a CV paragraph against car damage norms. So a
-score on its own means nothing; only the order does. Anyone who asks "what cut-off do
-we use" has to be told: there isn't one.
-
-0.999 is two BambooHR rows for the same person that differ by a single date. Remember
-that when question 5 fails.
-
 **Why this dot product is already the cosine.** The definition is
 `cos = (a·b) / (|a| x |b|)`. `|a|` is Pythagoras over all 384 numbers - the square root
 of the sum of their squares - so it says how far the point sits from the origin and
@@ -215,17 +207,27 @@ and nothing else. A score bounded to -1..1 for free. And no magnitude bias: un-n
 a vector that merely happens to be bigger outranks a smaller one whatever direction it
 points in.
 
-**Never near zero.** Nothing in this corpus is ever unrelated to anything else. The floor
-across all 2 405 721 pairs of our 2194 chunks is 0.661, and that pair is a paragraph from
-Michael Dumortier's CV against Nicolas Legrand's credit balance - two texts with nothing
-whatsoever in common. -1 is reachable in theory and never
-happens here: everything people wrote, about one company, in two related languages, lands
-in the same corner of the space.
+**Saying the bar out loud.** Cosine runs -1..1, so you expect a good match near 1 and an
+unrelated pair near 0. That is not what happens. Across all 2 405 721 pairs the *lowest*
+score in the company is 0.661 - a paragraph of Michael Dumortier's CV against Nicolas
+Legrand's credit balance, two texts with nothing in common - and the average pair is
+0.812. Our correct match scored 0.887. That is what right looks like: barely above the
+noise.
 
-So a score on its own means nothing and there is no cut-off to pick - only the order
-matters. That is the answer when someone asks what threshold to use: you don't, you take
-the top k. It is also why the numbers look so compressed later on: 0.844 against 0.831
-is a real gap, it just does not look like one.
+So the number means nothing on its own. 0.887 is not "89% relevant", and there is no
+threshold to set - you sort and take the top few, which is exactly what the code does.
+It is also why the scores look so compressed on the hybrid slide: 0.844 against 0.831 is
+a real gap, it just does not look like one.
+
+Why so compressed: everything here was written by people, at one company, about work, in
+two related languages. The model puts all human prose in one neighbourhood - differences
+are relative, never absolute.
+
+The axis starts at 0.661 because nothing is below it. The box is the middle 98%, so 0.73
+to 0.93 is where practically everything sits; the whiskers are single pairs out of 2.4
+million. And the top end, 0.999, is two BambooHR rows for the same person differing by a
+single date. When near-identical records score that high, retrieval cannot separate them
+- which is why "hoeveel credits heeft Simon nog" is doomed however good the search gets.
 -->
 
 ---
