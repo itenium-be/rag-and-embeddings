@@ -7,51 +7,51 @@
 
     <div class="row">
       <div class="slot reveal" :class="{ shown: clicks >= 1 }">
-        <div class="box">documents</div>
+        <div class="box">documents<em>pdf, xlsx, docx</em></div>
       </div>
-      <div class="slot reveal" :class="{ shown: clicks >= 1 }">
+      <div class="slot reveal" :class="{ shown: clicks >= 2 }">
         <span class="arrow">&rarr;</span>
-        <div class="box">chunks</div>
+        <div class="box">chunks<em>max 800, 100 overlap</em></div>
       </div>
-      <div class="slot reveal" :class="{ shown: clicks >= 1 }">
+      <div class="slot reveal" :class="{ shown: clicks >= 3 }">
         <span class="arrow">&rarr;</span>
         <div class="box model">embedding<br>model<em>e5-small · 384 dims</em></div>
       </div>
-      <div class="slot reveal" :class="{ shown: clicks >= 1 }">
+      <div class="slot reveal" :class="{ shown: clicks >= 4 }">
         <span class="arrow">&rarr;</span>
         <div class="box store">store<em>chunks.jsonl<br>embeddings.npy</em></div>
-        <span class="elbow reveal" :class="{ shown: clicks >= 3 }"><span class="head"></span></span>
+        <span class="elbow reveal" :class="{ shown: clicks >= 7 }"><span class="head"></span></span>
       </div>
       <div class="slot"></div>
     </div>
 
-    <div class="phase second reveal" :class="{ shown: clicks >= 2 }">
+    <div class="phase second reveal" :class="{ shown: clicks >= 5 }">
       Query <span class="when">every question</span>
     </div>
 
     <div class="row">
-      <div class="slot reveal" :class="{ shown: clicks >= 2 }">
+      <div class="slot reveal" :class="{ shown: clicks >= 5 }">
         <div class="box">question</div>
       </div>
-      <div class="slot reveal" :class="{ shown: clicks >= 2 }">
+      <div class="slot reveal" :class="{ shown: clicks >= 6 }">
         <span class="arrow">&rarr;</span>
         <div class="box model">embedding<br>model<em>e5-small · 384 dims</em></div>
       </div>
-      <div class="slot reveal" :class="{ shown: clicks >= 2 }">
+      <div class="slot reveal" :class="{ shown: clicks >= 7 }">
         <span class="arrow">&rarr;</span>
         <div class="box target">nearest<br>chunks</div>
       </div>
-      <div class="slot reveal" :class="{ shown: clicks >= 4 }">
+      <div class="slot reveal" :class="{ shown: clicks >= 8 }">
         <span class="arrow">&rarr;</span>
         <div class="box model">answer<br>model<em>claude-opus-5</em></div>
       </div>
-      <div class="slot reveal" :class="{ shown: clicks >= 4 }">
+      <div class="slot reveal" :class="{ shown: clicks >= 9 }">
         <span class="arrow">&rarr;</span>
         <div class="box answer">answer</div>
       </div>
     </div>
 
-    <div class="note reveal" :class="{ shown: clicks >= 5 }">
+    <div class="note reveal" :class="{ shown: clicks >= 10 }">
       Two different models: one turns text into coordinates, one writes the answer
     </div>
 
