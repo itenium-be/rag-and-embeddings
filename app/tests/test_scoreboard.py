@@ -10,6 +10,7 @@ import pytest
 import yaml
 
 from rag.app import build_engine
+from rag.critic import critique
 from rag.models import WIZARD_STEPS
 
 APP = Path(__file__).resolve().parents[1]
@@ -25,7 +26,19 @@ def engine():
     return build_engine(cache_dir=APP / "data" / "cache")
 
 
-def _verdict(check: dict, result) -> bool | str:
+def _verdict(spec: dict, result, llm) -> bool | str:
+    check = spec["check"]
+    if check["type"] == "refuses":
+        # The only check that reads the answer: a question the corpus cannot answer has
+        # no correct chunk, so there is nothing in `result.used` to assert on. The judge
+        # scores the answer against a reference that says so. Matching refusal phrasings
+        # with a regex does not survive a model that refuses in two languages.
+        #
+        # An empty verdict is a failure, not a pass: critique() swallows its own errors
+        # so the demo survives them, and a silent judge would otherwise score green.
+        checks = critique(llm, spec["question"], spec["answer"], result.answer)
+        return bool(checks) and all(c.ok for c in checks)
+
     if check["type"] == "everyone":
         # Who came back, not how often the string did. Five CVs contain "AZ-900"; one of
         # them is a Udemy exam-prep course, so a substring count scores a near-miss as a
@@ -59,7 +72,7 @@ def _verdict(check: dict, result) -> bool | str:
 def test_scoreboard(engine, spec, step):
     result = engine.run(spec["question"], step.config)
     expected = spec["steps"][step.number]
-    actual = _verdict(spec["check"], result)
+    actual = _verdict(spec, result, engine.llm)
     assert actual == expected, (
         f"{spec['id']} at step {step.number} ({step.name}): "
         f"expected {expected!r}, got {actual!r}"

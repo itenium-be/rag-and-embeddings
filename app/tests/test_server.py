@@ -47,9 +47,9 @@ def test_steps_endpoint_returns_the_six_wizard_steps(client):
     assert steps[1]["config"]["bm25"] is True
 
 
-def test_questions_endpoint_returns_the_four_questions(client):
+def test_questions_endpoint_returns_the_five_questions(client):
     questions = client.get("/api/questions").json()
-    assert len(questions) == 4
+    assert len(questions) == 5
     assert all("question" in q for q in questions)
 
 

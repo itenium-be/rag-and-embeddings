@@ -5,6 +5,9 @@
 #                       (title and text; `field: title` restricts it to the title, so a
 #                       document that merely cross-references another does not count)
 #   everyone          - every name in `values` is the title of some retrieved chunk
+#   refuses           - the answer critic ticks every item of the reference. The one
+#                       check that reads prose, because a question the corpus cannot
+#                       answer has no correct chunk to retrieve.
 #
 # `answer` is the reference answer: what a colleague who knows the corpus would say. The
 # answer critic derives its checklist from it, so it decides what the room sees ticked.
@@ -33,6 +36,31 @@
     Voor consultants komen deze tools in aanmerking: ChatGPT Go/Plus, ChatGPT Business,
     Cursor Teams/Enterprise, Copilot Business/Enterprise en Claude Go/Pro/Team.
   check: {type: includes, value: "AI Policy Itenium"}
+  steps: {1: true, 2: true, 3: true, 4: true, 5: true, 6: true}
+
+# The question with no answer anywhere, and the only one that shows the refusal in the
+# system prompt is real. `fietsleasing`, `fietslease`, `bedrijfsfiets`,
+# `mobiliteitsbudget`, `cafetariaplan` and `fietsvergoeding` all grep to zero over the
+# 2194 chunks; the `fiets` that is in there is a bike rack in the car policy and a hobby
+# on a CV.
+#
+# Flat green, because refusing is correct at every step: this is the control, not a
+# technique demo. It is also the harder half of that claim — the car policy is 36 chunks
+# of plausible neighbour and fills all five slots at every step. Step 4 is where it could
+# have broken: the rewriter adds "Mobiliteitsbudget alternatieven voor bedrijfswagen.
+# Cafetariaplan / flexibel verloningsplan opties. Woon-werkverkeer fietsvergoeding", and
+# the answer still declines to stretch the car policy over any of it.
+#
+# The reference says only that the corpus does not answer this, and nothing about what it
+# does contain. A second, true fact about the car policy scores FAIL at four of the six
+# steps: those answers name the bedrijfswagen without naming the policy, and the judge
+# does not count vague where the item is specific.
+- id: fietslease
+  question: Ik wil geen bedrijfswagen, kan ik in de plaats een fiets leasen?
+  answer: |
+    Daar staat niets over in de bronnen: over fietsleasing of een alternatief voor de
+    bedrijfswagen is niets terug te vinden.
+  check: {type: refuses}
   steps: {1: true, 2: true, 3: true, 4: true, 5: true, 6: true}
 
 # The one question that needs two techniques, which is why it demos both. `AZ-900`
