@@ -20,7 +20,12 @@
       <div class="slot reveal" :class="{ shown: clicks >= 4 }">
         <span class="arrow">&rarr;</span>
         <div class="box store">store<em>chunks.jsonl<br>embeddings.npy</em></div>
-        <span class="elbow reveal" :class="{ shown: clicks >= 7 }"><span class="head"></span></span>
+        <span class="elbow reveal" :class="{ shown: clicks >= 7 }">
+          <span class="leg down"></span>
+          <span class="bar"></span>
+          <span class="leg into"></span>
+          <span class="head"></span>
+        </span>
       </div>
       <div class="slot"></div>
     </div>
@@ -159,24 +164,49 @@ defineProps({ clicks: { type: Number, default: 0 } })
   color: #1c1c1c;
 }
 
-/* Down out of the store, one slot to the left, down again into the chunks it
-   answers with. Slots are equal-width flex children, so one slot is exactly the
-   pitch between two box centres; the inset is half a box, which puts the legs on
-   the box centres rather than the slot centres. */
+/* Down out of the store, one slot to the left, down again into the chunks it answers
+   with. Slots are equal-width flex children, so one slot is exactly the pitch between
+   two box centres; the inset is half a box, which puts the legs on the box centres
+   rather than the slot centres. The height spans the whole gap between the rows, so the
+   chevron lands on the target box instead of in the air above it. */
 .elbow {
   position: absolute;
   right: 4.28rem;
   top: 100%;
-  box-sizing: border-box;
   width: 100%;
-  height: 5.2rem;
-  border: 2px solid var(--color-primary);
-  border-top: 0;
+  height: 7.425rem;
+}
+.elbow .leg {
+  position: absolute;
+  width: 2px;
+  background: var(--color-primary);
+}
+/* The two legs are deliberately unequal: short out of the store, long into the box it
+   feeds, so the shape reads as a path rather than a bracket. */
+.elbow .leg.down {
+  right: 0;
+  margin-right: -1px;
+  top: 0;
+  height: 3.8rem;
+}
+.elbow .leg.into {
+  left: 0;
+  margin-left: -1px;
+  top: 3.8rem;
+  bottom: 0;
+}
+.elbow .bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 3.8rem;
+  height: 2px;
+  background: var(--color-primary);
 }
 /* Open chevron, never a filled head — same as every arrow in the deck. */
 .elbow .head {
   position: absolute;
-  left: -2px;
+  left: 0;
   top: 100%;
   width: 10px;
   height: 10px;
