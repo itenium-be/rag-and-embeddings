@@ -434,23 +434,43 @@ together and the averaging problem goes away.
 
 ---
 layout: default
+clicks: 2
+h1:
+  type: braces
+  color: primary
+  position: all
 ---
 
-# What we left out
+# More RAG?
 
-| Technique                  | What it does                                                     | Why not today      |
-| -------------------------- | ---------------------------------------------------------------- | ------------------ |
-| Hypothetical questions     | Index a generated *question* per chunk, then match question to question | An ingest-time variant of what we did |
-| Parent document retriever  | Retrieve the small chunk, hand the model the whole section around it   | Needs a failure we do not have |
-| Metadata filters           | Constrain by source, person or date *before* ranking               | Session 3 — it is really access control |
-| Router, agents, critic     | Let a model pick the retriever, then check its own answer          | Session 2 |
-| Entity resolution          | Decide that `Gaëtan Boey` and `Gaetan Boey` are one person         | Session 2 |
+## Eight things this session did not do
 
-<br>
+<MoreRag :clicks="$clicks" />
 
-That last one is not hypothetical: **36 CV names, 43 HR names, 29 that match.**
-Seven colleagues are unjoinable across two systems because of an accent, a capital
-and an apostrophe.
+<!--
+The four on the left are the same demo, unfinished. Question 5 - "how many consultants
+are free from October" - never gets answered by retrieval, because counting is not
+fetching; a `select count(*)` answers it and an embedding cannot. GraphRAG is the other
+route to it: build the entities and the edges first, then traverse instead of rank. The
+router is the picture from the retrieval slide with the fan actually wired up, plus the
+critic that reads the answer back against its context. And entity resolution is what
+makes any join possible at all - 36 CV names, 43 HR names, 29 that match, so seven
+colleagues are unjoinable across two systems because of an accent, a capital and an
+apostrophe.
+
+The four on the right are what a demo never forces you to solve. Access control is the
+one to sit on: everyone in this room is in this dataset, and salary and evaluation
+documents are in the same index as the CVs. Two people asking the same question must not
+get the same chunks - and today they do.
+
+Real vector stores earned their place by absence. 2194 chunks is a numpy dot product
+over the whole corpus in a few milliseconds; nothing here needed pgvector, HNSW or
+quantization, and saying so is more honest than pretending it did. Ingestion is where
+the time actually goes in a real project - tables, scans, incremental updates, and the
+re-embedding of everything the day you change the model. Cost and latency is the
+question every one of these techniques raises and none of them answers on its own: the
+cross-encoder that fixed step 3 also costs a second per query.
+-->
 
 ---
 layout: socials
