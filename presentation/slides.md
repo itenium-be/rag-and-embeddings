@@ -318,14 +318,51 @@ Consultants asking itenium anything
 
 ---
 layout: default
+clicks: 3
+---
+
+# Use Case
+
+## Four questions
+
+<Scoreboard :clicks="$clicks" :show="[1, 2]" />
+
+---
+layout: default
 clicks: 4
 ---
 
 # Use Case
 
-## Five questions
+## One question, two topics
 
-<Scoreboard :clicks="$clicks" />
+<CompoundQuestion :clicks="$clicks" />
+
+<!--
+Every step before rewriting is a way of re-ordering what the retriever was given, and
+the retriever was given one vector for two subjects. "Laptops" wins it: four of the five
+chunks are the same page of the laptop policy, out of a car policy that runs eight pages
+and 36 chunks.
+
+Reranking makes it worse, and that is the row to sit on. A cross-encoder re-reads the
+question against each candidate and re-sorts - but it re-sorts what fusion handed it,
+and nothing in the question tells it that "wagens" needs its own share of the five
+slots. It picks four laptop chunks and the Avis rental conditions, and the car policy
+disappears entirely.
+
+Rewriting is the first step that changes what is asked rather than what comes back. Two
+questions, two searches, and the split is what fixes it - not a better ranker.
+-->
+
+---
+layout: default
+---
+
+# Use Case
+
+## The one no retriever reaches
+
+<Scoreboard :show="[4]" />
 
 ---
 layout: quote
@@ -373,6 +410,14 @@ RRF throws the scores away - a cosine of 0.83 and a BM25 of 10.06 have no common
 ground - and votes on ranks alone. Jos Van Loock is 12th on one list and 9th on the
 other and ends up 4th; Thomas Janssens is BM25's number one and drops out of the top
 five, because the vectors never saw him. Agreement is the signal.
+
+And it stops at three of the four. Yannick Manfroy is BM25's third hit and the vectors'
+106th of 2194, so he scores on one list and lands 9th - no value of the RRF constant, no
+BM25 weight and no larger candidate pool moves him, all measured. His CV chunk buries
+one certificate line under IntelliJ, Postman, Scrum and Junit; isolated, that line ranks
+2nd. Fixing the chunking would fix step 1 too, which is the next slide's point, not
+this one's. The cross-encoder is what gets him: read the question and the chunk
+together and the averaging problem goes away.
 -->
 
 ---

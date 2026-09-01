@@ -2,44 +2,69 @@
   <div class="scoreboard">
 
     <div class="head">
-      <span class="head-label mark">naive RAG</span>
+      <span class="head-label mark"></span>
       <span class="head-label fix">fixed by</span>
     </div>
 
-    <div v-for="(q, i) in asked" :key="q.text" class="row">
-      <span class="num">{{ i + 1 }}</span>
+    <div v-for="q in asked" :key="q.text" class="row">
+      <span class="num">{{ q.n }}</span>
       <span class="q">{{ q.text }}</span>
-      <span class="detail reveal" :class="{ shown: clicks >= q.at }">{{ q.detail }}</span>
-      <span class="mark">
-        <span
-          class="verdict reveal"
-          :class="[q.ok ? 'ok' : 'no', { shown: clicks >= q.at }]"
-        >{{ q.ok ? '✓' : '✗' }}</span>
-      </span>
-      <span class="fix reveal" :class="{ shown: clicks >= q.at }">{{ q.fix }}</span>
+      <div class="stages">
+        <div
+          v-for="st in q.stages"
+          :key="st.fix"
+          class="stage reveal"
+          :class="{ shown: clicks >= st.at }"
+        >
+          <span class="detail">{{ st.detail }}</span>
+          <span class="mark">
+            <span class="verdict" :class="st.verdict">{{ MARK[st.verdict] }}</span>
+          </span>
+          <span class="fix">{{ st.fix }}</span>
+        </div>
+      </div>
     </div>
 
   </div>
 </template>
 
 <script setup>
-defineProps({ clicks: { type: Number, default: 0 } })
+import { computed } from 'vue'
 
-// Same five as the use case slide. Kept in step by hand — if one list changes, change
-// the other. `ok` and `detail` are wizard step 1 measured against data/index-real; the
-// verdicts are the ones `app/questions.yaml` holds and `tests/test_scoreboard.py`
-// asserts, and `fix` is the WIZARD_STEPS name of the step that first passes.
-const asked = [
-  { text: 'Welke AI tools mag ik gebruiken?', ok: true, at: 0, detail: '', fix: '' },
-  { text: 'Ik wil AZ-900 halen, wie heeft dat certificaat al?', ok: false, at: 1,
-    detail: '1 / 5 holders', fix: 'Hybrid search' },
-  { text: 'Wie kan me helpen met Kubernetes?', ok: false, at: 2,
-    detail: 'right answer at #3', fix: 'Reranking' },
-  { text: 'Wat zijn de regels rond wagens en laptops?', ok: false, at: 3,
-    detail: '1 / 5 wagens', fix: 'Query rewriting' },
-  { text: 'Hoeveel credits heeft Simon nog?', ok: false, at: 4,
-    detail: 'no chunk holds the sum', fix: 'Structure' },
+const props = defineProps({
+  clicks: { type: Number, default: 0 },
+  // Which questions this instance renders, by their number. The four are split over
+  // three slides and keep their numbering, so the number cannot come from the loop.
+  show: { type: Array, default: null },
+})
+
+const MARK = { ok: '✓', part: '!', no: '✗' }
+
+// Same four as the use case slide. Kept in step by hand — if one list changes, change
+// the other. Every verdict and count below is one `app/questions.yaml` holds and
+// `tests/test_scoreboard.py` asserts against data/index-real, and `fix` names the
+// WIZARD_STEPS step it belongs to.
+//
+// AZ-900 gets three stages because it is the one question two techniques share: no
+// amount of fusion tuning reaches Yannick Manfroy, whose CV chunk buries the
+// certificate under tool lists and puts him at dense rank 106. The cross-encoder does.
+// Question 3 is not here: it needs a step-by-step table of its own, and lives in
+// CompoundQuestion.vue.
+const questions = [
+  { n: 1, text: 'Welke AI tools mag ik gebruiken?',
+    stages: [{ at: 0, verdict: 'ok', detail: '', fix: 'Naive' }] },
+  { n: 2, text: 'Ik wil AZ-900 halen, wie heeft dat certificaat al?', stages: [
+    { at: 1, verdict: 'no', detail: '1 / 4 holders', fix: 'Naive' },
+    { at: 2, verdict: 'part', detail: '3 / 4 holders', fix: 'Hybrid search' },
+    { at: 3, verdict: 'ok', detail: '4 / 4 holders', fix: 'Reranking' },
+  ] },
+  { n: 4, text: 'Hoeveel credits heeft Simon nog?',
+    stages: [{ at: 0, verdict: 'no', detail: 'no chunk holds the sum', fix: 'Structure' }] },
 ]
+
+const asked = computed(() =>
+  props.show ? questions.filter(q => props.show.includes(q.n)) : questions
+)
 </script>
 
 <style scoped>
@@ -100,6 +125,18 @@ const asked = [
 
 /* The two right-hand columns are fixed width so the head labels sit over them. The head
    carries the row's border as transparent, which is what keeps the two in step. */
+.stages {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.stage {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1.1rem;
+}
 .mark { flex: 0 0 var(--mark-col); display: flex; justify-content: center; }
 .fix { flex: 0 0 var(--fix-col); text-align: center; }
 
@@ -143,6 +180,11 @@ const asked = [
   border-color: #3f8a46;
   background: #edf6ee;
   color: #276b2e;
+}
+.verdict.part {
+  border-color: #b8791f;
+  background: #fdf3e0;
+  color: #8a5a10;
 }
 .verdict.no {
   border-color: #b23c2c;
