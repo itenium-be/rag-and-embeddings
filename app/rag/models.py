@@ -34,6 +34,14 @@ class Citation:
 
 
 @dataclass(frozen=True)
+class Check:
+    """One fact from the reference answer, and whether the answer under review has it."""
+
+    ok: bool
+    label: str
+
+
+@dataclass(frozen=True)
 class Config:
     dense: bool = True
     bm25: bool = False

@@ -6,6 +6,9 @@
 #                       document that merely cross-references another does not count)
 #   everyone          - every name in `values` is the title of some retrieved chunk
 #
+# `answer` is the reference answer: what a colleague who knows the corpus would say. The
+# answer critic derives its checklist from it, so it decides what the room sees ticked.
+#
 # A step's verdict is `true`, `false`, or `partial` — measurably better than naive but
 # not yet right. Only `everyone` can return `partial`, and only it can tell "found three
 # of the four people" from "found all four", which is the whole AZ-900 story.
@@ -15,6 +18,14 @@
 
 - id: ai-tools
   question: Welke AI tools mag ik gebruiken?
+  answer: |
+    Voor consultants komen deze tools in aanmerking om toegestaan te worden: ChatGPT Go/Plus,
+    ChatGPT Business, Cursor Teams/Enterprise, Copilot Business/Enterprise en Claude Go/Pro/Team.
+    Op die lijst staan betekent niet dat itenium automatisch een licentie aankoopt of terugbetaalt:
+    dat wordt case per case beoordeeld. Gebruik binnen een klantproject vereist altijd aparte
+    project-use approval via je coach. De AI Policy blijft gelden: alle AI-uitvoer wordt door een
+    mens beoordeeld, en vertrouwelijke klantinformatie mag er alleen in met uitdrukkelijke
+    toestemming van de klant.
   check: {type: includes, value: "AI Policy Itenium"}
   steps: {1: true, 2: true, 3: true, 4: true, 5: true, 6: true}
 
@@ -29,6 +40,10 @@
 # the string rather than the people would score a near-miss as a hit.
 - id: az-900
   question: Ik wil AZ-900 halen, wie heeft dat certificaat al?
+  answer: |
+    Vier consultants hebben AZ-900 (Microsoft Azure Fundamentals) behaald: Igor Romy,
+    Jorn Meeusen, Jos Van Loock en Yannick Manfroy. Mirko Messina hoort er niet bij: op zijn
+    CV staat enkel een Udemy exam-prep cursus voor AZ-900, geen behaald certificaat.
   check:
     type: everyone
     values: [Igor Romy, Jorn Meeusen, Jos Van Loock, Yannick Manfroy]
@@ -37,6 +52,15 @@
 # A compound question: one topic crowds the other out until the query is split.
 - id: wagens-en-laptops
   question: Wat zijn de regels rond wagens en laptops?
+  answer: |
+    Het zijn twee aparte policies. De Car Policy regelt de bedrijfswagen: itenium beslist welke
+    functies er een krijgen en welk merk en type, een bedrijfswagen is nooit een verworven recht,
+    de wagen mag ook privé gebruikt worden als voordeel alle aard via de loonadministratie, en de
+    werkgever kan de policy eenzijdig herzien. De Laptop & Assets Policy regelt de laptop en het
+    overige materiaal: het blijft eigendom van itenium en wordt in bruikleen gegeven, de werknemer
+    beschermt en onderhoudt het en geeft het niet aan derden, diefstal of schade moet binnen 24 uur
+    gemeld worden en kan bij nalatigheid aangerekend worden, en alles wordt teruggegeven bij einde
+    dienstverband.
   check: {type: includes, value: "Car Policy", min_matches: 3, field: title}
   steps: {1: false, 2: false, 3: false, 4: true, 5: true, 6: true}
 
@@ -44,5 +68,7 @@
 # reaches it — only the summary computed at ingest time does.
 - id: creditsaldo
   question: Hoeveel credits heeft Simon nog?
+  answer: |
+    Simon Verhoeven heeft nog 1894 credits.
   check: {type: includes, value: "Huidig saldo"}
   steps: {1: false, 2: false, 3: false, 4: false, 5: false, 6: true}

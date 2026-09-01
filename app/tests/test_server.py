@@ -10,6 +10,11 @@ from web.server import create_app
 
 class StubLLM:
     def complete(self, system: str, prompt: str, **kwargs) -> str:
+        label = kwargs.get("label")
+        if label == "checklist":
+            return "1. Igor Romy genoemd\n2. Jos Van Loock genoemd"
+        if label == "critic":
+            return "1 PASS\n2 FAIL"
         return "An answer [1]."
 
 
@@ -129,3 +134,25 @@ def test_ask_logs_the_question_and_what_the_pipeline_did(client, caplog):
     assert "AZ-204" in text
     assert "step 1" in text
     assert "candidates" in text
+
+
+def test_a_prepared_question_is_judged_against_its_reference(client):
+    question = "Ik wil AZ-900 halen, wie heeft dat certificaat al?"
+    body = client.post("/api/ask", json={"question": question, "step": 1}).json()
+    assert body["critique"] == [
+        {"ok": True, "label": "Igor Romy genoemd"},
+        {"ok": False, "label": "Jos Van Loock genoemd"},
+    ]
+
+
+def test_a_question_nobody_prepared_has_no_reference_to_judge_against(client):
+    body = client.post("/api/ask", json={"question": "AZ-204", "step": 1}).json()
+    assert body["critique"] is None
+
+
+def test_the_critic_verdict_is_logged(client, caplog):
+    question = "Ik wil AZ-900 halen, wie heeft dat certificaat al?"
+    with caplog.at_level("INFO", logger="web.server"):
+        client.post("/api/ask", json={"question": question, "step": 1})
+    assert "critic" in caplog.text
+    assert "1/2" in caplog.text

@@ -16,6 +16,7 @@ sys.path.insert(0, str(APP))
 import yaml  # noqa: E402
 
 from rag.app import build_engine  # noqa: E402
+from rag.critic import critique  # noqa: E402
 from rag.models import WIZARD_STEPS  # noqa: E402
 
 
@@ -24,8 +25,10 @@ def main() -> None:
     specs = yaml.safe_load((APP / "questions.yaml").read_text(encoding="utf-8"))
     for spec in specs:
         for step in WIZARD_STEPS:
-            engine.run(spec["question"], step.config)
-            print(f"  {spec['id']} · step {step.number} {step.name}")
+            result = engine.run(spec["question"], step.config)
+            checks = critique(engine.llm, spec["question"], spec["answer"], result.answer)
+            verdict = f"{sum(c.ok for c in checks)}/{len(checks)}" if checks else "—"
+            print(f"  {spec['id']} · step {step.number} {step.name} · critic {verdict}")
     print(f"\nWarmed {len(specs) * len(WIZARD_STEPS)} entries.")
 
 
