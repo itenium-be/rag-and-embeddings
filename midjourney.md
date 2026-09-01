@@ -41,7 +41,7 @@ Full-bleed in the `section` layout: `object-fit: cover` at 16:10 under a 45% bla
 with the white title set top-left. So `--ar 16:10`, keep the top-left half quiet, and push the
 orange brighter than the cover — the overlay eats 45% of it.
 
-Both take `--sref <cover art URL> --sw 100` appended before submitting.
+All three take `--sref <cover art URL> --sw 100` appended before submitting.
 
 ## RAG
 
@@ -53,6 +53,16 @@ risograph print, a hand lifting one glowing page out of a wall of dark archive d
 
 ```
 risograph print, a vast field of scattered dots drifting into loose clusters across a dark plane, contour lines like a topographic map beneath them, fluorescent orange on charcoal, halftone grain, misregistration, empty dark space upper left, no text --ar 16:10 --style raw
+```
+
+## Use Case
+
+```
+risograph print, a wall of identical dark filing cabinets with one drawer pulled out and a single glowing orange thread running from it to a small figure standing below, halftone grain, misregistration, flat shapes, empty dark space upper left, no text --ar 16:10 --style raw
+```
+
+```
+risograph print, a crowd of small silhouetted office figures each with a bright orange question mark above them, converging on one large dark doorway, fluorescent orange on charcoal, coarse halftone, misregistered layers, empty dark space upper left, no text --ar 16:10 --style raw
 ```
 
 # Tech Lunch

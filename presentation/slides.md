@@ -306,6 +306,17 @@ or add a reranker, and "it feels better" is not an answer. A scored set of quest
 -->
 
 ---
+layout: section
+background: use-case.webp
+---
+
+# Use Case
+
+::subtitle::
+
+Consultants asking itenium anything
+
+---
 layout: default
 clicks: 4
 ---
