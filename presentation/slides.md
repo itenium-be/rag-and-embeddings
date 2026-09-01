@@ -138,6 +138,21 @@ h2:
 
 <RealVector :clicks="$clicks" />
 
+<!--
+384 is the network's width - 12 attention heads of 32 - not a decision about meaning.
+The vector is the mean-pooled last hidden state, so it comes out exactly as wide as the
+model is inside. e5 small/base/large = 384/768/1024; OpenAI's are 1536 and 3072. The
+cost is linear: 384 buys 3.37 MB for the corpus and 842k multiply-adds per question,
+1536 would be four times both for somewhat finer distinctions.
+
+No single dimension means "is about Kubernetes" - meaning is spread across all 384,
+which is why these numbers look like noise and only the dot product says anything.
+
+We picked this model for being multilingual, not for being small: a Dutch question has
+to reach an English CV. Foundations.md still says 1536 - that is OpenAI's number and
+wrong for this deck.
+-->
+
 ---
 layout: default
 clicks: 3
