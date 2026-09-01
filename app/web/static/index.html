@@ -100,10 +100,20 @@
     text-transform: uppercase; letter-spacing: .06em;
   }
 
-  .critic li { display: flex; gap: .5rem; align-items: baseline; padding: .2rem 0; }
+  .box.verdict { padding-bottom: .55rem; }
+  .box.verdict h2 { margin-bottom: .5rem; }
+  .critic { columns: 3; column-gap: 1.4rem; list-style: none; margin: 0; padding: 0; }
+  .critic li {
+    display: flex; gap: .4rem; align-items: baseline; padding: .12rem 0;
+    font-size: .88rem; break-inside: avoid;
+  }
   .critic li .v { flex: none; }
   .critic li.no { color: var(--dim); }
-  .critic .tally { float: right; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .tally {
+    float: right; border: 1px solid var(--line); border-radius: 999px;
+    padding: .05rem .55rem; font-size: .75rem; color: var(--dim);
+    font-variant-numeric: tabular-nums; letter-spacing: 0;
+  }
 
   .tabs { float: right; display: flex; gap: .3rem; }
   .tabs button {
@@ -223,6 +233,23 @@
           Searched for: <em x-text="result.rewritten"></em>
         </p>
 
+        <template x-if="result?.critique">
+          <div class="box verdict">
+            <h2>
+              Answer critic
+              <span class="tally" x-text="tally()"></span>
+            </h2>
+            <ul class="critic">
+              <template x-for="(c, i) in checks()" :key="i">
+                <li :class="c.ok ? '' : 'no'">
+                  <span class="v" x-text="c.ok ? '✅' : '❌'"></span>
+                  <span x-text="c.label"></span>
+                </li>
+              </template>
+            </ul>
+          </div>
+        </template>
+
         <div class="box">
           <h2>Answer</h2>
           <div class="answer" x-html="answerHtml()"></div>
@@ -238,23 +265,6 @@
             </div>
           </template>
         </div>
-
-        <template x-if="result.critique">
-          <div class="box">
-            <h2>
-              Answer critic
-              <span class="tally" x-text="passed().length + ' / ' + result.critique.length"></span>
-            </h2>
-            <ul class="critic">
-              <template x-for="(c, i) in result.critique" :key="i">
-                <li :class="c.ok ? '' : 'no'">
-                  <span class="v" x-text="c.ok ? '✅' : '❌'"></span>
-                  <span x-text="c.label"></span>
-                </li>
-              </template>
-            </ul>
-          </div>
-        </template>
 
         <div class="box">
         <h2>What came back</h2>
@@ -403,7 +413,13 @@ function demo() {
 
     rank(chunk, stage) { return chunk.ranks[stage] ?? '—'; },
 
-    passed() { return (this.result?.critique || []).filter(c => c.ok); },
+    // Read through the guards: Alpine re-runs these once more while it is tearing the
+    // box down, when the step it belonged to has no verdict.
+    checks() { return this.result?.critique || []; },
+
+    passed() { return this.checks().filter(c => c.ok); },
+
+    tally() { return `${this.passed().length} / ${this.checks().length}`; },
 
     // Three verdicts, not two: AZ-900 goes from useless to three of the four people at
     // hybrid search, and calling that a pass would hide the step that finishes the job.
