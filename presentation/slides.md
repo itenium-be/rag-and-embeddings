@@ -321,7 +321,7 @@ layout: default
 clicks: 4
 ---
 
-# Embeddings
+# Use Case
 
 ## Five questions
 
