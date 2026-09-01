@@ -83,16 +83,18 @@
       </div>
       <div class="bar">
         <span class="band"></span>
+        <span class="mark" style="left: 79.98%"></span>
+        <span class="mark" style="left: 81.15%"></span>
         <span class="pin"></span>
         <span class="pinlabel">0.887</span>
       </div>
       <div class="ticks">
-        <span class="tick" style="left: 0">0.0</span>
         <span class="tick edge" style="left: 66.1%">0.661</span>
-        <span class="tick" style="left: 100%">1.0</span>
+        <span class="tick" style="left: 79.98%">median 0.800</span>
+        <span class="tick max">0.999</span>
       </div>
-      <div class="scap">
-        min <b>0.661</b> · median <b>0.800</b> · max <b>0.999</b>
+      <div class="ticks">
+        <span class="tick" style="left: 81.15%">avg 0.812</span>
       </div>
     </div>
 
@@ -278,7 +280,8 @@ const productCells = swapIn(products, 'product')
   background: #fefefe;
 }
 /* The corpus occupies the right third and nothing else: the empty left two thirds is
-   the whole point of the slide, so the band is drawn, not described. */
+   the whole point of the slide, so the band is drawn, not described. Median and average
+   sit 1.2% apart, which is why their labels are on two rows rather than one. */
 .band {
   position: absolute;
   left: 66.1%;
@@ -288,6 +291,13 @@ const productCells = swapIn(products, 'product')
   background: #edf6ee;
   border-left: 2px solid #3f8a46;
   border-right: 2px solid #3f8a46;
+}
+.mark {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #3f8a46;
 }
 .pin {
   position: absolute;
@@ -312,7 +322,7 @@ const productCells = swapIn(products, 'product')
 
 .ticks {
   position: relative;
-  height: 1.1rem;
+  height: 1.15rem;
   margin-top: 0.35rem;
 }
 .tick {
@@ -323,15 +333,10 @@ const productCells = swapIn(products, 'product')
   color: #5f6066;
 }
 .tick.edge { color: #276b2e; }
+.tick.max {
+  left: auto;
+  right: 0;
+  transform: none;
+}
 
-.scap {
-  font-size: 0.95rem;
-  margin-top: 0.6rem;
-  color: #5f6066;
-}
-.scap b {
-  font-family: var(--font-code);
-  font-weight: 700;
-  color: #33343a;
-}
 </style>
