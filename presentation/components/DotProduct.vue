@@ -81,21 +81,33 @@
       <div class="stitle">our corpus</div>
       <div class="scount">every pair of the 2194 chunks — 2 405 721 comparisons</div>
       <div class="bar">
-        <span class="box"></span>
-        <span class="medline"></span>
-        <span class="mark"></span>
-        <span class="pin"></span>
-        <span class="avglabel">avg 0.812</span>
-        <span class="pinlabel">0.887</span>
+        <span class="band" :style="{ left: at(V.min), right: to(V.max) }"></span>
+        <span
+          class="box reveal" :class="{ shown: zoomed }"
+          :style="{ left: at(V.p1), right: to(V.p99) }"
+        ></span>
+        <span
+          class="medline reveal" :class="{ shown: zoomed }"
+          :style="{ left: at(V.median) }"
+        ></span>
+        <span class="mark" :style="{ left: at(V.avg) }"></span>
+        <span class="pin" :style="{ left: at(V.match) }"></span>
+        <span class="avglabel" :class="{ wide: zoomed }" :style="{ left: at(V.avg) }">avg 0.812</span>
+        <span class="pinlabel" :style="{ left: at(V.match) }">0.887</span>
       </div>
       <div class="ticks">
-        <span class="tick min">0.661</span>
-        <span class="tick" style="left: 20.4%">p1 0.730</span>
-        <span class="tick" style="left: 41.1%">median 0.800</span>
-        <span class="tick" style="left: 79.3%">p99 0.929</span>
-        <span class="tick max">0.999</span>
+        <span class="tick min" :style="{ left: at(V.min) }">0.661</span>
+        <span
+          class="tick reveal" :class="{ shown: zoomed }" :style="{ left: at(V.p1) }"
+        >p1 0.730</span>
+        <span
+          class="tick reveal" :class="{ shown: zoomed }" :style="{ left: at(V.median) }"
+        >median 0.800</span>
+        <span
+          class="tick reveal" :class="{ shown: zoomed }" :style="{ left: at(V.p99) }"
+        >p99 0.929</span>
+        <span class="tick max" :style="{ left: at(V.max) }">0.999</span>
       </div>
-      <div class="boxnote">box = 1st to 99th percentile</div>
     </div>
 
 
@@ -121,6 +133,22 @@ const products = ['0.0022', '0.0014', '0.0025', '0.0036', '0.0008', '0.0015']
 const SWAP_COL = 3
 const SWAP_AT = 5
 const swap = { question: '+0.032', chunk: '−0.035', product: '0.0011' }
+
+// The chart is drawn twice from one set of numbers: first against the whole 0..1 range
+// a cosine could occupy, then against the range the corpus actually occupies. Every mark
+// is positioned by `at()`, so changing the axis animates them into their new places.
+const V = {
+  min: 0.661, p1: 0.730, median: 0.800, avg: 0.812, match: 0.887, p99: 0.929, max: 0.999,
+}
+const ZOOM_AT = 7
+const zoomed = computed(() => props.clicks >= ZOOM_AT)
+const axis = computed(() => (zoomed.value ? [V.min, V.max] : [0, 1]))
+const pct = (v) => {
+  const [lo, hi] = axis.value
+  return ((v - lo) / (hi - lo)) * 100
+}
+const at = (v) => `${pct(v).toFixed(2)}%`
+const to = (v) => `${(100 - pct(v)).toFixed(2)}%`
 
 const isSwapped = (i) => i === SWAP_COL && props.clicks >= SWAP_AT
 const swapIn = (list, key) =>
@@ -150,7 +178,7 @@ const productCells = swapIn(products, 'product')
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.45rem 0;
+  padding: 0.38rem 0;
 }
 .crow.ops { padding: 0; }
 
@@ -235,7 +263,7 @@ const productCells = swapIn(products, 'product')
 /* Both footers occupy the same box, so swapping one for the other moves nothing. */
 .calcfoot {
   position: relative;
-  height: 3.2rem;
+  height: 2.9rem;
 }
 .foot {
   position: absolute;
@@ -264,14 +292,7 @@ const productCells = swapIn(products, 'product')
   color: #b23c2c;
 }
 
-.scale { padding-top: 1.5rem; }
-.boxnote {
-  font-family: var(--font-code);
-  font-size: 0.72rem;
-  letter-spacing: 0.03em;
-  margin-top: 0.5rem;
-  color: #5f6066;
-}
+.scale { padding-top: 1.2rem; }
 .stitle {
   font-family: var(--font-heading);
   font-size: 1.1rem;
@@ -282,7 +303,7 @@ const productCells = swapIn(products, 'product')
   font-family: var(--font-code);
   font-size: 0.82rem;
   letter-spacing: 0.04em;
-  margin: 0.2rem 0 0.6rem;
+  margin: 0.2rem 0 2.8rem;
   color: #5f6066;
 }
 .bar {
@@ -295,19 +316,28 @@ const productCells = swapIn(products, 'product')
 /* The axis runs from the corpus floor to its ceiling, so the bar ends are the whiskers.
    Positions are computed from the printed values, not from the underlying floats, so the
    marks land where the labels say they do. */
-.box {
+.band {
   position: absolute;
-  left: 20.4%;
-  right: 20.7%;
   top: 0;
   bottom: 0;
   background: #edf6ee;
+}
+.box {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: #d9edda;
   border-left: 2px solid #3f8a46;
   border-right: 2px solid #3f8a46;
 }
+
+/* Everything on the bar is placed by percentage, so rescaling the axis animates the
+   marks into their new positions instead of cutting to them. */
+.band, .box, .medline, .mark, .pin, .avglabel, .pinlabel, .tick {
+  transition: left 700ms ease, right 700ms ease, transform 700ms ease, opacity 350ms ease;
+}
 .medline {
   position: absolute;
-  left: 41.1%;
   top: 0;
   bottom: 0;
   width: 3px;
@@ -315,7 +345,6 @@ const productCells = swapIn(products, 'product')
 }
 .mark {
   position: absolute;
-  left: 44.7%;
   top: 0;
   bottom: 0;
   width: 2px;
@@ -323,7 +352,6 @@ const productCells = swapIn(products, 'product')
 }
 .pin {
   position: absolute;
-  left: 66.9%;
   top: -0.4rem;
   bottom: -0.4rem;
   width: 3px;
@@ -331,18 +359,17 @@ const productCells = swapIn(products, 'product')
 }
 .avglabel {
   position: absolute;
-  left: 44.7%;
   bottom: 100%;
-  transform: translateX(-50%);
+  transform: translateX(calc(-100% - 6px));
   margin-bottom: 0.5rem;
   font-family: var(--font-code);
   font-size: 0.85rem;
   white-space: nowrap;
-  color: #343434;
+  color: #5f6066;
 }
+.avglabel.wide { transform: translateX(-50%); }
 .pinlabel {
   position: absolute;
-  left: 66.9%;
   bottom: 100%;
   transform: translateX(-50%);
   margin-bottom: 0.5rem;
@@ -365,15 +392,7 @@ const productCells = swapIn(products, 'product')
   font-size: 0.8rem;
   color: #5f6066;
 }
-.tick.max {
-  left: auto;
-  right: 0;
-  transform: none;
-}
-.tick.min {
-  left: 0;
-  transform: none;
-  color: #276b2e;
-}
+.tick.min { transform: translateX(0); }
+.tick.max { transform: translateX(-100%); }
 
 </style>
