@@ -8,7 +8,10 @@
           <em>Welke AI tools mag ik gebruiken?</em>
         </span>
         <span class="cells">
-          <span v-for="(n, i) in question" :key="i" class="cell">{{ n }}</span>
+          <span
+            v-for="(n, i) in questionCells" :key="i"
+            class="cell" :class="{ swapped: isSwapped(i) }"
+          >{{ n }}</span>
           <span class="cell more">…</span>
         </span>
       </div>
@@ -27,7 +30,10 @@
           <em>Approved AI Tools itenium</em>
         </span>
         <span class="cells">
-          <span v-for="(n, i) in chunk" :key="i" class="cell">{{ n }}</span>
+          <span
+            v-for="(n, i) in chunkCells" :key="i"
+            class="cell" :class="{ swapped: isSwapped(i) }"
+          >{{ n }}</span>
           <span class="cell more">…</span>
         </span>
       </div>
@@ -43,22 +49,39 @@
       <div class="crow reveal" :class="{ shown: clicks >= 3 }">
         <span class="vlabel"></span>
         <span class="cells">
-          <span v-for="(n, i) in products" :key="i" class="cell product">{{ n }}</span>
-          <span class="cell more">…</span>
+          <span
+            v-for="(n, i) in productCells" :key="i"
+            class="cell product" :class="{ swapped: isSwapped(i) }"
+          >
+            <i
+              v-if="i > 0"
+              class="sign reveal" :class="{ shown: clicks >= 4, minus: isSwapped(i) }"
+            >{{ isSwapped(i) ? '−' : '+' }}</i>
+            {{ n }}
+          </span>
+          <span class="cell more">
+            <i class="sign reveal" :class="{ shown: clicks >= 4 }">+</i>
+            …
+          </span>
         </span>
       </div>
 
       <div class="calcfoot">
-        <span class="rest reveal" :class="{ shown: clicks >= 4 }">and 378 more</span>
-        <span class="res reveal" :class="{ shown: clicks >= 4 }">= 0.887</span>
+        <span class="foot reveal" :class="{ shown: clicks === 4 }">
+          <span class="rest">and 378 more</span>
+          <span class="res">= 0.887</span>
+        </span>
+        <span class="foot verdict reveal" :class="{ shown: clicks >= 5 }">
+          A big difference reduces the resulting score
+        </span>
       </div>
     </div>
 
-    <div class="cosline reveal" :class="{ shown: clicks >= 5 }">
+    <div class="cosline reveal" :class="{ shown: clicks >= 6 }">
       Every vector has length&nbsp;1, so the dot product <b>is</b> the cosine.
     </div>
 
-    <div class="scale reveal" :class="{ shown: clicks >= 6 }">
+    <div class="scale reveal" :class="{ shown: clicks >= 7 }">
       <div class="bar">
         <span class="band"></span>
         <span class="pin"></span>
@@ -74,7 +97,7 @@
       </div>
     </div>
 
-    <div class="punch reveal" :class="{ shown: clicks >= 7 }">
+    <div class="punch reveal" :class="{ shown: clicks >= 8 }">
       Never near zero. Nearness is a ranking, not a threshold.
     </div>
 
@@ -82,14 +105,32 @@
 </template>
 
 <script setup>
-defineProps({ clicks: { type: Number, default: 0 } })
+import { computed } from 'vue'
+
+const props = defineProps({ clicks: { type: Number, default: 0 } })
 
 // The first six of the 384 real dimensions and their real products: question 1 of the
 // scoreboard against the chunk naive retrieval actually returns for it. Three decimals
-// on the inputs is what makes the products on screen reproduce by hand.
+// on the inputs is what makes the products on screen reproduce by hand. The sign lives
+// in the operator between the boxes, so the boxes hold magnitudes only.
 const question = ['+0.082', '−0.038', '−0.064', '−0.043', '+0.027', '−0.057']
 const chunk = ['+0.026', '−0.038', '−0.039', '−0.084', '+0.028', '−0.026']
-const products = ['+0.0022', '+0.0014', '+0.0025', '+0.0036', '+0.0008', '+0.0015']
+const products = ['0.0022', '0.0014', '0.0025', '0.0036', '0.0008', '0.0015']
+
+// Dimension 288 of the same pair, swapped in over column 3: the only thing that changed
+// is that the two signs now disagree, and the term flips from adding to subtracting.
+// 43 of the 384 dimensions do this, together worth −0.0069.
+const SWAP_COL = 3
+const SWAP_AT = 5
+const swap = { question: '+0.032', chunk: '−0.035', product: '0.0011' }
+
+const isSwapped = (i) => i === SWAP_COL && props.clicks >= SWAP_AT
+const swapIn = (list, key) =>
+  computed(() => list.map((v, i) => (isSwapped(i) ? swap[key] : v)))
+
+const questionCells = swapIn(question, 'question')
+const chunkCells = swapIn(chunk, 'chunk')
+const productCells = swapIn(products, 'product')
 </script>
 
 <style scoped>
@@ -130,15 +171,17 @@ const products = ['+0.0022', '+0.0014', '+0.0025', '+0.0036', '+0.0008', '+0.001
   color: #5f6066;
 }
 
-/* One shared seven-column grid for values and operators alike, so every × and ↓ sits
-   on the centre line of the pair it belongs to. */
+/* One shared seven-column grid for values and operators alike, so every ×, ↓ and + sits
+   on the centre line of the pair it belongs to. The gap is wide enough to hold the sign
+   between two product boxes. */
 .cells {
   flex: 1;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.4rem;
+  gap: 1.1rem;
 }
 .cell {
+  position: relative;
   font-family: var(--font-code);
   font-size: 0.88rem;
   text-align: center;
@@ -159,6 +202,28 @@ const products = ['+0.0022', '+0.0014', '+0.0025', '+0.0036', '+0.0008', '+0.001
   background: transparent;
   color: #5f6066;
 }
+.cell.swapped {
+  border-color: #b23c2c;
+}
+.cell.product.swapped {
+  background: #f7ece9;
+  color: #b23c2c;
+}
+
+/* Centred on the gutter between two boxes: half the 1.1rem gap, plus the 2px border
+   that getBoundingClientRect counts as part of the box. */
+.sign {
+  position: absolute;
+  left: -0.675rem;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-code);
+  font-size: 0.95rem;
+  font-style: normal;
+  font-weight: 700;
+  color: #5f6066;
+}
+.sign.minus { color: #b23c2c; }
 
 .op {
   font-family: var(--font-code);
@@ -169,12 +234,19 @@ const products = ['+0.0022', '+0.0014', '+0.0025', '+0.0036', '+0.0008', '+0.001
 }
 .op.down { font-size: 1.05rem; }
 
+/* Both footers occupy the same box, so swapping one for the other moves nothing. */
 .calcfoot {
+  position: relative;
+  height: 2.4rem;
+}
+.foot {
+  position: absolute;
+  right: 0;
+  bottom: 0;
   display: flex;
   align-items: baseline;
-  justify-content: flex-end;
   gap: 1.2rem;
-  padding-top: 0.5rem;
+  white-space: nowrap;
 }
 .rest {
   font-family: var(--font-code);
@@ -187,6 +259,11 @@ const products = ['+0.0022', '+0.0014', '+0.0025', '+0.0036', '+0.0008', '+0.001
   font-size: 1.6rem;
   font-weight: 700;
   color: var(--color-primary);
+}
+.verdict {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #b23c2c;
 }
 
 .cosline {
