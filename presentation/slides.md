@@ -432,7 +432,7 @@ together and the averaging problem goes away.
 
 ---
 layout: default
-clicks: 4
+clicks: 5
 ---
 
 # Built, not explained
