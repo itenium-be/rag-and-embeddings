@@ -54,3 +54,33 @@ risograph print, a hand lifting one glowing page out of a wall of dark archive d
 ```
 risograph print, a vast field of scattered dots drifting into loose clusters across a dark plane, contour lines like a topographic map beneath them, fluorescent orange on charcoal, halftone grain, misregistration, empty dark space upper left, no text --ar 16:10 --style raw
 ```
+
+# Tech Lunch
+
+Left column of `two-col-image-text`: half width, full height, `object-fit: contain` on white —
+so portrait `--ar 2:3`, and like the cover art it needs its own charcoal ground or it dissolves
+into the slide. Resize to 800x1200 before committing:
+
+```bash
+bun run presentation/theme/scripts/resize-image.ts <download> tech-lunch --width 800 --height 1200
+```
+
+All four take `--sref <cover art URL> --sw 100` appended before submitting. Same locked
+risograph style as the rest of the deck — only the metaphor varies, since four different
+aesthetics would break the deck rather than give you a choice.
+
+```
+risograph print, a stack of sandwiches rendered as glowing layered strata with sparks and speech bubbles rising from between the layers, fluorescent orange on charcoal, halftone grain, misregistration, flat bold shapes, no text --ar 2:3 --style raw
+```
+
+```
+risograph print, a lunch table seen from directly above, plates and cups connected by bright wires into a small constellation, fluorescent orange on charcoal, coarse halftone, misregistered layers, no text --ar 2:3 --style raw
+```
+
+```
+risograph print, a paper lunch bag torn open with a burst of lightning bolts and geometric shapes erupting out of it, flat shapes, fluorescent orange on charcoal, screenprint texture, grain, no text --ar 2:3 --style raw
+```
+
+```
+risograph print, five silhouetted figures leaning over a table, one standing mid-gesture explaining, an orange glow between them, everything else charcoal, halftone grain, misregistration, no text --ar 2:3 --style raw
+```

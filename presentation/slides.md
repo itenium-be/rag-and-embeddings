@@ -18,6 +18,23 @@ aspectRatio: 16/10
 ![](./images/cover-art.webp)
 
 ---
+layout: two-col-image-text
+image: ./images/tech-lunch.webp
+h1:
+  type: braces
+  color: primary
+  position: all
+---
+
+# Tech Lunch
+
+## 17 september · 12u–13u
+
+::content::
+
+<TechLunch />
+
+---
 layout: agenda
 items:
   - RAG
