@@ -77,3 +77,8 @@ def test_map_query_returns_the_query_point_and_neighbours(client):
 
 def test_index_page_is_served(client):
     assert client.get("/").status_code == 200
+
+
+def test_static_assets_are_served(client):
+    assert client.get("/static/favicon.ico").status_code == 200
+    assert client.get("/static/logo.svg").status_code == 200

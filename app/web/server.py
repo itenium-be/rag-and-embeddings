@@ -7,6 +7,7 @@ import numpy as np
 import yaml
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from rag.llm import NoAnswerAvailable
@@ -65,6 +66,8 @@ def create_app(engine: Engine, chunks: list[Chunk], projection: np.ndarray) -> F
     @app.get("/")
     def index() -> FileResponse:
         return FileResponse(STATIC / "index.html")
+
+    app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
     @app.get("/api/steps")
     def steps() -> list[dict]:

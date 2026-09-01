@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RAG &amp; Embeddings</title>
+<link rel="icon" href="/static/favicon.ico" sizes="any">
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
 <style>
@@ -22,6 +23,7 @@
     padding: 1rem 1.5rem; border-bottom: 1px solid var(--line);
   }
   header h1 { font-size: 1.1rem; margin: 0; font-weight: 600; letter-spacing: .01em; }
+  header .logo { height: 1.6rem; display: block; }
   .steps { display: flex; gap: .5rem; margin-left: auto; }
   .steps button {
     background: var(--panel); color: var(--dim); border: 1px solid var(--line);
@@ -69,6 +71,7 @@
 <body x-data="demo()" x-init="init()">
 
 <header>
+  <img class="logo" src="/static/logo.svg" alt="itenium">
   <h1>RAG &amp; Embeddings</h1>
   <nav class="steps">
     <button @click="goto(0)" :class="step === 0 ? 'on' : ''">0 · Map</button>
