@@ -68,12 +68,27 @@ prefers `data/index-real` when it exists, so before the talk edit the script's
 chunks differ from what the cache was warmed against, and the live demo still hits the
 network.
 
+## Hot reload
+
+```bash
+WATCHFILES_FORCE_POLLING=1 uv run uvicorn --factory web.server:build --port 8000 --reload
+```
+
+Polling because an edit made from a Windows editor never reaches inotify under WSL.
+
+Editing `web/static/index.html` needs no reload at all — it is read from disk per
+request, so a refresh in the browser is enough.
+
+Serve without `--reload` for the talk: the first question after a restart waits ~30s
+while the embedder and the cross-encoder load again.
+
 ## Commands
 
-| Command                                                 | Does                                    |
-| ------------------------------------------------------- | --------------------------------------- |
-| `uv run pytest`                                         | Unit tests, no models, no network       |
-| `uv run pytest -m slow`                                 | The scoreboard, against the built index |
-| `uv run python scripts/build_index.py`                  | Ingest, embed, project                  |
-| `uv run python scripts/warm_cache.py`                   | Fill the answer cache                   |
-| `uv run uvicorn --factory web.server:build --port 8000` | Serve the app                           |
+| Command                                                          | Does                                    |
+| ---------------------------------------------------------------- | --------------------------------------- |
+| `uv run pytest`                                                  | Unit tests, no models, no network       |
+| `uv run pytest -m slow`                                          | The scoreboard, against the built index |
+| `uv run python scripts/build_index.py`                           | Ingest, embed, project                  |
+| `uv run python scripts/warm_cache.py`                            | Fill the answer cache                   |
+| `uv run uvicorn --factory web.server:build --port 8000`          | Serve the app                           |
+| `uv run uvicorn --factory web.server:build --port 8000 --reload` | Serve it with hot reload                |
