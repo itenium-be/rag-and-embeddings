@@ -248,8 +248,6 @@ clicks: 5
 
 # Retrieval
 
-## Every question
-
 <QueryPipeline :clicks="$clicks" />
 
 <!--
