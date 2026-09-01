@@ -336,6 +336,7 @@ clicks: 4
 ---
 layout: default
 clicks: 4
+hide: true
 ---
 
 # Use Case
@@ -363,6 +364,7 @@ ask a vaguer question.
 
 ---
 layout: default
+hide: true
 ---
 
 # Use Case
@@ -373,12 +375,14 @@ layout: default
 
 ---
 layout: quote
+hide: true
 ---
 
 # 🎬 Demo
 
 ---
 layout: break
+hide: true
 ---
 
 # ☕ Break
@@ -395,6 +399,7 @@ layout: break
 ---
 layout: default
 clicks: 4
+hide: true
 h2:
   type: semicolon
   color: muted
