@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import logging
+import threading
+import time
 from dataclasses import asdict
 from pathlib import Path
 
@@ -13,6 +16,10 @@ from pydantic import BaseModel
 from rag.llm import NoAnswerAvailable
 from rag.models import Chunk, Config, Result, WIZARD_STEPS
 from rag.pipeline import Engine
+from web.clusters import cluster_ellipses
+from web.trace import format_question, format_result, install_console_logging
+
+log = logging.getLogger(__name__)
 
 STATIC = Path(__file__).resolve().parent / "static"
 QUESTIONS_FILE = Path(__file__).resolve().parents[1] / "questions.yaml"
@@ -100,8 +107,10 @@ def create_app(engine: Engine, chunks: list[Chunk], projection: np.ndarray) -> F
                 "id": s["id"],
                 "question": s["question"],
                 "steps": s["steps"],
-                # The step this question exists to demonstrate: the first one it passes.
-                # Derived rather than declared, so it cannot drift from the scoreboard.
+                # The step this question exists to demonstrate: the first one whose
+                # verdict is better than a flat failure, so a question that a technique
+                # only partly fixes still opens on that technique. Derived rather than
+                # declared, so it cannot drift from the scoreboard.
                 "demo_at": next((n for n in sorted(s["steps"]) if s["steps"][n]), None),
             }
             for s in specs
@@ -109,14 +118,22 @@ def create_app(engine: Engine, chunks: list[Chunk], projection: np.ndarray) -> F
 
     @app.post("/api/ask")
     def ask(request: AskRequest) -> dict:
+        config = _config_for(request)
+        step = None if request.config is not None else request.step
+        log.info(format_question(request.question, step, config))
+        started = time.perf_counter()
         try:
-            result = engine.run(request.question, _config_for(request))
+            result = engine.run(request.question, config)
         except NoAnswerAvailable as exc:
+            log.info("   failed    %s", exc)
             return {"error": str(exc)}
         except Exception as exc:
             # A live LLM call can fail for reasons other than a missing credential
             # (e.g. no API credit) — the room must see a message, never a stack trace.
+            log.info("   failed    %s", exc)
             return {"error": str(exc)}
+        for line in format_result(result, config, time.perf_counter() - started):
+            log.info(line)
         # The rewritten query is what retrieval actually saw, so it is the vector the
         # room should be looking at.
         query_vector = engine.embed_query(result.rewritten or result.question)
@@ -135,6 +152,10 @@ def create_app(engine: Engine, chunks: list[Chunk], projection: np.ndarray) -> F
             }
             for chunk, point in zip(chunks, projection)
         ]
+
+    @app.get("/api/map/clusters")
+    def map_clusters() -> list[dict]:
+        return cluster_ellipses(chunks, projection)
 
     @app.post("/api/map/query")
     def map_query(request: MapQuery) -> dict:
@@ -156,11 +177,16 @@ def create_app(engine: Engine, chunks: list[Chunk], projection: np.ndarray) -> F
 
 
 def build() -> FastAPI:
-    from rag.app import APP_DIR, CACHE_DIR, build_engine, load_projection
+    install_console_logging()
+
+    from rag.app import APP_DIR, CACHE_DIR, build_engine, load_projection, warm_models
 
     index_dir = APP_DIR / "data" / "index-real"
     if not index_dir.is_dir():
         index_dir = APP_DIR / "data" / "index"
 
     chunks, projection = load_projection(index_dir)
-    return create_app(build_engine(index_dir, CACHE_DIR), chunks, projection)
+    engine = build_engine(index_dir, CACHE_DIR)
+    # On a thread, so the page is up while the weights load rather than after.
+    threading.Thread(target=warm_models, args=(engine,), daemon=True).start()
+    return create_app(engine, chunks, projection)
