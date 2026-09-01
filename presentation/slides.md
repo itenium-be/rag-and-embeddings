@@ -51,6 +51,7 @@ layout: agenda
 items:
   - RAG
   - Embeddings
+  - Use Case
 ---
 
 ---
