@@ -2,28 +2,63 @@
   <div class="dotp">
 
     <div class="calc">
-      <div v-for="v in vectors" :key="v.what" class="vrow reveal" :class="{ shown: clicks >= 1 }">
+      <div class="crow reveal" :class="{ shown: clicks >= 1 }">
         <span class="vlabel">
-          {{ v.what }}
-          <em>{{ v.text }}</em>
+          the question
+          <em>Welke AI tools mag ik gebruiken?</em>
         </span>
         <span class="cells">
-          <span v-for="(n, i) in v.dims" :key="i" class="cell">{{ n }}</span>
+          <span v-for="(n, i) in question" :key="i" class="cell">{{ n }}</span>
+          <span class="cell more">…</span>
+        </span>
+      </div>
+
+      <div class="crow ops reveal" :class="{ shown: clicks >= 2 }">
+        <span class="vlabel"></span>
+        <span class="cells">
+          <span v-for="i in 6" :key="i" class="op">×</span>
+          <span class="op"></span>
+        </span>
+      </div>
+
+      <div class="crow reveal" :class="{ shown: clicks >= 1 }">
+        <span class="vlabel">
+          the chunk
+          <em>Approved AI Tools itenium</em>
+        </span>
+        <span class="cells">
+          <span v-for="(n, i) in chunk" :key="i" class="cell">{{ n }}</span>
+          <span class="cell more">…</span>
+        </span>
+      </div>
+
+      <div class="crow ops reveal" :class="{ shown: clicks >= 3 }">
+        <span class="vlabel"></span>
+        <span class="cells">
+          <span v-for="i in 6" :key="i" class="op down">&darr;</span>
+          <span class="op"></span>
+        </span>
+      </div>
+
+      <div class="crow reveal" :class="{ shown: clicks >= 3 }">
+        <span class="vlabel"></span>
+        <span class="cells">
+          <span v-for="(n, i) in products" :key="i" class="cell product">{{ n }}</span>
           <span class="cell more">…</span>
         </span>
       </div>
 
       <div class="calcfoot">
-        <span class="op reveal" :class="{ shown: clicks >= 1 }">multiply pairwise, add all 384</span>
-        <span class="res reveal" :class="{ shown: clicks >= 2 }">= 0.887</span>
+        <span class="rest reveal" :class="{ shown: clicks >= 4 }">and 378 more</span>
+        <span class="res reveal" :class="{ shown: clicks >= 4 }">= 0.887</span>
       </div>
     </div>
 
-    <div class="cosline reveal" :class="{ shown: clicks >= 2 }">
+    <div class="cosline reveal" :class="{ shown: clicks >= 5 }">
       Every vector has length&nbsp;1, so the dot product <b>is</b> the cosine.
     </div>
 
-    <div class="scale reveal" :class="{ shown: clicks >= 3 }">
+    <div class="scale reveal" :class="{ shown: clicks >= 6 }">
       <div class="bar">
         <span class="band"></span>
         <span class="pin"></span>
@@ -39,7 +74,7 @@
       </div>
     </div>
 
-    <div class="punch reveal" :class="{ shown: clicks >= 4 }">
+    <div class="punch reveal" :class="{ shown: clicks >= 7 }">
       Never near zero. Nearness is a ranking, not a threshold.
     </div>
 
@@ -49,27 +84,19 @@
 <script setup>
 defineProps({ clicks: { type: Number, default: 0 } })
 
-// The first six of the 384 real dimensions, and the real cosine between them: question 1
-// of the scoreboard against the chunk naive retrieval actually returns for it.
-const vectors = [
-  {
-    what: 'the question',
-    text: 'Welke AI tools mag ik gebruiken?',
-    dims: ['+0.08', '−0.04', '−0.06', '−0.04', '+0.03', '−0.06'],
-  },
-  {
-    what: 'the chunk',
-    text: 'Approved AI Tools itenium',
-    dims: ['+0.03', '−0.04', '−0.04', '−0.08', '+0.03', '−0.03'],
-  },
-]
+// The first six of the 384 real dimensions and their real products: question 1 of the
+// scoreboard against the chunk naive retrieval actually returns for it. Three decimals
+// on the inputs is what makes the products on screen reproduce by hand.
+const question = ['+0.082', '−0.038', '−0.064', '−0.043', '+0.027', '−0.057']
+const chunk = ['+0.026', '−0.038', '−0.039', '−0.084', '+0.028', '−0.026']
+const products = ['+0.0022', '+0.0014', '+0.0025', '+0.0036', '+0.0008', '+0.0015']
 </script>
 
 <style scoped>
 .dotp {
   display: flex;
   flex-direction: column;
-  margin-top: 1rem;
+  margin-top: 0.7rem;
 }
 
 /* Nothing is ever dimmed: unrevealed items are fully transparent and keep their
@@ -80,12 +107,14 @@ const vectors = [
 }
 .reveal.shown { opacity: 1; }
 
-.vrow {
+.crow {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.8rem 0;
+  padding: 0.3rem 0;
 }
+.crow.ops { padding: 0; }
+
 .vlabel {
   flex: 0 0 15rem;
   display: flex;
@@ -101,6 +130,8 @@ const vectors = [
   color: #5f6066;
 }
 
+/* One shared seven-column grid for values and operators alike, so every × and ↓ sits
+   on the centre line of the pair it belongs to. */
 .cells {
   flex: 1;
   display: grid;
@@ -109,19 +140,34 @@ const vectors = [
 }
 .cell {
   font-family: var(--font-code);
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   text-align: center;
   border: 2px solid #a8a8a8;
   border-radius: 0.35rem;
   background: #fefefe;
-  padding: 0.3rem 0;
+  padding: 0.28rem 0;
   color: #33343a;
+}
+.cell.product {
+  font-size: 0.8rem;
+  border-color: var(--color-primary);
+  color: #8a2f00;
+  background: #ffe2d2;
 }
 .cell.more {
   border-color: transparent;
   background: transparent;
   color: #5f6066;
 }
+
+.op {
+  font-family: var(--font-code);
+  font-size: 0.95rem;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--color-primary);
+}
+.op.down { font-size: 1.05rem; }
 
 .calcfoot {
   display: flex;
@@ -130,7 +176,7 @@ const vectors = [
   gap: 1.2rem;
   padding-top: 0.5rem;
 }
-.op {
+.rest {
   font-family: var(--font-code);
   font-size: 0.85rem;
   letter-spacing: 0.03em;
@@ -145,11 +191,11 @@ const vectors = [
 
 .cosline {
   font-size: 1.05rem;
-  padding-top: 1.3rem;
+  padding-top: 1rem;
   color: #33343a;
 }
 
-.scale { padding-top: 2.2rem; }
+.scale { padding-top: 1.5rem; }
 .bar {
   position: relative;
   height: 2.1rem;
@@ -182,7 +228,7 @@ const vectors = [
   left: 88.7%;
   bottom: 100%;
   transform: translateX(-50%);
-  margin-bottom: 0.55rem;
+  margin-bottom: 0.5rem;
   font-family: var(--font-code);
   font-size: 0.9rem;
   font-weight: 700;
@@ -192,8 +238,8 @@ const vectors = [
 
 .ticks {
   position: relative;
-  height: 1.2rem;
-  margin-top: 0.4rem;
+  height: 1.1rem;
+  margin-top: 0.35rem;
 }
 .tick {
   position: absolute;
@@ -206,7 +252,7 @@ const vectors = [
 
 .scap {
   font-size: 0.9rem;
-  margin-top: 0.3rem;
+  margin-top: 0.25rem;
   color: #5f6066;
 }
 .scap b {
@@ -218,7 +264,7 @@ const vectors = [
 .punch {
   font-size: 1.2rem;
   font-weight: 700;
-  padding-top: 2.2rem;
+  padding-top: 1.4rem;
   color: #1c1c1c;
 }
 </style>

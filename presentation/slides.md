@@ -167,7 +167,7 @@ Dutch question above reaches an English CV because one multilingual model drew b
 
 ---
 layout: default
-clicks: 4
+clicks: 7
 h2:
   type: dot
   color: secondary
