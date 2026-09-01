@@ -11,11 +11,11 @@
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 2 }">
         <span class="arrow">&rarr;</span>
-        <div class="box">chunks<em>max 800<br>&middot; 100 overlap</em></div>
+        <div class="box">chunks<em>max 800<span class="sep">&middot;</span>100 overlap</em></div>
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 3 }">
         <span class="arrow">&rarr;</span>
-        <div class="box model">embedding<br>model<em>e5-small<br>&middot; 384 dims</em></div>
+        <div class="box model">embedding<br>model<em>e5-small<span class="sep">&middot;</span>384 dims</em></div>
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 4 }">
         <span class="arrow">&rarr;</span>
@@ -40,7 +40,7 @@
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 6 }">
         <span class="arrow">&rarr;</span>
-        <div class="box model">embedding<br>model<em>e5-small<br>&middot; 384 dims</em></div>
+        <div class="box model">embedding<br>model<em>e5-small<span class="sep">&middot;</span>384 dims</em></div>
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 7 }">
         <span class="arrow">&rarr;</span>
@@ -122,7 +122,7 @@ defineProps({ clicks: { type: Number, default: 0 } })
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 5.4rem;
+  height: 5.7rem;
   box-sizing: border-box;
   border: 2px solid #a8a8a8;
   border-radius: 0.5rem;
@@ -150,6 +150,12 @@ defineProps({ clicks: { type: Number, default: 0 } })
   letter-spacing: 0.01em;
   margin-top: 0.25rem;
   color: #5f6066;
+}
+/* The separator sits on a line of its own between the two values; a collapsed
+   line-height keeps that from costing a full extra line. */
+.box em .sep {
+  display: block;
+  line-height: 0.75;
 }
 .box.store em { color: #b9b9b9; }
 
