@@ -34,3 +34,23 @@ risograph print, silhouette of a human head in profile filled with a field of sc
 ```
 risograph poster, a library card catalog drawer bursting open into a swarm of floating dots, flat geometric shapes, fluorescent orange on charcoal, misregistered layers, grainy paper texture, no text --ar 2:3 --style raw
 ```
+
+# Section backgrounds
+
+Full-bleed in the `section` layout: `object-fit: cover` at 16:10 under a 45% black overlay,
+with the white title set top-left. So `--ar 16:10`, keep the top-left half quiet, and push the
+orange brighter than the cover — the overlay eats 45% of it.
+
+Both take `--sref <cover art URL> --sw 100` appended before submitting.
+
+## RAG
+
+```
+risograph print, a hand lifting one glowing page out of a wall of dark archive drawers, the page bright fluorescent orange, everything else charcoal, halftone grain, misregistration, flat shapes, empty dark space upper left, no text --ar 16:10 --style raw
+```
+
+## Embeddings
+
+```
+risograph print, a vast field of scattered dots drifting into loose clusters across a dark plane, contour lines like a topographic map beneath them, fluorescent orange on charcoal, halftone grain, misregistration, empty dark space upper left, no text --ar 16:10 --style raw
+```
