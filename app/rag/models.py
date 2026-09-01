@@ -75,7 +75,7 @@ WIZARD_STEPS: list[WizardStep] = [
     WizardStep(
         2,
         "Hybrid search",
-        "Run keyword search alongside meaning search and merge the two.",
+        "Run keyword search (az-900) alongside meaning search (vector) and merge the two.",
         Config(bm25=True),
     ),
     WizardStep(

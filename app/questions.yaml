@@ -4,8 +4,11 @@
 #   includes          - `value` appears in at least `min_matches` retrieved chunks
 #                       (title and text; `field: title` restricts it to the title, so a
 #                       document that merely cross-references another does not count)
-#   first             - `value` appears in the top-ranked chunk; an optional
-#                       `source_type` also constrains what kind of chunk it must be
+#   everyone          - every name in `values` is the title of some retrieved chunk
+#
+# A step's verdict is `true`, `false`, or `partial` — measurably better than naive but
+# not yet right. Only `everyone` can return `partial`, and only it can tell "found three
+# of the four people" from "found all four", which is the whole AZ-900 story.
 #
 # Every prediction below was measured against the real corpus, not assumed. Three of the
 # first draft's five questions did not survive that and were replaced.
@@ -15,19 +18,21 @@
   check: {type: includes, value: "AI Policy Itenium"}
   steps: {1: true, 2: true, 3: true, 4: true, 5: true, 6: true}
 
-# Dense retrieval finds one holder in five; the exact code is a keyword problem and BM25
-# lifts it to four. The conversational framing is what dilutes the embedding.
+# The one question that needs two techniques, which is why it demos both. `AZ-900`
+# carries no meaning, so dense lands on the hospitalisatie folder and finds one holder;
+# BM25 knows the spelling and fusion lifts it to three. Yannick Manfroy is the fourth,
+# and he is out of reach of any fusion tuning: his CV chunk buries the certificate line
+# under tool and framework lists, which puts him at dense rank 106 of 2194. Only the
+# cross-encoder, which reads the question and the chunk together, gets him back.
+#
+# Five CVs contain the string. Mirko Messina's is a Udemy exam-prep course, so counting
+# the string rather than the people would score a near-miss as a hit.
 - id: az-900
   question: Ik wil AZ-900 halen, wie heeft dat certificaat al?
-  check: {type: includes, value: "AZ-900", min_matches: 3}
-  steps: {1: false, 2: true, 3: true, 4: true, 5: true, 6: true}
-
-# Naive retrieval answers with an onboarding deck and a credit-ledger row that merely
-# contains the word. Reranking is what puts an actual CV on top.
-- id: kubernetes
-  question: Wie kan me helpen met Kubernetes?
-  check: {type: first, value: "Kubernetes", source_type: cv}
-  steps: {1: false, 2: false, 3: true, 4: true, 5: true, 6: true}
+  check:
+    type: everyone
+    values: [Igor Romy, Jorn Meeusen, Jos Van Loock, Yannick Manfroy]
+  steps: {1: false, 2: partial, 3: true, 4: true, 5: true, 6: true}
 
 # A compound question: one topic crowds the other out until the query is split.
 - id: wagens-en-laptops

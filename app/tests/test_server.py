@@ -42,17 +42,23 @@ def test_steps_endpoint_returns_the_six_wizard_steps(client):
     assert steps[1]["config"]["bm25"] is True
 
 
-def test_questions_endpoint_returns_the_five_questions(client):
+def test_questions_endpoint_returns_the_four_questions(client):
     questions = client.get("/api/questions").json()
-    assert len(questions) == 5
+    assert len(questions) == 4
     assert all("question" in q for q in questions)
 
 
-def test_questions_report_the_step_that_first_makes_them_pass(client):
+def test_questions_report_the_step_that_first_improves_them(client):
     by_id = {q["id"]: q for q in client.get("/api/questions").json()}
     assert by_id["ai-tools"]["demo_at"] == 1
-    assert by_id["kubernetes"]["demo_at"] == 3
     assert by_id["creditsaldo"]["demo_at"] == 6
+
+
+def test_a_question_demos_at_the_step_that_partly_fixes_it(client):
+    az = {q["id"]: q for q in client.get("/api/questions").json()}["az-900"]
+    assert az["demo_at"] == 2, "hybrid search is where AZ-900 stops being useless"
+    assert az["steps"]["2"] == "partial"
+    assert az["steps"]["3"] is True
 
 
 def test_ask_returns_answer_used_and_candidates(client):
@@ -108,3 +114,18 @@ def test_ask_returns_candidates_reranking_dropped(client):
 def test_static_assets_are_served(client):
     assert client.get("/static/favicon.ico").status_code == 200
     assert client.get("/static/logo.svg").status_code == 200
+
+
+def test_map_clusters_endpoint_names_the_blobs(client):
+    clusters = client.get("/api/map/clusters").json()
+    assert [c["label"] for c in clusters] == ["CVs"]
+    assert clusters[0]["count"] == 2
+
+
+def test_ask_logs_the_question_and_what_the_pipeline_did(client, caplog):
+    with caplog.at_level("INFO", logger="web.server"):
+        client.post("/api/ask", json={"question": "AZ-204", "step": 1})
+    text = caplog.text
+    assert "AZ-204" in text
+    assert "step 1" in text
+    assert "candidates" in text

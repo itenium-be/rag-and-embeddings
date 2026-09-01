@@ -3,7 +3,7 @@
 
     <div class="query">
       <span class="q-text">Ik wil AZ-900 halen, wie heeft dat certificaat al?</span>
-      <span class="q-fact">5 CVs mention AZ-900</span>
+      <span class="q-fact">4 CVs list AZ-900 as a certificate</span>
     </div>
 
     <div class="cols">
@@ -29,7 +29,7 @@
             <span v-if="r.from" class="from">{{ r.from }}</span>
           </div>
 
-          <div class="tally"><b>{{ col.hits }}</b> / 5</div>
+          <div class="tally"><b>{{ col.hits }}</b> / 4</div>
         </div>
       </div>
     </div>
@@ -47,6 +47,10 @@ defineProps({ clicks: { type: Number, default: 0 } })
 
 // Measured against data/index-real, not assumed: 2194 chunks, the query above, top 5
 // per retriever. `from` is the row's rank in the meaning and words lists.
+//
+// `hits` counts distinct people who actually hold AZ-900 - Igor Romy, Jorn Meeusen,
+// Jos Van Loock, Yannick Manfroy. Five CVs contain the string; Mirko Messina's is a
+// Udemy exam-prep course, which is the kind of near-miss the tally must not count.
 const columns = [
   {
     name: 'MEANING',
@@ -78,13 +82,13 @@ const columns = [
     name: 'FUSED',
     sub: 'RRF',
     at: 3,
-    hits: 4,
+    hits: 3,
     rows: [
       { label: 'Igor Romy', qual: 'cv', hit: true, from: 'm1 · w2' },
       { label: 'Credits itenium juni 2025', qual: 'policy', hit: false, from: 'm3 · w7' },
       { label: 'Jorn Meeusen', qual: 'cv', hit: true, from: 'm7 · w5' },
       { label: 'Jos Van Loock', qual: 'cv', hit: true, from: 'm12 · w9' },
-      { label: 'Mirko Messina', qual: 'cv', hit: true, from: 'm18 · w10' },
+      { label: 'Mirko Messina', qual: 'cv · Udemy exam prep, no cert', hit: false, from: 'm18 · w10' },
     ],
   },
 ]
