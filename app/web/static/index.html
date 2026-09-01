@@ -164,6 +164,13 @@
   .strip i { flex: 1; display: block; }
   #resultmap { height: 260px; margin-bottom: 1.5rem; }
 
+  .cost { display: flex; gap: 2.5rem; margin-bottom: 1.5rem; }
+  .cost span { display: flex; flex-direction: column; font-size: .78rem; color: var(--dim); }
+  .cost b {
+    font-size: 1.5rem; font-weight: 600; color: var(--ink);
+    font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+  }
+
   details.advanced { margin-top: 1.5rem; font-size: .85rem; color: var(--dim); }
   details.advanced label { margin-right: 1rem; }
   #map { height: 620px; }
@@ -176,6 +183,7 @@
   <img class="logo" src="/static/logo.svg" alt="itenium">
   <h1>RAG &amp; Embeddings</h1>
   <nav class="steps">
+    <button @click="goto(-1)" :class="step === -1 ? 'on' : ''">-1 · Context</button>
     <button @click="goto(0)" :class="step === 0 ? 'on' : ''">0 · Map</button>
     <template x-for="s in steps" :key="s.number">
       <button @click="goto(s.number)"
@@ -184,6 +192,95 @@
     </template>
   </nav>
 </header>
+
+<main x-show="step === -1">
+  <aside class="panel scoreboard">
+    <h2>Scoreboard</h2>
+    <ul>
+      <template x-for="q in questions" :key="q.id">
+        <li>
+          <span class="v" :class="verdictClass(q)" x-text="verdictMark(q)"></span>
+          <button @click="askContext(q.question)" x-text="q.question"></button>
+        </li>
+      </template>
+    </ul>
+  </aside>
+
+  <section class="panel">
+    <p class="blurb">
+      No retrieval at all: every chunk of the corpus goes into the prompt, and the model
+      reads all of it. The baseline every step after this one has to beat.
+    </p>
+    <div class="askrow">
+      <form class="ask" @submit.prevent="askContext(contextQuestion)">
+        <input x-model="contextQuestion" placeholder="Ask something…">
+        <button type="submit" x-text="contextLoading ? '…' : 'Find'"></button>
+      </form>
+      <form class="ask" @submit.prevent="askContext(contextPicked)">
+        <select x-model="contextPicked">
+          <option value="">Prepared questions…</option>
+          <template x-for="q in questions" :key="q.id">
+            <option :value="q.question" x-text="q.question"></option>
+          </template>
+        </select>
+        <button type="submit" :disabled="!contextPicked">Find</button>
+      </form>
+    </div>
+
+    <p class="error" x-show="contextError" x-text="contextError"></p>
+    <p class="blurb" x-show="contextLoading">
+      Sending the whole corpus. A cache miss takes about 15 seconds.
+    </p>
+
+    <template x-if="contextResult">
+      <div>
+        <h1 class="qtitle" x-text="contextResult.question"></h1>
+
+        <div class="cost">
+          <template x-for="cell in costCells()" :key="cell.label">
+            <span>
+              <b x-text="cell.value"></b>
+              <span x-text="cell.label"></span>
+            </span>
+          </template>
+        </div>
+
+        <template x-if="contextResult.critique">
+          <div class="box verdict">
+            <h2>
+              Answer critic
+              <span class="tally" x-text="contextTally()"></span>
+            </h2>
+            <ul class="critic">
+              <template x-for="(c, i) in contextResult.critique" :key="i">
+                <li :class="c.ok ? '' : 'no'">
+                  <span class="v" x-text="c.ok ? '✅' : '❌'"></span>
+                  <span x-text="c.label"></span>
+                </li>
+              </template>
+            </ul>
+          </div>
+        </template>
+
+        <div class="box">
+          <h2>Answer</h2>
+          <div class="answer" x-html="contextAnswerHtml()"></div>
+        </div>
+
+        <div class="box" x-show="contextResult.citations.length">
+          <h2>Sources</h2>
+          <template x-for="c in contextResult.citations" :key="c.marker">
+            <div class="source">
+              <span class="cite" x-text="'[' + c.marker + ']'"></span>
+              <span x-text="c.title"></span>
+              <span class="loc" x-text="sourceLoc(c)"></span>
+            </div>
+          </template>
+        </div>
+      </div>
+    </template>
+  </section>
+</main>
 
 <main x-show="step === 0" style="grid-template-columns: 1fr">
   <section class="panel">
@@ -413,6 +510,8 @@ function demo() {
     mapQuestion: '', mapPicked: '', groupsOn: false, clusters: [],
     results: {}, loading: false, filling: 0, error: '', overrides: {}, points: [],
     vecView: 'numbers',
+    contextQuestion: '', contextPicked: '', contextResult: null,
+    contextLoading: false, contextError: '',
 
     async init() {
       this.steps = await (await fetch('/api/steps')).json();
@@ -439,6 +538,53 @@ function demo() {
       // Plotly draws into a div the step swap leaves untouched, so it still holds the
       // previous step's map until it is told otherwise.
       if (this.result) this.$nextTick(() => this.plotResult());
+    },
+
+    async askContext(question) {
+      if (!question) return;
+      this.contextQuestion = question;
+      this.contextLoading = true;
+      this.contextError = '';
+      const response = await (await fetch('/api/context', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question }),
+      })).json();
+      this.contextLoading = false;
+      if (response.error) { this.contextError = response.error; this.contextResult = null; return; }
+      this.contextResult = response;
+    },
+
+    // What the whole corpus cost to ask once — the number step 5's five chunks is
+    // measured against. The token count is what the CLI billed, which carries its own
+    // system prompt, hence "as billed" rather than a claim about the corpus alone.
+    costCells() {
+      const { usage = {}, chunks } = this.contextResult;
+      const cells = [{ value: chunks, label: 'chunks in prompt' }];
+      if (usage.input_tokens) {
+        cells.push({
+          value: (usage.input_tokens / 1000).toFixed(0) + 'k',
+          label: usage.cache_read_tokens ? 'tokens in · cache read' : 'tokens in, as billed',
+        });
+      }
+      if (usage.cost_usd != null) {
+        cells.push({ value: '$' + usage.cost_usd.toFixed(2), label: 'per question' });
+      }
+      if (usage.duration_ms) {
+        cells.push({ value: (usage.duration_ms / 1000).toFixed(1) + 's', label: 'to answer' });
+      }
+      return cells;
+    },
+
+    contextTally() {
+      const checks = this.contextResult?.critique || [];
+      return `${checks.filter(c => c.ok).length} / ${checks.length}`;
+    },
+
+    contextAnswerHtml() {
+      const html = marked.parse(this.contextResult.answer);
+      if (!this.contextResult.citations.length) return html;
+      return html.replace(/\[(\d+)\]/g, '<span class="cite">[$1]</span>');
     },
 
     rank(chunk, stage) { return chunk.ranks[stage] ?? '—'; },
