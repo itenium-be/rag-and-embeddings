@@ -71,17 +71,16 @@
           <span class="rest">and 378 more</span>
           <span class="res">= 0.887</span>
         </span>
-        <span class="foot verdict reveal" :class="{ shown: clicks >= 5 }">
+        <span class="foot verdict reveal" :class="{ shown: clicks === 5 }">
           A big difference reduces the resulting score
         </span>
       </div>
     </div>
 
-    <div class="cosline reveal" :class="{ shown: clicks >= 6 }">
-      Every vector has length&nbsp;1, so the dot product <b>is</b> the cosine.
-    </div>
-
-    <div class="scale reveal" :class="{ shown: clicks >= 7 }">
+    <div class="scale reveal" :class="{ shown: clicks >= 6 }">
+      <div class="stitle">
+        every pair of the 2194 chunks in our corpus — 2 405 721 comparisons
+      </div>
       <div class="bar">
         <span class="band"></span>
         <span class="pin"></span>
@@ -89,17 +88,14 @@
       </div>
       <div class="ticks">
         <span class="tick" style="left: 0">0.0</span>
-        <span class="tick edge" style="left: 67.2%">0.672</span>
+        <span class="tick edge" style="left: 66.1%">0.661</span>
         <span class="tick" style="left: 100%">1.0</span>
       </div>
       <div class="scap">
-        all 404 549 chunk pairs — min <b>0.672</b> · median <b>0.800</b> · max <b>0.999</b>
+        min <b>0.661</b> · median <b>0.800</b> · max <b>0.999</b>
       </div>
     </div>
 
-    <div class="punch reveal" :class="{ shown: clicks >= 8 }">
-      Never near zero. Nearness is a ranking, not a threshold.
-    </div>
 
   </div>
 </template>
@@ -152,7 +148,7 @@ const productCells = swapIn(products, 'product')
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.3rem 0;
+  padding: 0.55rem 0;
 }
 .crow.ops { padding: 0; }
 
@@ -188,7 +184,7 @@ const productCells = swapIn(products, 'product')
   border: 2px solid #a8a8a8;
   border-radius: 0.35rem;
   background: #fefefe;
-  padding: 0.28rem 0;
+  padding: 0.42rem 0;
   color: #33343a;
 }
 .cell.product {
@@ -237,7 +233,7 @@ const productCells = swapIn(products, 'product')
 /* Both footers occupy the same box, so swapping one for the other moves nothing. */
 .calcfoot {
   position: relative;
-  height: 2.4rem;
+  height: 3.2rem;
 }
 .foot {
   position: absolute;
@@ -266,16 +262,17 @@ const productCells = swapIn(products, 'product')
   color: #b23c2c;
 }
 
-.cosline {
-  font-size: 1.05rem;
-  padding-top: 1rem;
-  color: #33343a;
+.scale { padding-top: 2rem; }
+.stitle {
+  font-family: var(--font-code);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+  color: #5f6066;
 }
-
-.scale { padding-top: 1.5rem; }
 .bar {
   position: relative;
-  height: 2.1rem;
+  height: 2.6rem;
   border: 2px solid #a8a8a8;
   border-radius: 0.4rem;
   background: #fefefe;
@@ -284,7 +281,7 @@ const productCells = swapIn(products, 'product')
    the whole point of the slide, so the band is drawn, not described. */
 .band {
   position: absolute;
-  left: 67.2%;
+  left: 66.1%;
   right: 0.1%;
   top: 0;
   bottom: 0;
@@ -328,20 +325,13 @@ const productCells = swapIn(products, 'product')
 .tick.edge { color: #276b2e; }
 
 .scap {
-  font-size: 0.9rem;
-  margin-top: 0.25rem;
+  font-size: 0.95rem;
+  margin-top: 0.6rem;
   color: #5f6066;
 }
 .scap b {
   font-family: var(--font-code);
   font-weight: 700;
   color: #33343a;
-}
-
-.punch {
-  font-size: 1.2rem;
-  font-weight: 700;
-  padding-top: 1.4rem;
-  color: #1c1c1c;
 }
 </style>

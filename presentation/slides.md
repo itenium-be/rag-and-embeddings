@@ -182,7 +182,7 @@ Dutch question above reaches an English CV because one multilingual model drew b
 
 ---
 layout: default
-clicks: 8
+clicks: 6
 h2:
   type: dot
   color: secondary
@@ -207,6 +207,30 @@ we use" has to be told: there isn't one.
 
 0.999 is two BambooHR rows for the same person that differ by a single date. Remember
 that when question 5 fails.
+
+**Why this dot product is already the cosine.** The definition is
+`cos = (a·b) / (|a| x |b|)`. `|a|` is Pythagoras over all 384 numbers - the square root
+of the sum of their squares - so it says how far the point sits from the origin and
+nothing about which way it points. The encoder normalises: every vector is divided by
+its own `|a|`, and all 2194 come out at exactly 1.0000. Both denominators are 1, the
+division does nothing, and the sum they just watched *is* the cosine.
+
+Three things that buys us. No normalising step at query time - `vectors @ query_vector`
+and nothing else. A score bounded to -1..1 for free. And no magnitude bias: un-normalised,
+a vector that merely happens to be bigger outranks a smaller one whatever direction it
+points in.
+
+**Never near zero.** Nothing in this corpus is ever unrelated to anything else. The floor
+across all 2 405 721 pairs of our 2194 chunks is 0.661, and that pair is a paragraph from
+Michael Dumortier's CV against Nicolas Legrand's credit balance - two texts with nothing
+whatsoever in common. -1 is reachable in theory and never
+happens here: everything people wrote, about one company, in two related languages, lands
+in the same corner of the space.
+
+So a score on its own means nothing and there is no cut-off to pick - only the order
+matters. That is the answer when someone asks what threshold to use: you don't, you take
+the top k. It is also why the numbers look so compressed later on: 0.844 against 0.831
+is a real gap, it just does not look like one.
 -->
 
 ---
