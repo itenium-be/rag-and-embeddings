@@ -22,6 +22,11 @@ MODEL = "claude-opus-5"
 MAX_TOKENS = 2048
 # A cold CLI call on a long prompt is slow; a demo cache miss must not look like a hang.
 CLI_TIMEOUT = 180
+# Step -1 sends the whole corpus. Measured at 16s, but one slow call costs the demo.
+LONG_CLI_TIMEOUT = 600
+# Linux caps a single argv string at MAX_ARG_STRLEN, 32 pages. Past it, execve fails with
+# E2BIG, so a prompt that big has to reach the CLI on stdin instead.
+ARGV_LIMIT = 100_000
 
 
 class NoAnswerAvailable(RuntimeError):
@@ -64,23 +69,59 @@ class ClaudeCliLLM:
         self._model = model
 
     def complete(self, system: str, prompt: str) -> str:
+        return self.complete_with_usage(system, prompt)[0]
+
+    def complete_with_usage(self, system: str, prompt: str) -> tuple[str, dict]:
+        piped = len(prompt.encode("utf-8")) > ARGV_LIMIT
+        argv = ["claude", "-p"]
+        if not piped:
+            argv.append(prompt)
+        argv += [
+            "--system-prompt", system,
+            # An agent with tools would go exploring; this is a single completion.
+            "--allowed-tools", "",
+            "--model", self._model,
+            # Carries the token counts and the price of the call, which is the whole
+            # argument step -1 exists to make.
+            "--output-format", "json",
+        ]
         completed = self._run(
-            [
-                "claude", "-p", prompt,
-                "--system-prompt", system,
-                # An agent with tools would go exploring; this is a single completion.
-                "--allowed-tools", "",
-                "--model", self._model,
-            ],
+            argv,
             capture_output=True,
             text=True,
-            timeout=CLI_TIMEOUT,
+            input=prompt if piped else None,
+            timeout=LONG_CLI_TIMEOUT if piped else CLI_TIMEOUT,
         )
         if completed.returncode != 0:
             raise RuntimeError(
                 f"claude exited {completed.returncode}: {completed.stderr.strip()[:300]}"
             )
-        return completed.stdout.strip()
+        return parse_cli_reply(completed.stdout)
+
+
+def parse_cli_reply(stdout: str) -> tuple[str, dict]:
+    """Split `--output-format json` into the answer and what the call cost.
+
+    Anything unparseable is the answer with no usage: the strip is commentary on the
+    demo, and losing an answer to a reporting field would be a bad trade.
+    """
+    try:
+        payload = json.loads(stdout)
+        usage = payload["usage"]
+    except (ValueError, KeyError, TypeError):
+        return stdout.strip(), {}
+
+    cache_read = usage.get("cache_read_input_tokens", 0)
+    cache_creation = usage.get("cache_creation_input_tokens", 0)
+    return payload.get("result", "").strip(), {
+        # The CLI bills cached input on its own lines; the size of the prompt is the sum.
+        "input_tokens": usage.get("input_tokens", 0) + cache_read + cache_creation,
+        "cache_read_tokens": cache_read,
+        "cache_creation_tokens": cache_creation,
+        "output_tokens": usage.get("output_tokens", 0),
+        "cost_usd": payload.get("total_cost_usd"),
+        "duration_ms": payload.get("duration_ms"),
+    }
 
 
 def cache_key(system: str, prompt: str) -> str:
@@ -97,15 +138,29 @@ class CachedLLM:
     def _path(self, system: str, prompt: str) -> Path:
         return self._dir / f"{cache_key(system, prompt)}.json"
 
-    def _read(self, system: str, prompt: str) -> str | None:
+    def _read(self, system: str, prompt: str) -> tuple[str, dict] | None:
         path = self._path(system, prompt)
         if not path.is_file():
             return None
-        return json.loads(path.read_text(encoding="utf-8"))["response"]
+        entry = json.loads(path.read_text(encoding="utf-8"))
+        # Entries warmed before the cost strip existed carry no usage.
+        return entry["response"], entry.get("usage", {})
+
+    def _call_inner(self, system: str, prompt: str) -> tuple[str, dict]:
+        if hasattr(self._inner, "complete_with_usage"):
+            return self._inner.complete_with_usage(system, prompt)
+        return self._inner.complete(system, prompt), {}
 
     def complete(
         self, system: str, prompt: str, *, fallback_to: str | None = None, label: str = "llm"
     ) -> str:
+        return self.complete_with_usage(
+            system, prompt, fallback_to=fallback_to, label=label
+        )[0]
+
+    def complete_with_usage(
+        self, system: str, prompt: str, *, fallback_to: str | None = None, label: str = "llm"
+    ) -> tuple[str, dict]:
         cached = self._read(system, prompt)
         if cached is not None:
             log.info("   %-9s %s · cache hit", "llm", label)
@@ -119,7 +174,7 @@ class CachedLLM:
 
         started = time.perf_counter()
         try:
-            response = self._inner.complete(system, prompt)
+            response, usage = self._call_inner(system, prompt)
         except Exception:
             # On stage, a stale answer beats a stack trace.
             if fallback_to is not None:
@@ -131,10 +186,12 @@ class CachedLLM:
         log.info("   %-9s %s · cache miss → %.1fs", "llm", label, time.perf_counter() - started)
 
         self._path(system, prompt).write_text(
-            json.dumps({"system": system, "prompt": prompt, "response": response}),
+            json.dumps(
+                {"system": system, "prompt": prompt, "response": response, "usage": usage}
+            ),
             encoding="utf-8",
         )
-        return response
+        return response, usage
 
 
 def build_llm(cache_dir: Path) -> CachedLLM:
