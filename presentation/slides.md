@@ -243,7 +243,7 @@ clicks: 9
 
 ---
 layout: default
-clicks: 5
+clicks: 7
 ---
 
 # Retrieval

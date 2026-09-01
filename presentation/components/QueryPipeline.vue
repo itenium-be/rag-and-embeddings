@@ -15,17 +15,19 @@
       <em>a system prompt selects one or more retrievers</em>
     </div>
 
-    <div class="fan reveal" :class="{ shown: clicks >= 3 }">
-      <span class="rule stem"></span>
-      <span class="rail"></span>
-      <span v-for="c in COLS" :key="c" class="rule leg" :style="{ left: c }"></span>
-      <span v-for="c in COLS" :key="'c' + c" class="chev" :style="{ left: c }"></span>
+    <div class="fan">
+      <span class="rule stem reveal" :class="{ shown: clicks >= 3 }"></span>
+      <span class="rail reveal" :class="{ shown: clicks >= 3 }"></span>
+      <template v-for="(c, i) in COLS" :key="c">
+        <span class="rule leg reveal" :class="{ shown: clicks >= 3 + i }" :style="{ left: c }"></span>
+        <span class="chev reveal" :class="{ shown: clicks >= 3 + i }" :style="{ left: c }"></span>
+      </template>
     </div>
 
     <div class="sources">
       <div
         v-for="s in sources" :key="s.name"
-        class="src reveal" :class="[s.kind, { shown: clicks >= 3 }]"
+        class="src reveal" :class="[s.kind, { shown: clicks >= s.at }]"
       >
         <span class="sname">{{ s.name }}</span>
         <em>{{ s.what }}</em>
@@ -33,19 +35,19 @@
       </div>
     </div>
 
-    <div class="fan up reveal" :class="{ shown: clicks >= 4 }">
+    <div class="fan up reveal" :class="{ shown: clicks >= 6 }">
       <span v-for="c in COLS" :key="c" class="rule leg" :style="{ left: c }"></span>
       <span class="rail"></span>
       <span class="rule stem"></span>
       <span class="chev mid"></span>
     </div>
 
-    <div class="prompt reveal" :class="{ shown: clicks >= 4 }">
+    <div class="prompt reveal" :class="{ shown: clicks >= 6 }">
       stuffed into the prompt
       <em>the model only ever sees what retrieval handed it</em>
     </div>
 
-    <div class="tail reveal" :class="{ shown: clicks >= 5 }">
+    <div class="tail reveal" :class="{ shown: clicks >= 7 }">
       <span class="answer-model">
         answer model
         <span class="rule into"></span>
@@ -69,9 +71,9 @@ const COLS = [EDGE, '50%', `calc(100% - ${EDGE})`]
 // Only the first is wired up in the demo. The other two are what retrieval turns into
 // once the answer is not sitting in a passage anywhere — named, not built.
 const sources = [
-  { name: 'vector search', what: 'nearest chunks by cosine', tag: 'this demo', kind: 'ours' },
-  { name: 'API call', what: 'deterministic code that calls BambooHR', tag: 'not today', kind: 'off' },
-  { name: 'SQL query', what: 'prepared queries — or text-to-SQL', tag: 'not today', kind: 'off' },
+  { name: 'vector search', what: 'nearest chunks by cosine', tag: 'this demo', kind: 'ours', at: 3 },
+  { name: 'API call', what: 'deterministic code that calls BambooHR', tag: 'not today', kind: 'off', at: 4 },
+  { name: 'SQL query', what: 'prepared queries — or text-to-SQL', tag: 'not today', kind: 'off', at: 5 },
 ]
 </script>
 
