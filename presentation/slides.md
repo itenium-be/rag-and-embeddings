@@ -125,7 +125,7 @@ h2:
 
 ---
 layout: default
-clicks: 4
+clicks: 5
 h2:
   type: dot
   color: secondary

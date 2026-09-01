@@ -27,29 +27,26 @@
     </div>
 
     <div class="right">
-      <div
-        v-for="group in groups"
-        :key="group.head"
-        class="group reveal"
-        :class="{ shown: clicks >= group.at }"
-      >
-        <div class="ghead">
-          <span>{{ group.head }}</span>
-          <span>{{ group.sub }}</span>
+      <template v-for="(group, gi) in groups" :key="group.head">
+        <div class="group reveal" :class="{ shown: clicks >= group.at }">
+          <div class="ghead">
+            <span>{{ group.head }}</span>
+            <span>{{ group.sub }}</span>
+          </div>
+          <div v-for="r in group.rows" :key="r.key" class="trow">
+            <span class="tkey">
+              {{ r.key }}
+              <b v-if="r.ours" class="ours">{{ r.ours }}</b>
+            </span>
+            <span class="tval">{{ r.val }}</span>
+          </div>
         </div>
-        <div v-for="r in group.rows" :key="r.key" class="trow">
-          <span class="tkey">
-            {{ r.key }}
-            <b v-if="r.ours" class="ours">{{ r.ours }}</b>
-          </span>
-          <span class="tval">{{ r.val }}</span>
-        </div>
-      </div>
 
-      <div class="note reveal" :class="{ shown: clicks >= 4 }">
-        Claude cut on <code>¶</code> &rarr; <code>line</code> &rarr; <code>sentence</code>
-        &rarr; <code>word</code>. Chunk at max 800 chars.
-      </div>
+        <div v-if="gi === 0" class="note reveal" :class="{ shown: clicks >= 4 }">
+          Claude cut on <code>¶</code> &rarr; <code>line</code> &rarr; <code>sentence</code>
+          &rarr; <code>word</code>. Chunk at max 800 chars.
+        </div>
+      </template>
     </div>
 
     <span class="link reveal" :class="{ shown: clicks >= 4 }">
@@ -74,7 +71,7 @@ const groups = [
     ],
   },
   {
-    head: 'THEN ADD', sub: 'BUYS YOU', at: 4,
+    head: 'THEN ADD', sub: 'BUYS YOU', at: 5,
     rows: [
       { key: 'overlap', ours: '100', val: 'the cut sentence survives, stored twice' },
       { key: 'parent link', val: 'retrieve the card, send the section around it' },
@@ -185,7 +182,6 @@ const cardStyle = (n) => ({
 }
 
 .group { margin-bottom: 0.9rem; }
-.group + .group { margin-top: 2.4rem; }
 
 .ghead {
   display: flex;
@@ -234,7 +230,7 @@ const cardStyle = (n) => ({
 }
 
 .note {
-  margin-top: 2.4rem;
+  margin: 1.1rem 0 1.7rem;
   font-size: 0.88rem;
   color: #5f6066;
 }
