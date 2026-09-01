@@ -100,6 +100,11 @@
     text-transform: uppercase; letter-spacing: .06em;
   }
 
+  .critic li { display: flex; gap: .5rem; align-items: baseline; padding: .2rem 0; }
+  .critic li .v { flex: none; }
+  .critic li.no { color: var(--dim); }
+  .critic .tally { float: right; color: var(--dim); font-variant-numeric: tabular-nums; }
+
   .tabs { float: right; display: flex; gap: .3rem; }
   .tabs button {
     background: none; border: 1px solid var(--line); border-radius: 5px; color: var(--dim);
@@ -233,6 +238,23 @@
             </div>
           </template>
         </div>
+
+        <template x-if="result.critique">
+          <div class="box">
+            <h2>
+              Answer critic
+              <span class="tally" x-text="passed().length + ' / ' + result.critique.length"></span>
+            </h2>
+            <ul class="critic">
+              <template x-for="(c, i) in result.critique" :key="i">
+                <li :class="c.ok ? '' : 'no'">
+                  <span class="v" x-text="c.ok ? '✅' : '❌'"></span>
+                  <span x-text="c.label"></span>
+                </li>
+              </template>
+            </ul>
+          </div>
+        </template>
 
         <div class="box">
         <h2>What came back</h2>
@@ -380,6 +402,8 @@ function demo() {
     },
 
     rank(chunk, stage) { return chunk.ranks[stage] ?? '—'; },
+
+    passed() { return (this.result?.critique || []).filter(c => c.ok); },
 
     // Three verdicts, not two: AZ-900 goes from useless to three of the four people at
     // hybrid search, and calling that a pass would hide the step that finishes the job.

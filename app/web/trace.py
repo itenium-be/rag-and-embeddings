@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 import os
 
-from rag.models import Config, Result, WIZARD_STEPS
+from rag.models import Check, Config, Result, WIZARD_STEPS
 
 TECHNIQUES = ("dense", "bm25", "rerank", "rewrite", "citations", "aggregates")
 INDENT = "   "
@@ -62,6 +62,14 @@ def format_result(result: Result, config: Config, elapsed: float) -> list[str]:
         _stage("answer", f"{len(result.used)} chunks · {citations} · {elapsed:.1f}s"),
         *_used(result),
     ]
+
+
+def format_critique(checks: list[Check]) -> str:
+    if not checks:
+        return _stage("critic", "no verdict")
+    passed = sum(1 for c in checks if c.ok)
+    verdicts = " · ".join(("\u2714 " if c.ok else "\u2718 ") + c.label for c in checks)
+    return _stage("critic", f"{passed}/{len(checks)} · {verdicts}")
 
 
 def install_console_logging() -> None:

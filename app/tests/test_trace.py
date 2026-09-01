@@ -1,7 +1,7 @@
 import logging
 
-from rag.models import Chunk, Config, Citation, Result, Scored
-from web.trace import format_question, format_result, install_console_logging
+from rag.models import Check, Chunk, Config, Citation, Result, Scored
+from web.trace import format_critique, format_question, format_result, install_console_logging
 
 
 def _scored(cid: str, title: str, ranks: dict) -> Scored:
@@ -90,3 +90,13 @@ def test_console_logging_puts_the_pipeline_loggers_on_stderr_once():
     logger = logging.getLogger("rag")
     assert len(logger.handlers) == 1
     assert logging.getLogger("rag.llm").isEnabledFor(logging.INFO)
+
+
+def test_the_critic_line_counts_the_checks_that_passed():
+    line = format_critique([Check(True, "Igor Romy"), Check(False, "Jos Van Loock"), Check(True, "Vier houders")])
+    assert "2/3" in line
+    assert "Jos Van Loock" in line
+
+
+def test_a_critic_that_said_nothing_says_so():
+    assert "no verdict" in format_critique([])

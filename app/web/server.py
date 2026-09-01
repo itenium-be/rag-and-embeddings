@@ -13,11 +13,12 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
+from rag.critic import critique
 from rag.llm import NoAnswerAvailable
 from rag.models import Chunk, Config, Result, WIZARD_STEPS
 from rag.pipeline import Engine
 from web.clusters import cluster_ellipses
-from web.trace import format_question, format_result, install_console_logging
+from web.trace import format_critique, format_question, format_result, install_console_logging
 
 log = logging.getLogger(__name__)
 
@@ -42,6 +43,22 @@ def _config_for(request: AskRequest) -> Config:
     if request.step is not None:
         return WIZARD_STEPS[request.step - 1].config
     return Config()
+
+
+def _questions() -> list[dict]:
+    return yaml.safe_load(QUESTIONS_FILE.read_text(encoding="utf-8"))
+
+
+def _reference_for(question: str) -> str | None:
+    """The known-correct answer for a prepared question, if this is one of them.
+
+    Read per request rather than at startup: the reference is what the critic judges
+    against, and rewording it between two questions must not need a restart.
+    """
+    for spec in _questions():
+        if spec["question"] == question:
+            return spec.get("answer")
+    return None
 
 
 def _preview(vector: np.ndarray) -> list[float]:
@@ -101,7 +118,6 @@ def create_app(engine: Engine, chunks: list[Chunk], projection: np.ndarray) -> F
 
     @app.get("/api/questions")
     def questions() -> list[dict]:
-        specs = yaml.safe_load(QUESTIONS_FILE.read_text(encoding="utf-8"))
         return [
             {
                 "id": s["id"],
@@ -113,7 +129,7 @@ def create_app(engine: Engine, chunks: list[Chunk], projection: np.ndarray) -> F
                 # declared, so it cannot drift from the scoreboard.
                 "demo_at": next((n for n in sorted(s["steps"]) if s["steps"][n]), None),
             }
-            for s in specs
+            for s in _questions()
         ]
 
     @app.post("/api/ask")
@@ -134,10 +150,19 @@ def create_app(engine: Engine, chunks: list[Chunk], projection: np.ndarray) -> F
             return {"error": str(exc)}
         for line in format_result(result, config, time.perf_counter() - started):
             log.info(line)
+
+        reference = _reference_for(request.question)
+        checks = critique(engine.llm, request.question, reference, result.answer) if reference else []
+        if reference:
+            log.info(format_critique(checks))
+
         # The rewritten query is what retrieval actually saw, so it is the vector the
         # room should be looking at.
         query_vector = engine.embed_query(result.rewritten or result.question)
-        return _result_json(result, query_vector, vector_of)
+        return {
+            **_result_json(result, query_vector, vector_of),
+            "critique": [asdict(c) for c in checks] if reference else None,
+        }
 
     @app.get("/api/map")
     def map_points() -> list[dict]:
