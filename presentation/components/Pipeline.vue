@@ -15,11 +15,11 @@
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 1 }">
         <span class="arrow">&rarr;</span>
-        <div class="box model">embedding<br>model</div>
+        <div class="box model">embedding<br>model<em>e5-small · 384 dims</em></div>
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 1 }">
         <span class="arrow">&rarr;</span>
-        <div class="box store">store</div>
+        <div class="box store">store<em>chunks.jsonl<br>embeddings.npy</em></div>
         <span class="elbow reveal" :class="{ shown: clicks >= 3 }"><span class="head"></span></span>
       </div>
       <div class="slot"></div>
@@ -35,7 +35,7 @@
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 2 }">
         <span class="arrow">&rarr;</span>
-        <div class="box model">embedding<br>model</div>
+        <div class="box model">embedding<br>model<em>e5-small · 384 dims</em></div>
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 2 }">
         <span class="arrow">&rarr;</span>
@@ -43,7 +43,7 @@
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 4 }">
         <span class="arrow">&rarr;</span>
-        <div class="box model">answer<br>model</div>
+        <div class="box model">answer<br>model<em>claude-opus-5</em></div>
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 4 }">
         <span class="arrow">&rarr;</span>
@@ -114,6 +114,7 @@ defineProps({ clicks: { type: Number, default: 0 } })
 .box {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 5.4rem;
@@ -132,6 +133,21 @@ defineProps({ clicks: { type: Number, default: 0 } })
   font-weight: 700;
   color: #1c1c1c;
 }
+
+/* Names the concrete thing in the box: the two boxes that say "model" are two different
+   models, and the store is a pair of files rather than a database. */
+.box em {
+  font-family: var(--font-code);
+  font-style: normal;
+  font-size: 0.62rem;
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  margin-top: 0.35rem;
+  color: #5f6066;
+}
+.box.store em { color: #b9b9b9; }
+
 .box.store {
   background: #343434;
   border-color: #343434;
