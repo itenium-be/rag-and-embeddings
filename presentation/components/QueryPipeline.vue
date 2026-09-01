@@ -45,13 +45,12 @@
       <em>the model only ever sees what retrieval handed it</em>
     </div>
 
-    <div class="stem-only reveal" :class="{ shown: clicks >= 5 }">
-      <span class="rule"></span>
-      <span class="chev"></span>
-    </div>
-
     <div class="tail reveal" :class="{ shown: clicks >= 5 }">
-      <span class="answer-model">answer model</span>
+      <span class="answer-model">
+        answer model
+        <span class="rule into"></span>
+        <span class="chev into"></span>
+      </span>
       <span class="arr">&rarr;</span>
       <span class="answer">answer + citations</span>
     </div>
@@ -79,6 +78,10 @@ const sources = [
 <style scoped>
 .qp {
   --gap: 1.4rem;
+  /* Every chevron centre stops this far short of the box it points into — the same
+     clearance the arrows on the pipeline slide leave. */
+  --clearance: 8px;
+  --tail-stem: 1.25rem;
   display: flex;
   flex-direction: column;
   margin-top: 0.3rem;
@@ -125,12 +128,12 @@ const sources = [
 .stem-only .rule {
   left: 50%;
   top: 0;
-  bottom: 0;
+  bottom: var(--clearance);
   margin-left: -1px;
 }
 .stem-only .chev {
   left: 50%;
-  top: 100%;
+  top: calc(100% - var(--clearance));
 }
 
 .agent,
@@ -175,11 +178,11 @@ const sources = [
 }
 .fan .leg {
   top: 1.4rem;
-  bottom: 0;
+  bottom: var(--clearance);
   margin-left: -1px;
 }
 .fan > .chev {
-  top: 100%;
+  top: calc(100% - var(--clearance));
 }
 
 /* The converging fan is the same shape upside down: legs first, then the rail, then one
@@ -194,12 +197,12 @@ const sources = [
 }
 .fan.up .stem {
   top: auto;
-  bottom: 0;
-  height: 1.6rem;
+  bottom: var(--clearance);
+  height: calc(1.6rem - var(--clearance));
 }
 .fan.up .chev.mid {
   left: 50%;
-  top: 100%;
+  top: calc(100% - var(--clearance));
 }
 
 .sources {
@@ -246,11 +249,26 @@ const sources = [
 .src.ours b { background: #276b2e; color: #fefefe; }
 
 .tail {
+  margin-top: var(--tail-stem);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 1rem;
 }
+/* The arrow into the answer model hangs off that box, not off the slide centre: the
+   tail is a centred row of two boxes, so 50% of the row falls between them. */
+.answer-model { position: relative; }
+.answer-model .rule.into {
+  left: 50%;
+  margin-left: -1px;
+  top: calc(-1 * var(--tail-stem) - 2px);
+  height: calc(var(--tail-stem) + 2px - var(--clearance));
+}
+.answer-model .chev.into {
+  left: 50%;
+  top: calc(-1 * var(--clearance) - 2px);
+}
+
 .answer-model,
 .answer {
   border: 2px solid var(--color-primary);
