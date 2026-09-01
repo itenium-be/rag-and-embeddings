@@ -232,7 +232,7 @@ single date. When near-identical records score that high, retrieval cannot separ
 
 ---
 layout: default
-clicks: 10
+clicks: 9
 ---
 
 # Embeddings

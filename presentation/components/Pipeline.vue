@@ -56,10 +56,6 @@
       </div>
     </div>
 
-    <div class="note reveal" :class="{ shown: clicks >= 10 }">
-      Two different models: one turns text into coordinates, one writes the answer
-    </div>
-
   </div>
 </template>
 
@@ -220,10 +216,4 @@ defineProps({ clicks: { type: Number, default: 0 } })
   transform: translate(-50%, -50%) rotate(45deg);
 }
 
-.note {
-  padding-top: 2.4rem;
-  font-size: 1.1rem;
-  text-align: center;
-  color: #33343a;
-}
 </style>
