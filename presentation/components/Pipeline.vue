@@ -45,6 +45,11 @@
       <div class="slot reveal" :class="{ shown: clicks >= 7 }">
         <span class="arrow">&rarr;</span>
         <div class="box target">search<em>cosine, then sort</em></div>
+        <div class="bubble reveal" :class="{ shown: clicks === 7 }">
+          Every question is compared against <b>all</b> chunks. Fine at 2194 &mdash; when
+          that number explodes you index instead of scan, in a vector database like
+          <b>Elasticsearch</b>.
+        </div>
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 8 }">
         <span class="arrow">&rarr;</span>
@@ -162,6 +167,38 @@ defineProps({ clicks: { type: Number, default: 0 } })
   background: #343434;
   border-color: #343434;
   color: #fefefe;
+}
+
+/* Anchored to the box rather than the slot: the arrow to its left takes 2rem out of
+   the slot, so the slot centre is not the box centre. */
+.bubble {
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  left: calc(50% + 1rem);
+  transform: translateX(-50%);
+  width: 30rem;
+  box-sizing: border-box;
+  border: 2px solid var(--color-primary);
+  border-radius: 0.6rem;
+  background: #fffdf7;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.86rem;
+  line-height: 1.35;
+  text-align: center;
+  color: #33343a;
+}
+/* Tail: a rotated square that covers the border it pokes through. */
+.bubble::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -7px;
+  width: 12px;
+  height: 12px;
+  background: #fffdf7;
+  border-left: 2px solid var(--color-primary);
+  border-top: 2px solid var(--color-primary);
+  transform: translateX(-50%) rotate(45deg);
 }
 
 /* Down out of the store, one slot to the left, down again into the chunks it answers
