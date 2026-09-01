@@ -432,6 +432,38 @@ together and the averaging problem goes away.
 
 ---
 layout: default
+clicks: 4
+---
+
+# Built, not explained
+
+<ProductionPipeline :clicks="$clicks" />
+
+<!--
+The six boxes from the pipeline slide are the part of a RAG system that answers a
+question. These five are the part that keeps it answerable, and every one of them is
+already in the demo - further than anyone in the room was told, and nowhere near
+production.
+
+Evals is the one to linger on. Four questions, six configurations, twenty-four
+assertions, and they encode this session's own story: AZ-900 is expected to fail at step
+one, to come back partial after hybrid search, and to be right only after reranking.
+Query rewriting broke the AI tools answer before it fixed the laptop one - it filled all
+five slots with the AI Policy and pushed out the page that is the list. Nobody would have
+caught that by reading the answer, because it still sounded right. Four questions is a
+small dataset. It is also four more than most projects have.
+
+The badges are deliberately unflattering. The citation check is the honest gap in
+guardrails: the demo shows you the source, it never verifies the source says what the
+answer claims. Ingestion parses and drops what may not be stored, and then a changed
+document means rebuilding the whole index. Observability prints to my console and the
+line is gone when the terminal scrolls. Caching is per prompt; semantic caching - reusing
+an answer because a similar question was asked - is the one that looks like free latency
+and quietly answers the wrong question.
+-->
+
+---
+layout: default
 clicks: 2
 h1:
   type: braces
