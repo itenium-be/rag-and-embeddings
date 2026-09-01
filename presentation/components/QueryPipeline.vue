@@ -12,7 +12,7 @@
 
     <div class="agent reveal" :class="{ shown: clicks >= 2 }">
       retriever agent
-      <em>decides where to look</em>
+      <em>a system prompt selects one or more retrievers</em>
     </div>
 
     <div class="fan reveal" :class="{ shown: clicks >= 3 }">
@@ -70,8 +70,8 @@ const COLS = [EDGE, '50%', `calc(100% - ${EDGE})`]
 // once the answer is not sitting in a passage anywhere — named, not built.
 const sources = [
   { name: 'vector search', what: 'nearest chunks by cosine', tag: 'this demo', kind: 'ours' },
-  { name: 'API call', what: 'BambooHR, live', tag: 'not today', kind: 'off' },
-  { name: 'SQL query', what: 'count, sum, join', tag: 'not today', kind: 'off' },
+  { name: 'API call', what: 'deterministic code that calls BambooHR', tag: 'not today', kind: 'off' },
+  { name: 'SQL query', what: 'prepared queries — or text-to-SQL', tag: 'not today', kind: 'off' },
 ]
 </script>
 
