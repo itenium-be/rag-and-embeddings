@@ -67,7 +67,7 @@
       </div>
 
       <div class="calcfoot">
-        <span class="foot reveal" :class="{ shown: clicks === 4 }">
+        <span class="foot reveal" :class="{ shown: clicks === 4 || clicks >= 6 }">
           <span class="rest">and 378 more</span>
           <span class="res">= 0.887</span>
         </span>
