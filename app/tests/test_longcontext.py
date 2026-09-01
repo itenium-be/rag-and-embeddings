@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from rag.longcontext import SYSTEM, build_corpus, answer
+from rag.longcontext import SYSTEM, answer_from_corpus, build_corpus, corpus_chunks
 from rag.models import Chunk
 
 
@@ -17,9 +17,9 @@ class FakeLLM:
         self.response = response
         self.calls = []
 
-    def complete(self, system, prompt, **kwargs):
+    def complete_with_usage(self, system, prompt, **kwargs):
         self.calls.append((system, prompt, kwargs))
-        return self.response
+        return self.response, {"input_tokens": 262000}
 
 
 def test_build_corpus_numbers_every_chunk():
@@ -71,28 +71,46 @@ def test_build_corpus_sorts_pages_numerically():
 def test_answer_puts_the_question_after_the_corpus():
     """The corpus is the cacheable prefix, so it goes first and the question last."""
     llm = FakeLLM()
-    answer(llm, "Hoeveel credits?", "[1] Ledger — Ledger\nboeking")
+    answer_from_corpus(llm, "Hoeveel credits?", "[1] Ledger — Ledger\nboeking")
     _, prompt, _ = llm.calls[0]
     assert prompt.index("boeking") < prompt.index("Hoeveel credits?")
 
 
 def test_answer_passes_the_question_as_its_own_fallback():
     llm = FakeLLM()
-    answer(llm, "Hoeveel credits?", "corpus")
+    answer_from_corpus(llm, "Hoeveel credits?", "corpus")
     assert llm.calls[0][2]["fallback_to"] == "Hoeveel credits?"
 
 
 def test_answer_uses_the_shared_system_prompt():
     """Same instructions as generation, so the only difference from RAG is what it sees."""
     llm = FakeLLM()
-    answer(llm, "vraag", "corpus")
+    answer_from_corpus(llm, "vraag", "corpus")
     assert llm.calls[0][0] == SYSTEM
 
 
 def test_answer_strips_the_response():
-    assert answer(FakeLLM("  antwoord  "), "vraag", "corpus") == "antwoord"
+    text, _ = answer_from_corpus(FakeLLM("  antwoord  "), "vraag", "corpus")
+    assert text == "antwoord"
 
 
 def test_build_corpus_refuses_an_empty_corpus():
     with pytest.raises(ValueError):
         build_corpus([chunk("a", "Saldo", "c.json", "Saldo", "x", "aggregate")])
+
+
+def test_corpus_chunks_numbering_matches_the_prompt():
+    """The model cites `[n]`; that n has to index this list or every citation is wrong."""
+    chunks = [
+        chunk("b", "Laptop", "l.pdf", "Laptop > p. 1", "beta"),
+        chunk("a", "AI", "ai.pdf", "AI > p. 1", "alpha"),
+    ]
+    ordered = corpus_chunks(chunks)
+    corpus = build_corpus(chunks)
+    for i, c in enumerate(ordered, start=1):
+        assert f"[{i}] {c.title}" in corpus
+
+
+def test_answer_reports_the_usage_the_llm_returned():
+    _, usage = answer_from_corpus(FakeLLM(), "vraag", "corpus")
+    assert usage["input_tokens"] == 262000

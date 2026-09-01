@@ -4,7 +4,7 @@ The baseline the retrieval steps have to beat. If dumping everything answers the
 questions, the rest of the app is machinery nobody needed.
 
 Aggregates are left out. They are step 6's answer computed at ingest time, and letting
-them in would hand long context the one answer no retrieval technique can reach.
+them in would hand step -1 the one answer no retrieval technique can reach.
 """
 
 from __future__ import annotations
@@ -27,20 +27,30 @@ def _order(chunk: Chunk) -> tuple[str, int, str]:
     return (chunk.source, int(page.group(1)) if page else 0, chunk.location)
 
 
-def build_corpus(chunks: list[Chunk]) -> str:
-    retrievable = sorted(
-        (c for c in chunks if c.source_type != "aggregate"), key=_order
-    )
+def corpus_chunks(chunks: list[Chunk]) -> list[Chunk]:
+    """Everything a retriever could have reached, in document order.
+
+    The numbering the prompt uses is this list's, so the citations the model writes
+    resolve against it.
+    """
+    retrievable = sorted((c for c in chunks if c.source_type != "aggregate"), key=_order)
     if not retrievable:
         raise ValueError("nothing to put in the context window")
+    return retrievable
+
+
+def build_corpus(chunks: list[Chunk]) -> str:
     return "\n\n".join(
         f"[{i}] {c.title} — {c.location}\n{c.text}"
-        for i, c in enumerate(retrievable, start=1)
+        for i, c in enumerate(corpus_chunks(chunks), start=1)
     )
 
 
-def answer(llm, question: str, corpus: str) -> str:
+def answer_from_corpus(llm, question: str, corpus: str) -> tuple[str, dict]:
     """The corpus first: it is the same bytes on every question, so it is the prefix a
     cache — the CLI's, or ours on disk — can actually reuse."""
     prompt = f"Sources:\n\n{corpus}\n\nQuestion: {question}"
-    return llm.complete(SYSTEM, prompt, label="longcontext", fallback_to=question).strip()
+    text, usage = llm.complete_with_usage(
+        SYSTEM, prompt, label="longcontext", fallback_to=question
+    )
+    return text.strip(), usage

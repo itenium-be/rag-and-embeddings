@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 import os
 
-from rag.models import Check, Config, Result, WIZARD_STEPS
+from rag.models import Check, Config, LONG_CONTEXT_STEP, Result, WIZARD_STEPS
 
 TECHNIQUES = ("dense", "bm25", "rerank", "rewrite", "citations", "aggregates")
 INDENT = "   "
@@ -24,12 +24,31 @@ def _stage(name: str, detail: str) -> str:
     return f"{INDENT}{name:<9} {detail}"
 
 
-def format_question(question: str, step: int | None, config: Config) -> str:
+def format_question(question: str, step: int | None, config: Config | None) -> str:
+    if step == LONG_CONTEXT_STEP:
+        return f"\nQ  step -1 · Context · no retrieval\n{INDENT}{question}"
     if step is None:
         label = "custom"
     else:
         label = f"step {step} · {WIZARD_STEPS[step - 1].name}"
     return f"\nQ  {label} · {_techniques(config)}\n{INDENT}{question}"
+
+
+def _thousands(tokens: int) -> str:
+    return f"{tokens / 1000:.0f}k" if tokens >= 1000 else str(tokens)
+
+
+def format_usage(usage: dict, chunks: int, elapsed: float) -> str:
+    """What the whole corpus cost to ask once."""
+    parts = [f"{chunks} chunks"]
+    if usage.get("input_tokens"):
+        parts.append(f"{_thousands(usage['input_tokens'])} tokens")
+    if usage.get("cache_read_tokens"):
+        parts.append(f"cache read {_thousands(usage['cache_read_tokens'])}")
+    if usage.get("cost_usd") is not None:
+        parts.append(f"${usage['cost_usd']:.2f}")
+    parts.append(f"{elapsed:.1f}s")
+    return _stage("context", " · ".join(parts))
 
 
 def _retrieved(result: Result) -> str:

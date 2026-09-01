@@ -73,6 +73,10 @@ class WizardStep:
     config: Config
 
 
+# The long-context baseline sits before the wizard, not in it: it has no Config, because
+# it uses no technique. Numbering it -1 keeps the wizard's 1..6 meaning what it meant.
+LONG_CONTEXT_STEP = -1
+
 WIZARD_STEPS: list[WizardStep] = [
     WizardStep(
         1,

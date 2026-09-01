@@ -100,3 +100,38 @@ def test_the_critic_line_counts_the_checks_that_passed():
 
 def test_a_critic_that_said_nothing_says_so():
     assert "no verdict" in format_critique([])
+
+
+def test_step_minus_one_names_itself_and_claims_no_technique():
+    from web.trace import format_question
+
+    line = format_question("Hoeveel credits?", -1, None)
+    assert "step -1 \u00b7 Context" in line
+    assert "no retrieval" in line
+
+
+def test_usage_reads_as_a_cost_line():
+    from web.trace import format_usage
+
+    line = format_usage(
+        {"input_tokens": 262_000, "cache_read_tokens": 0, "cost_usd": 1.31}, 2151, 16.4
+    )
+    assert "2151 chunks" in line
+    assert "262k tokens" in line
+    assert "$1.31" in line
+    assert "16.4s" in line
+
+
+def test_a_cached_prompt_says_so():
+    from web.trace import format_usage
+
+    line = format_usage(
+        {"input_tokens": 262_000, "cache_read_tokens": 262_000, "cost_usd": 0.13}, 2151, 3.0
+    )
+    assert "cache read" in line
+
+
+def test_usage_the_cli_did_not_report_is_not_a_crash():
+    from web.trace import format_usage
+
+    assert "2151 chunks" in format_usage({}, 2151, 16.4)
