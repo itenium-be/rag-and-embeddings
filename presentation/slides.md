@@ -243,7 +243,7 @@ clicks: 9
 
 ---
 layout: default
-clicks: 7
+clicks: 8
 ---
 
 # Retrieval
@@ -265,11 +265,19 @@ picture, not code: everything below the fan is vector search only.
 The line worth landing: the model never sees your documents. It sees whatever retrieval
 put in the prompt, and nothing else. Every failure for the rest of the session is a
 retrieval failure, not a model failure.
+
+The bottom row is not more retrievers - the fan never points at it. It is the three
+things wrapped around the whole picture that we never get to. Access control: the same
+question asked by two people should not return the same chunks, and with this dataset
+that is not theoretical - session 3. Answer critic loop: a second pass that reads the
+answer against the context it was given, and sends retrieval round again when it does
+not hold up - session 2. Evaluation: you will change chunk size, or the embedding model,
+or add a reranker, and "it feels better" is not an answer. A scored set of questions is.
 -->
 
 ---
 layout: default
-clicks: 1
+clicks: 4
 ---
 
 # Embeddings
