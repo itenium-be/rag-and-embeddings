@@ -25,14 +25,22 @@ def test_first_and_third_beats_second_and_second():
 def test_ranks_record_the_position_in_each_retriever():
     fused = reciprocal_rank_fusion({"dense": [A, B], "bm25": [B, A]})
     by_id = {s.chunk.id: s for s in fused}
-    assert by_id["a"].ranks == {"dense": 1, "bm25": 2}
-    assert by_id["b"].ranks == {"dense": 2, "bm25": 1}
+    assert by_id["a"].ranks["dense"] == 1 and by_id["a"].ranks["bm25"] == 2
+    assert by_id["b"].ranks["dense"] == 2 and by_id["b"].ranks["bm25"] == 1
+
+
+def test_ranks_record_the_merged_position():
+    # Without this the projector cannot show what reranking did: a chunk fused at 39
+    # and reranked to 3 is the whole argument for the technique, and comparing against
+    # a single retriever's rank understates it.
+    fused = reciprocal_rank_fusion({"dense": [A, B, C], "bm25": [C, B, A]})
+    assert [s.ranks["fused"] for s in fused] == [1, 2, 3]
 
 
 def test_chunk_found_by_one_retriever_only_still_appears():
     fused = reciprocal_rank_fusion({"dense": [A], "bm25": [B]})
     assert {s.chunk.id for s in fused} == {"a", "b"}
-    assert all(len(s.ranks) == 1 for s in fused)
+    assert all(len(s.ranks) == 2 for s in fused)  # its retriever, plus "fused"
 
 
 def test_single_retriever_preserves_its_order():

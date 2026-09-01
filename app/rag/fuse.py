@@ -23,4 +23,7 @@ def reciprocal_rank_fusion(
             ranks.setdefault(chunk.id, {})[retriever] = position
 
     ordered = sorted(scores, key=lambda cid: -scores[cid])
-    return [Scored(chunks[cid], scores[cid], ranks[cid]) for cid in ordered]
+    return [
+        Scored(chunks[cid], scores[cid], {**ranks[cid], "fused": position})
+        for position, cid in enumerate(ordered, start=1)
+    ]
