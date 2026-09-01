@@ -57,6 +57,14 @@
       <span class="answer">answer + citations</span>
     </div>
 
+    <div class="sources left-out reveal" :class="{ shown: clicks >= 8 }">
+      <div v-for="s in leftOut" :key="s.name" class="src off">
+        <span class="sname">{{ s.name }}</span>
+        <em>{{ s.what }}</em>
+        <b>not today</b>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -75,6 +83,14 @@ const sources = [
   { name: 'API call', what: 'deterministic code that calls BambooHR', tag: 'not today', kind: 'off', at: 4 },
   { name: 'SQL query', what: 'prepared queries — or text-to-SQL', tag: 'not today', kind: 'off', at: 5 },
 ]
+
+// Not retrievers - the three things wrapped around the whole pipeline that this session
+// never gets to.
+const leftOut = [
+  { name: 'access control', what: 'who asks decides which chunks exist' },
+  { name: 'answer critic loop', what: 'the model judges its own answer and retries' },
+  { name: 'evaluation', what: 'proving a change made retrieval better' },
+]
 </script>
 
 <style scoped>
@@ -83,10 +99,9 @@ const sources = [
   /* Every chevron centre stops this far short of the box it points into — the same
      clearance the arrows on the pipeline slide leave. */
   --clearance: 8px;
-  --tail-stem: 1.25rem;
+  --tail-stem: 0.8rem;
   display: flex;
   flex-direction: column;
-  margin-top: 0.3rem;
 }
 
 /* Nothing is ever dimmed: unrevealed items are fully transparent and keep their
@@ -162,24 +177,24 @@ const sources = [
 
 .fan {
   position: relative;
-  height: 2.5rem;
+  height: 2.2rem;
 }
 .fan .stem {
   left: 50%;
   top: 0;
-  height: 1.4rem;
+  height: 1.05rem;
   margin-left: -1px;
 }
 .fan .rail {
   position: absolute;
-  top: 1.4rem;
+  top: 1.05rem;
   left: calc((100% - 2 * var(--gap)) / 6);
   right: calc((100% - 2 * var(--gap)) / 6);
   height: 2px;
   background: var(--color-primary);
 }
 .fan .leg {
-  top: 1.4rem;
+  top: 1.05rem;
   bottom: var(--clearance);
   margin-left: -1px;
 }
@@ -191,16 +206,16 @@ const sources = [
    stem into the prompt. */
 .fan.up .leg {
   top: 0;
-  bottom: 1.6rem;
+  bottom: 1.25rem;
 }
 .fan.up .rail {
   top: auto;
-  bottom: 1.6rem;
+  bottom: 1.25rem;
 }
 .fan.up .stem {
   top: auto;
   bottom: var(--clearance);
-  height: calc(1.6rem - var(--clearance));
+  height: calc(1.25rem - var(--clearance));
 }
 .fan.up .chev.mid {
   left: 50%;
@@ -290,4 +305,8 @@ const sources = [
   line-height: 1;
   color: var(--color-primary);
 }
+
+/* Nothing points into these: they are not retrievers the fan could have chosen, so they
+   sit detached below the answer. */
+.left-out { margin-top: 0.4rem; }
 </style>
