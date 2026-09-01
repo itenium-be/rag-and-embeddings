@@ -3,7 +3,7 @@
 
     <div class="head">
       <span class="head-label mark"></span>
-      <span class="head-label fix">fixed by</span>
+      <span class="head-label fix">techniques</span>
     </div>
 
     <div v-for="q in asked" :key="q.text" class="row">
