@@ -19,13 +19,8 @@
 - id: ai-tools
   question: Welke AI tools mag ik gebruiken?
   answer: |
-    Voor consultants komen deze tools in aanmerking om toegestaan te worden: ChatGPT Go/Plus,
-    ChatGPT Business, Cursor Teams/Enterprise, Copilot Business/Enterprise en Claude Go/Pro/Team.
-    Op die lijst staan betekent niet dat itenium automatisch een licentie aankoopt of terugbetaalt:
-    dat wordt case per case beoordeeld. Gebruik binnen een klantproject vereist altijd aparte
-    project-use approval via je coach. De AI Policy blijft gelden: alle AI-uitvoer wordt door een
-    mens beoordeeld, en vertrouwelijke klantinformatie mag er alleen in met uitdrukkelijke
-    toestemming van de klant.
+    Voor consultants komen deze tools in aanmerking: ChatGPT Go/Plus, ChatGPT Business,
+    Cursor Teams/Enterprise, Copilot Business/Enterprise en Claude Go/Pro/Team.
   check: {type: includes, value: "AI Policy Itenium"}
   steps: {1: true, 2: true, 3: true, 4: true, 5: true, 6: true}
 
