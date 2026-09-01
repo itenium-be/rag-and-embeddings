@@ -25,10 +25,10 @@
   note:
     steps: [4, 5, 6]
     text: >
-      Rewriting broke this answer before it fixed anything: broadening the question into
-      policy language filled all five slots with the AI Policy and pushed out the one page
-      that is the list. The rewrite prompt now keeps the question as asked in front of the
-      broader phrasings. Every technique here needed a pass like that against this corpus.
+      Rewriting broke this answer before it fixed anything: broadening it into policy
+      language filled all five slots with the AI Policy and pushed out the page that is
+      the list. The prompt now keeps the question as asked in front of the broader
+      phrasings.
   answer: |
     Voor consultants komen deze tools in aanmerking: ChatGPT Go/Plus, ChatGPT Business,
     Cursor Teams/Enterprise, Copilot Business/Enterprise en Claude Go/Pro/Team.
