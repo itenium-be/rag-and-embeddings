@@ -1,27 +1,20 @@
 <template>
   <div class="scoreboard">
 
-    <div class="head reveal" :class="{ shown: clicks >= 2 }">
+    <div class="head">
       <span class="head-label">naive RAG</span>
     </div>
 
-    <div
-      v-for="(q, i) in asked"
-      :key="q"
-      class="row reveal"
-      :class="{ shown: clicks >= 1 }"
-    >
+    <div v-for="(q, i) in asked" :key="q" class="row">
       <span class="num">{{ i + 1 }}</span>
       <span class="q">{{ q }}</span>
-      <span class="verdict reveal" :class="{ shown: clicks >= 2 }"></span>
+      <span class="verdict"></span>
     </div>
 
   </div>
 </template>
 
 <script setup>
-defineProps({ clicks: { type: Number, default: 0 } })
-
 // Same five as the use case slide. Kept in step by hand — if one list changes, change
 // the other.
 const asked = [
@@ -35,14 +28,6 @@ const asked = [
 
 <style scoped>
 .scoreboard { margin-top: 1.4rem; }
-
-/* Nothing is ever dimmed: unrevealed items are fully transparent and keep their
-   space, so the layout never shifts and nothing on screen looks washed out. */
-.reveal {
-  opacity: 0;
-  transition: opacity 350ms ease;
-}
-.reveal.shown { opacity: 1; }
 
 .head {
   display: flex;
