@@ -322,7 +322,7 @@ Consultants asking itenium anything
 
 ---
 layout: default
-clicks: 3
+clicks: 4
 ---
 
 # Use Case
@@ -330,6 +330,8 @@ clicks: 3
 ## Four questions
 
 <Scoreboard :clicks="$clicks" :show="[1, 2]" />
+
+<DemoTime :clicks="$clicks" :at="4" />
 
 ---
 layout: default
