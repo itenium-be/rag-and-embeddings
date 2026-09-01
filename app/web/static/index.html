@@ -11,7 +11,7 @@
   :root {
     --bg: #12141a; --panel: #1a1d25; --line: #2c313d;
     --ink: #e8eaf0; --dim: #8d94a5; --accent: #6ea8fe;
-    --pass: #4ade80; --fail: #f87171;
+    --pass: #4ade80; --fail: #f87171; --warn: #fbbf24;
   }
   * { box-sizing: border-box; }
   body {
@@ -38,7 +38,7 @@
   .scoreboard li { list-style: none; display: flex; gap: .55rem; padding: .3rem 0; font-size: .9rem; }
   .scoreboard ul { margin: 0; padding: 0; }
   .scoreboard .v { width: 1.2rem; }
-  .pass { color: var(--pass); } .fail { color: var(--fail); }
+  .pass { color: var(--pass); } .fail { color: var(--fail); } .part { color: var(--warn); }
   .scoreboard button {
     background: none; border: none; color: inherit; font: inherit; text-align: left;
     cursor: pointer; padding: 0; flex: 1;
@@ -76,6 +76,11 @@
     text-transform: uppercase; letter-spacing: .06em; padding: .3rem .5rem;
     border-bottom: 1px solid var(--line);
   }
+  table.grid th .help {
+    display: inline-block; margin-left: .3rem; width: 1em; height: 1em; line-height: 1em;
+    border: 1px solid var(--line); border-radius: 50%; text-align: center; cursor: help;
+  }
+  table.grid th .help:hover { border-color: var(--accent); color: var(--accent); }
   table.grid td { padding: .45rem .5rem; border-bottom: 1px solid #21252f; vertical-align: top; }
   table.grid td.title { max-width: 24rem; }
   table.grid td.title .snip {
@@ -133,7 +138,13 @@
 
 <main x-show="step === 0" style="grid-template-columns: 1fr">
   <section class="panel">
-    <h2>The map of meaning</h2>
+    <h2>
+      The map of meaning
+      <span class="tabs">
+        <button @click="toggleGroups()" :class="groupsOn ? 'on' : ''"
+                x-text="groupsOn ? 'hide groups' : 'show groups'"></button>
+      </span>
+    </h2>
     <div class="askrow">
       <form class="ask" @submit.prevent="plotQuery(mapQuestion)">
         <input x-model="mapQuestion" placeholder="Drop a question on the map…">
@@ -160,9 +171,8 @@
     <ul>
       <template x-for="q in questions" :key="q.id">
         <li>
-          <span class="v" :class="q.steps[step] ? 'pass' : 'fail'"
-                x-text="q.steps[step] ? '✅' : '❌'"></span>
-          <button @click="ask(q.question)" x-text="q.question"></button>
+          <span class="v" :class="verdictClass(q)" x-text="verdictMark(q)"></span>
+          <button @click="askEverywhere(q.question)" x-text="q.question"></button>
         </li>
       </template>
     </ul>
@@ -184,7 +194,7 @@
         <input x-model="question" placeholder="Ask something…">
         <button type="submit" x-text="loading ? '…' : 'Find'"></button>
       </form>
-      <form class="ask" @submit.prevent="ask(picked)">
+      <form class="ask" @submit.prevent="askEverywhere(picked)">
         <select x-model="picked">
           <option value="">Prepared questions…</option>
           <template x-for="q in questions" :key="q.id">
@@ -215,13 +225,16 @@
         <table class="grid">
           <thead>
             <tr>
-              <th>#</th><th>Δ</th><th>title</th><th>type</th>
-              <th style="text-align:right">page</th>
-              <th style="text-align:right">dense</th>
-              <th style="text-align:right">bm25</th>
-              <th style="text-align:right">fused</th>
-              <th style="text-align:right">rerank</th>
-              <th style="text-align:right">cos</th>
+              <th>#<span class="help" title="Position in the final list.">?</span></th>
+              <th>Δ<span class="help" title="How far reranking moved this chunk: its fused rank minus its rerank rank. ▲ up, ▼ down.">?</span></th>
+              <th>title<span class="help" title="The chunk's title — the CV owner or the policy name. Hover the grey text for the whole chunk.">?</span></th>
+              <th>type<span class="help" title="Where the chunk came from: cv, policy, project, credit or aggregate.">?</span></th>
+              <th style="text-align:right">page<span class="help" title="Page number, read out of the chunk's location. BambooHR records have no pages.">?</span></th>
+              <th style="text-align:right">dense<span class="help" title="Rank in the cosine ranking, 1 = nearest to the question vector. — = outside the top 50.">?</span></th>
+              <th style="text-align:right">bm25<span class="help" title="Rank in the keyword ranking, 1 = best BM25 score. — = the chunk contains none of the query terms.">?</span></th>
+              <th style="text-align:right">fused<span class="help" title="Rank after reciprocal rank fusion of the two columns to the left, before reranking: 1/(60+dense) + 1/(60+bm25), so a chunk both retrievers found beats one only one of them found.">?</span></th>
+              <th style="text-align:right">rerank<span class="help" title="Final rank from the cross-encoder, which reads the question and the chunk together. — on the steps that do not rerank.">?</span></th>
+              <th style="text-align:right">cos<span class="help" title="Cosine between the question vector and the chunk vector, 0–1. A score, not a rank: dense #1 is the row with the highest cos.">?</span></th>
             </tr>
           </thead>
           <tbody>
@@ -316,16 +329,21 @@
 function demo() {
   return {
     step: 0, steps: [], questions: [], question: '', picked: '',
-    mapQuestion: '', mapPicked: '',
-    result: null, loading: false, error: '', overrides: {}, points: [],
+    mapQuestion: '', mapPicked: '', groupsOn: false, clusters: [],
+    results: {}, loading: false, filling: 0, error: '', overrides: {}, points: [],
     vecView: 'numbers',
 
     async init() {
       this.steps = await (await fetch('/api/steps')).json();
       this.questions = await (await fetch('/api/questions')).json();
       this.points = await (await fetch('/api/map')).json();
+      this.clusters = await (await fetch('/api/map/clusters')).json();
       this.drawMap();
     },
+
+    // Kept per step: switching between two steps is how the room compares them, so
+    // walking back to a step must bring its answer back with it.
+    get result() { return this.results[this.step] || null; },
 
     current() { return this.steps[this.step - 1] || { blurb: '', config: {} }; },
     config() { return { ...this.current().config, ...this.overrides }; },
@@ -333,17 +351,31 @@ function demo() {
     goto(n) {
       this.step = n;
       this.overrides = {};
-      this.result = null;
+      this.error = '';
       // Land on the question this step exists to fix, so nobody has to remember which
       // of the five belongs where. Step 5 fixes no question — citations do not change
       // retrieval — so fall back to the nearest earlier one rather than blanking.
       const q = this.questions.filter(q => q.demo_at && q.demo_at <= n).pop();
-      this.question = q ? q.question : '';
-      this.picked = q ? q.question : '';
+      const asked = this.result ? this.result.question : (q ? q.question : '');
+      this.question = asked;
+      this.picked = asked;
       if (n === 0) this.$nextTick(() => this.drawMap());
+      // Plotly draws into a div the step swap leaves untouched, so it still holds the
+      // previous step's map until it is told otherwise.
+      if (this.result) this.$nextTick(() => this.plotResult());
     },
 
     rank(chunk, stage) { return chunk.ranks[stage] ?? '—'; },
+
+    // Three verdicts, not two: AZ-900 goes from useless to three of the four people at
+    // hybrid search, and calling that a pass would hide the step that finishes the job.
+    verdict(q) { return q.steps[this.step]; },
+    verdictMark(q) {
+      return { true: '✅', partial: '❗' }[this.verdict(q)] ?? '❌';
+    },
+    verdictClass(q) {
+      return { true: 'pass', partial: 'part' }[this.verdict(q)] ?? 'fail';
+    },
 
     // Locations read "AI Policy Itenium > p. 3" for anything ingested from a PDF, and
     // carry a date or a record kind for the BambooHR exports, which have no pages.
@@ -371,7 +403,8 @@ function demo() {
     },
 
     droppedLabel() {
-      return this.config().rerank ? 'dropped by reranking' : 'below the cut';
+      const used = this.result ? this.result.used : [];
+      return used.some(c => c.ranks.rerank !== undefined) ? 'dropped by reranking' : 'below the cut';
     },
 
     nums(vector) {
@@ -389,7 +422,8 @@ function demo() {
     // The scale is the question's own peak rather than each strip's, so a weaker match
     // reads as dimmer. Per-strip scaling normalises away exactly what we want to show.
     contributions(vector) {
-      const query = this.result.query_vector;
+      const query = this.result ? this.result.query_vector : null;
+      if (!query) return [];
       const order = query.map((v, i) => i).sort((a, b) => Math.abs(query[b]) - Math.abs(query[a]));
       const scale = Math.max(...query.map(v => v * v)) || 1;
       return order.map(i => Math.max(-1, Math.min(1, (vector[i] * query[i]) / scale)));
@@ -407,20 +441,44 @@ function demo() {
       if (this.question) this.ask(this.question);
     },
 
-    async ask(question) {
-      this.question = question;
-      this.loading = true;
-      this.error = '';
-      const body = { question, config: this.config() };
-      const response = await (await fetch('/api/ask', {
+    async answer(body) {
+      return await (await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })).json();
+    },
+
+    async ask(question) {
+      // The answer belongs to the step that asked for it, not to whichever step is on
+      // screen when it arrives.
+      const step = this.step;
+      this.question = question;
+      this.loading = true;
+      this.error = '';
+      const response = await this.answer({ question, config: this.config() });
       this.loading = false;
-      if (response.error) { this.error = response.error; this.result = null; return; }
-      this.result = response;
+      if (response.error) { this.error = response.error; delete this.results[step]; return; }
+      this.results[step] = response;
       this.$nextTick(() => this.plotResult());
+    },
+
+    // Answer the prepared questions at every step, current one first. Their answers are
+    // all cached, so the other five cost seconds, and stepping through them afterwards
+    // compares answers instead of waiting for them. The ticket drops a fill whose
+    // question has been superseded, which would otherwise overwrite the newer answers.
+    // It counts rather than holds an object: state read back out of Alpine comes back
+    // as a proxy, so `!==` against the object that was put in is always true.
+    async askEverywhere(question) {
+      await this.ask(question);
+      const asked = this.step;
+      const ticket = ++this.filling;
+      for (const s of this.steps) {
+        if (s.number === asked) continue;
+        const response = await this.answer({ question, step: s.number });
+        if (this.filling !== ticket) return;
+        if (!response.error) this.results[s.number] = response;
+      }
     },
 
     traces(highlight) {
@@ -441,8 +499,29 @@ function demo() {
       });
     },
 
-    layout() {
+    // Dotted rings, not filled blobs: the point of the map is the dots underneath.
+    shapes() {
+      return this.clusters.map(c => ({
+        type: 'circle', xref: 'x', yref: 'y', layer: 'below',
+        x0: c.x - c.rx, x1: c.x + c.rx, y0: c.y - c.ry, y1: c.y + c.ry,
+        line: { color: 'rgba(232,234,240,.45)', width: 2, dash: 'dot' },
+        fillcolor: 'rgba(232,234,240,.04)',
+      }));
+    },
+
+    labels() {
+      return this.clusters.map(c => ({
+        x: c.x, y: c.y + c.ry, xref: 'x', yref: 'y', yanchor: 'bottom',
+        text: c.label, showarrow: false, borderpad: 4,
+        font: { size: 15, color: '#e8eaf0' }, bgcolor: 'rgba(26,29,37,.8)',
+      }));
+    },
+
+    // Only the big map gets rings; the 260px result map has no room for them.
+    layout(groups = false) {
       return {
+        shapes: groups ? this.shapes() : [],
+        annotations: groups ? this.labels() : [],
         paper_bgcolor: '#1a1d25', plot_bgcolor: '#1a1d25',
         font: { color: '#e8eaf0' }, margin: { t: 10, r: 10, b: 30, l: 30 },
         xaxis: { gridcolor: '#2c313d', zeroline: false },
@@ -451,7 +530,7 @@ function demo() {
       };
     },
 
-    render(element, highlight = [], query = null) {
+    render(element, highlight = [], query = null, groups = false) {
       const traces = this.traces(highlight);
       if (query) {
         traces.push({
@@ -461,19 +540,33 @@ function demo() {
           marker: { size: 20, color: '#f87171', symbol: 'x' },
         });
       }
-      Plotly.newPlot(element, traces, this.layout(), { displayModeBar: false });
+      Plotly.newPlot(element, traces, this.layout(groups), { displayModeBar: false });
     },
 
-    drawMap(highlight = [], query = null) { this.render('map', highlight, query); },
+    drawMap(highlight = [], query = null) { this.render('map', highlight, query, this.groupsOn); },
 
+    toggleGroups() {
+      this.groupsOn = !this.groupsOn;
+      Plotly.relayout('map', {
+        shapes: this.groupsOn ? this.shapes() : [],
+        annotations: this.groupsOn ? this.labels() : [],
+      });
+    },
+
+    // Both the step and the answer can change while this is in flight, and the map it
+    // draws belongs to one step: whoever is on screen when it lands.
     async plotResult() {
-      const asked = this.result.rewritten || this.result.question;
+      const step = this.step;
+      const result = this.result;
+      if (!result) return;
+      const asked = result.rewritten || result.question;
       const response = await (await fetch('/api/map/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: asked, k: 5 }),
       })).json();
-      this.render('resultmap', this.result.used.map(c => c.id), response);
+      if (this.step !== step || this.result !== result) return;
+      this.render('resultmap', result.used.map(c => c.id), response);
     },
 
     async plotQuery(question) {
