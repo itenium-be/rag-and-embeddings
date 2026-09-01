@@ -6,7 +6,10 @@
       <div class="source-text">Bert Vermorgen .NET Developer (7 years of experience)</div>
     </div>
 
-    <div class="riser reveal" :class="{ shown: clicks >= 2 }">&darr;</div>
+    <div class="riser reveal" :class="{ shown: clicks >= 2 }">
+      <span class="arrow">&darr;</span>
+      <span class="model">intfloat/multilingual-e5-small</span>
+    </div>
 
     <div class="grid reveal" :class="{ shown: clicks >= 2 }">
       <span v-for="(v, i) in values" :key="i" class="n">{{ v }}</span>
@@ -71,10 +74,20 @@ const values = [
 }
 
 .riser {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.7rem 0;
+}
+.arrow {
   font-size: 1.6rem;
   line-height: 1;
-  padding: 0.7rem 0;
   color: var(--color-primary);
+}
+.model {
+  font-family: var(--font-code);
+  font-size: 0.95rem;
+  color: #5f6066;
 }
 
 /* Eight to a row on purpose: rows and columns read as coordinates, where the same
