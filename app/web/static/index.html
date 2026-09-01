@@ -55,6 +55,9 @@
   .blurb { color: var(--dim); font-size: .9rem; margin: 0 0 1rem; }
   .rewritten { border-left: 3px solid var(--accent); padding-left: .8rem; margin-bottom: 1rem; font-size: .9rem; }
   .answer { white-space: pre-wrap; }
+  .cite { color: var(--accent); font-weight: 600; }
+  .source { display: flex; gap: .6rem; align-items: baseline; padding: .2rem 0; }
+  .source .loc { color: var(--dim); font-size: .85rem; }
 
   h1.qtitle { font-size: 1.5rem; margin: 0 0 .3rem; font-weight: 600; line-height: 1.25; }
   .box {
@@ -217,7 +220,18 @@
 
         <div class="box">
           <h2>Answer</h2>
-          <div class="answer" x-text="result.answer"></div>
+          <div class="answer" x-html="answerHtml()"></div>
+        </div>
+
+        <div class="box" x-show="result.citations.length">
+          <h2>Sources</h2>
+          <template x-for="c in sources()" :key="c.marker">
+            <div class="source">
+              <span class="cite" x-text="'[' + c.marker + ']'"></span>
+              <span x-text="c.title"></span>
+              <span class="loc" x-text="sourceLoc(c)"></span>
+            </div>
+          </template>
         </div>
 
         <div class="box">
@@ -439,6 +453,30 @@ function demo() {
     override(flag, value) {
       this.overrides[flag] = value;
       if (this.question) this.ask(this.question);
+    },
+
+    // The model is told to cite in every step, so the markers are in the prose from
+    // step 1. Only the citations step resolves them, and until it does they are
+    // deliberately left as plain text: an unresolvable [3] is the argument for the step.
+    answerHtml() {
+      const escaped = this.result.answer.replace(
+        /[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]),
+      );
+      if (!this.result.citations.length) return escaped;
+      return escaped.replace(/\[(\d+)\]/g, '<span class="cite">[$1]</span>');
+    },
+
+    // Numbered order, not order of first mention: this is a reference list, and the
+    // room reads it against the [n] in the prose.
+    sources() {
+      return [...this.result.citations].sort((a, b) => a.marker - b.marker);
+    },
+
+    // A chunk's location already starts with its title, which is printed beside it.
+    sourceLoc(c) {
+      return c.location.startsWith(c.title)
+        ? c.location.slice(c.title.length).replace(/^\s*>\s*/, '')
+        : c.location;
     },
 
     async answer(body) {
