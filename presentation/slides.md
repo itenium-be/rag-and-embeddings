@@ -35,6 +35,18 @@ h1:
 <TechLunch />
 
 ---
+layout: full
+---
+
+<TheAlignmentProblem />
+
+---
+layout: full
+---
+
+<MoreSessions />
+
+---
 layout: agenda
 items:
   - RAG
