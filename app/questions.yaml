@@ -23,6 +23,11 @@
 # Every prediction below was measured against the real corpus, not assumed. Three of the
 # first draft's five questions did not survive that and were replaced.
 
+# Step -1 is the long-context baseline: the whole corpus in the prompt, no retrieval. It
+# is judged on its answer rather than on what it retrieved, because everything is
+# retrieved by construction — `includes` and `everyone` would pass on any question.
+# Measured at 501k tokens and $4.93 a question, against fractions of a cent for five
+# chunks.
 - id: ai-tools
   question: Welke AI tools mag ik gebruiken?
   note:
@@ -36,7 +41,7 @@
     Voor consultants komen deze tools in aanmerking: ChatGPT Go/Plus, ChatGPT Business,
     Cursor Teams/Enterprise, Copilot Business/Enterprise en Claude Go/Pro/Team.
   check: {type: includes, value: "AI Policy Itenium"}
-  steps: {1: true, 2: true, 3: true, 4: true, 5: true, 6: true}
+  steps: {-1: true, 1: true, 2: true, 3: true, 4: true, 5: true, 6: true}
 
 # The question with no answer anywhere, and the only one that shows the refusal in the
 # system prompt is real. `fietsleasing`, `fietslease`, `bedrijfsfiets`,
@@ -61,7 +66,9 @@
     Daar staat niets over in de bronnen: over fietsleasing of een alternatief voor de
     bedrijfswagen is niets terug te vinden.
   check: {type: refuses}
-  steps: {1: true, 2: true, 3: true, 4: true, 5: true, 6: true}
+  # Long context refuses it too, and for a better reason: it holds the whole car policy
+  # and still will not stretch it over a bike.
+  steps: {-1: true, 1: true, 2: true, 3: true, 4: true, 5: true, 6: true}
 
 # The one question that needs two techniques, which is why it demos both. `AZ-900`
 # carries no meaning, so dense lands on the hospitalisatie folder and finds one holder;
@@ -81,7 +88,12 @@
   check:
     type: everyone
     values: [Igor Romy, Jorn Meeusen, Jos Van Loock, Yannick Manfroy]
-  steps: {1: false, 2: partial, 3: true, 4: true, 5: true, 6: true}
+  # Green at step -1, and worth reading aloud before believing it: the answer opens "de
+  # bronnen bevatten geen enkele vermelding van een AZ-900-certificaat" and then lists
+  # all four holders with citations, Mirko correctly excluded. The critic scores the
+  # facts, the facts are all there, and the prose contradicts itself in its first
+  # sentence. Retrieving five chunks never produces that failure.
+  steps: {-1: true, 1: false, 2: partial, 3: true, 4: true, 5: true, 6: true}
 
 # An over-specific question. `lader` occurs nowhere in the corpus, and `kwijt` on `trein`
 # lands dense, BM25 and the cross-encoder alike on the Avis rental conditions, which do
@@ -102,7 +114,10 @@
     de laptop in gebruik is. De policy gaat over de laptop zelf; een verloren lader wordt niet
     apart geregeld.
   check: {type: includes, value: "Laptop policy", min_matches: 2, field: title}
-  steps: {1: false, 2: false, 3: false, 4: true, 5: true, 6: true}
+  # Four of the five items at step -1, missing only the instruction to have the laptop
+  # blocked through the internal contact. Rewriting at step 4 gets all five: the broader
+  # phrasing puts the page in front of the model instead of a page and 2150 others.
+  steps: {-1: partial, 1: false, 2: false, 3: false, 4: true, 5: true, 6: true}
 
 # The balance is a sum over a ledger. No chunk contains it, so no retrieval technique
 # reaches it — only the summary computed at ingest time does.
@@ -111,4 +126,8 @@
   answer: |
     Simon Verhoeven heeft nog 1894 credits.
   check: {type: includes, value: "Huidig saldo"}
-  steps: {1: false, 2: false, 3: false, 4: false, 5: false, 6: true}
+  # The one that settles the argument. Long context holds all 946 ledger rows and still
+  # declines to add them up: "optellen van alle boekingen op zijn naam levert een getal
+  # op, maar de bronnen zeggen niet dat dat het actuele saldo is". A bigger context
+  # window is not an aggregation engine either. Only step 6 is.
+  steps: {-1: false, 1: false, 2: false, 3: false, 4: false, 5: false, 6: true}

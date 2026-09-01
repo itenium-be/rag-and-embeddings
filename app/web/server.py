@@ -138,7 +138,13 @@ def create_app(engine: Engine, chunks: list[Chunk], projection: np.ndarray) -> F
                 # verdict is better than a flat failure, so a question that a technique
                 # only partly fixes still opens on that technique. Derived rather than
                 # declared, so it cannot drift from the scoreboard.
-                "demo_at": next((n for n in sorted(s["steps"]) if s["steps"][n]), None),
+                #
+                # Step -1 is not a candidate. It demonstrates no technique — it is what
+                # the techniques are measured against.
+                "demo_at": next(
+                    (n for n in sorted(s["steps"]) if n > LONG_CONTEXT_STEP and s["steps"][n]),
+                    None,
+                ),
                 "note": s.get("note"),
             }
             for s in _questions()

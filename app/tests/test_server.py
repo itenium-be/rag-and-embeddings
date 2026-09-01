@@ -59,6 +59,15 @@ def test_questions_report_the_step_that_first_improves_them(client):
     assert by_id["creditsaldo"]["demo_at"] == 6
 
 
+def test_the_long_context_baseline_is_never_the_step_a_question_demonstrates(client):
+    """Step -1 demonstrates no technique; it is what the techniques are measured against."""
+    assert all(q["demo_at"] != -1 for q in client.get("/api/questions").json())
+
+
+def test_questions_carry_a_long_context_verdict(client):
+    assert all("-1" in q["steps"] for q in client.get("/api/questions").json())
+
+
 def test_a_question_demos_at_the_step_that_partly_fixes_it(client):
     az = {q["id"]: q for q in client.get("/api/questions").json()}["az-900"]
     assert az["demo_at"] == 2, "hybrid search is where AZ-900 stops being useless"

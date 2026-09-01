@@ -562,9 +562,12 @@ function demo() {
       const { usage = {}, chunks } = this.contextResult;
       const cells = [{ value: chunks, label: 'chunks in prompt' }];
       if (usage.input_tokens) {
+        // The CLI always cache-reads its own preamble, so a few thousand cached tokens
+        // says nothing about the corpus. Only a majority means the corpus itself hit.
+        const cached = usage.cache_read_tokens > usage.input_tokens / 2;
         cells.push({
           value: (usage.input_tokens / 1000).toFixed(0) + 'k',
-          label: usage.cache_read_tokens ? 'tokens in · cache read' : 'tokens in, as billed',
+          label: cached ? 'tokens in · cache read' : 'tokens in, as billed',
         });
       }
       if (usage.cost_usd != null) {
