@@ -39,7 +39,7 @@
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 7 }">
         <span class="arrow">&rarr;</span>
-        <div class="box target">nearest<br>chunks</div>
+        <div class="box target">nearest chunks<br>+ question</div>
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 8 }">
         <span class="arrow">&rarr;</span>
