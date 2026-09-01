@@ -20,10 +20,6 @@
       </div>
     </div>
 
-    <div class="strap reveal" :class="{ shown: clicks >= 2 }">
-      None of these are scheduled yet — <b>say which one you want.</b>
-    </div>
-
   </div>
 </template>
 
