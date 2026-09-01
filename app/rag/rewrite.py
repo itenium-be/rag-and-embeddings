@@ -9,6 +9,10 @@ Broaden an over-specific question into the more general one that has to be answe
 first. Split a compound question into its parts. Keep every proper noun, product name
 and certification code from the original exactly as written.
 
+Start with the question as it was asked, word for word, and add the broader or split
+phrasings after it. A rewrite that only asks the general question retrieves the policy
+that describes a list instead of the document that is the list.
+
 Reply with the rewritten query and nothing else."""
 
 
