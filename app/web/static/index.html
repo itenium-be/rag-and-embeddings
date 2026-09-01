@@ -429,17 +429,12 @@ function demo() {
     current() { return this.steps[this.step - 1] || { blurb: '', config: {} }; },
     config() { return { ...this.current().config, ...this.overrides }; },
 
+    // The question carries across the steps: asking the same one at each of them and
+    // changing nothing but the technique is the demo.
     goto(n) {
       this.step = n;
       this.overrides = {};
       this.error = '';
-      // Land on the question this step exists to fix, so nobody has to remember which
-      // of the five belongs where. Step 5 fixes no question — citations do not change
-      // retrieval — so fall back to the nearest earlier one rather than blanking.
-      const q = this.questions.filter(q => q.demo_at && q.demo_at <= n).pop();
-      const asked = this.result ? this.result.question : (q ? q.question : '');
-      this.question = asked;
-      this.picked = asked;
       if (n === 0) this.$nextTick(() => this.drawMap());
       // Plotly draws into a div the step swap leaves untouched, so it still holds the
       // previous step's map until it is told otherwise.
