@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import functools
+import threading
 from typing import Protocol
 
 from rag.models import Scored
@@ -19,8 +20,19 @@ class CrossEncoderReranker:
         return [float(s) for s in _model().predict(pairs)]
 
 
-@functools.lru_cache(maxsize=1)
+# The server warms the models on a background thread while it is already serving, so
+# a question asked during the warm-up would otherwise load a second copy: lru_cache
+# does not hold a lock across the call it is caching.
+_loading = threading.Lock()
+
+
 def _model():
+    with _loading:
+        return _load()
+
+
+@functools.lru_cache(maxsize=1)
+def _load():
     from sentence_transformers import CrossEncoder
 
     return CrossEncoder(MODEL_NAME)

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+import time
 from pathlib import Path
 
 from rag.embed import embed_query
@@ -10,6 +12,8 @@ from rag.llm import build_llm
 from rag.pipeline import Engine
 from rag.rerank import CrossEncoderReranker
 from rag.store import load_artefacts
+
+log = logging.getLogger(__name__)
 
 APP_DIR = Path(__file__).resolve().parents[1]
 INDEX_DIR = APP_DIR / "data" / "index"
@@ -42,3 +46,22 @@ def load_projection(index_dir: Path | None = None):
     index_dir = index_dir or default_index_dir()
     chunks, _, projection = load_artefacts(index_dir)
     return chunks, projection
+
+
+def warm_models(engine: Engine) -> None:
+    """Load the embedder and the cross-encoder before anyone asks a question.
+
+    Both are lazy, so without this the first question on stage pays for ~15s of weight
+    loading with no indication that anything is happening.
+    """
+    started = time.perf_counter()
+    log.info("loading the models…")
+    try:
+        engine.embed_query("warm")
+        engine.reranker.score("warm", ["warm"])
+    except Exception as exc:
+        # A missing model must not take the server down with it: every step that does
+        # not rerank still works, and the room needs to see the error, not a crash.
+        log.info("models failed to load: %s", exc)
+        return
+    log.info("models ready in %.1fs", time.perf_counter() - started)
