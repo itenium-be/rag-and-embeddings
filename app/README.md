@@ -4,6 +4,10 @@ The live demo for the [RAG & Embeddings session](../notes/Session-Outline.md). F
 questions, a six-step wizard: four go green from retrieval tricks alone, the fifth
 needs the last step, Structure.
 
+Before the wizard there is a step -1, Context: the whole corpus in the prompt and no
+retrieval at all, which is the baseline the six steps have to beat. See
+[When not to reach for this](../notes/When-Not-To-RAG.md).
+
 ## Run it
 
 ```bash
@@ -67,6 +71,9 @@ prefers `data/index-real` when it exists, so before the talk edit the script's
 `build_engine()` call to pass `data/index-real` explicitly — otherwise the retrieved
 chunks differ from what the cache was warmed against, and the live demo still hits the
 network.
+
+Rebuilding the index invalidates every step -1 entry, because at that step the corpus
+*is* the prompt and the cache is keyed on the prompt. Re-warm after any rebuild.
 
 ## Hot reload
 

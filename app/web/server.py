@@ -14,11 +14,19 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from rag.critic import critique
+from rag.generate import extract_citations
 from rag.llm import NoAnswerAvailable
-from rag.models import Chunk, Config, Result, WIZARD_STEPS
+from rag.longcontext import answer_from_corpus, build_corpus, corpus_chunks
+from rag.models import Chunk, Config, LONG_CONTEXT_STEP, Result, Scored, WIZARD_STEPS
 from rag.pipeline import Engine
 from web.clusters import cluster_ellipses
-from web.trace import format_critique, format_question, format_result, install_console_logging
+from web.trace import (
+    format_critique,
+    format_question,
+    format_result,
+    format_usage,
+    install_console_logging,
+)
 
 log = logging.getLogger(__name__)
 
@@ -97,6 +105,9 @@ def _result_json(result: Result, query_vector: np.ndarray, vector_of: dict) -> d
 def create_app(engine: Engine, chunks: list[Chunk], projection: np.ndarray) -> FastAPI:
     app = FastAPI(title="RAG demo")
     vector_of = {c.id: v for c, v in zip(engine.dense.chunks, engine.dense.vectors)}
+    # Built once: it is a megabyte of string and it is identical on every question.
+    ordered = corpus_chunks(chunks)
+    corpus = build_corpus(chunks)
 
     @app.get("/")
     def index() -> FileResponse:
@@ -127,7 +138,13 @@ def create_app(engine: Engine, chunks: list[Chunk], projection: np.ndarray) -> F
                 # verdict is better than a flat failure, so a question that a technique
                 # only partly fixes still opens on that technique. Derived rather than
                 # declared, so it cannot drift from the scoreboard.
-                "demo_at": next((n for n in sorted(s["steps"]) if s["steps"][n]), None),
+                #
+                # Step -1 is not a candidate. It demonstrates no technique — it is what
+                # the techniques are measured against.
+                "demo_at": next(
+                    (n for n in sorted(s["steps"]) if n > LONG_CONTEXT_STEP and s["steps"][n]),
+                    None,
+                ),
                 "note": s.get("note"),
             }
             for s in _questions()
@@ -162,6 +179,38 @@ def create_app(engine: Engine, chunks: list[Chunk], projection: np.ndarray) -> F
         query_vector = engine.embed_query(result.rewritten or result.question)
         return {
             **_result_json(result, query_vector, vector_of),
+            "critique": [asdict(c) for c in checks] if reference else None,
+        }
+
+    @app.post("/api/context")
+    def context(request: AskRequest) -> dict:
+        """Step -1: no retrieval at all, just the corpus and the question."""
+        log.info(format_question(request.question, LONG_CONTEXT_STEP, None))
+        started = time.perf_counter()
+        try:
+            answer, usage = answer_from_corpus(engine.llm, request.question, corpus)
+        except NoAnswerAvailable as exc:
+            log.info("   failed    %s", exc)
+            return {"error": str(exc)}
+        except Exception as exc:
+            log.info("   failed    %s", exc)
+            return {"error": str(exc)}
+        log.info(format_usage(usage, len(ordered), time.perf_counter() - started))
+
+        # Every chunk is a source here, so a marker resolves against the whole corpus.
+        citations = extract_citations(answer, [Scored(c, 0.0) for c in ordered])
+
+        reference = _reference_for(request.question)
+        checks = critique(engine.llm, request.question, reference, answer) if reference else []
+        if reference:
+            log.info(format_critique(checks))
+
+        return {
+            "question": request.question,
+            "answer": answer,
+            "citations": [asdict(c) for c in citations],
+            "chunks": len(ordered),
+            "usage": usage,
             "critique": [asdict(c) for c in checks] if reference else None,
         }
 

@@ -9,9 +9,10 @@ from pathlib import Path
 import pytest
 import yaml
 
-from rag.app import build_engine
+from rag.app import build_engine, load_projection
 from rag.critic import critique
-from rag.models import WIZARD_STEPS
+from rag.longcontext import answer_from_corpus, build_corpus
+from rag.models import LONG_CONTEXT_STEP, WIZARD_STEPS
 
 APP = Path(__file__).resolve().parents[1]
 QUESTIONS = yaml.safe_load((APP / "questions.yaml").read_text(encoding="utf-8"))
@@ -24,6 +25,25 @@ def engine():
     # Whichever corpus has been built: the real one when it exists, the committed
     # sample otherwise. Pinning this to the sample silently measured the wrong corpus.
     return build_engine(cache_dir=APP / "data" / "cache")
+
+
+@pytest.fixture(scope="module")
+def corpus():
+    return build_corpus(load_projection()[0])
+
+
+def verdict_from_checks(checks) -> bool | str:
+    """Score an answer the way `everyone` scores retrieval: all, most, or neither.
+
+    An empty verdict is a failure, not a pass: critique() swallows its own errors so the
+    demo survives them, and a silent judge would otherwise score green.
+    """
+    if not checks:
+        return False
+    passed = sum(1 for c in checks if c.ok)
+    if passed == len(checks):
+        return True
+    return "partial" if passed * 2 > len(checks) else False
 
 
 def _verdict(spec: dict, result, llm) -> bool | str:
@@ -65,6 +85,21 @@ def _verdict(spec: dict, result, llm) -> bool | str:
 
     matches = sum(1 for s in result.used if value in blob(s.chunk))
     return matches >= check.get("min_matches", 1)
+
+
+@pytest.mark.parametrize("spec", QUESTIONS, ids=[q["id"] for q in QUESTIONS])
+def test_long_context_scoreboard(engine, corpus, spec):
+    """Step -1 is judged on its answer, not on what it retrieved.
+
+    Every chunk is in the prompt, so `includes` and `everyone` would both pass on any
+    question by construction. The critic is the only check that means anything here.
+    """
+    answer, _ = answer_from_corpus(engine.llm, spec["question"], corpus)
+    expected = spec["steps"][LONG_CONTEXT_STEP]
+    actual = verdict_from_checks(critique(engine.llm, spec["question"], spec["answer"], answer))
+    assert actual == expected, (
+        f"{spec['id']} at step -1 (Context): expected {expected!r}, got {actual!r}"
+    )
 
 
 @pytest.mark.parametrize("spec", QUESTIONS, ids=[q["id"] for q in QUESTIONS])

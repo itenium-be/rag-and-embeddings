@@ -522,6 +522,45 @@ cross-encoder that fixed step 3 also costs a second per query.
 -->
 
 ---
+layout: default
+clicks: 3
+h2:
+  type: semicolon
+  color: muted
+  position: end
+---
+
+# So we pasted them all in
+
+## The baseline, measured
+
+<LongContextResults :clicks="$clicks" />
+
+<!--
+The callback to "Just paste them all in?". That slide predicted three problems from
+first principles; this one is what happened when the demo actually did it. Step -1 in
+the app is the whole corpus - 2151 chunks, no retrieval at all - and the honest result
+is that it is a strong baseline, not a strawman. Three of five right, one four-fifths
+right. It beats naive, hybrid and reranking on most of this scoreboard.
+
+Two things it does that retrieval never does. On AZ-900 it opens by flatly denying the
+certificate exists, lists all four holders with citations, and then corrects itself in
+the same answer - lost in the middle, live, in a paragraph. The critic scores it 6/6
+because the last paragraph is right, which is its own lesson about scoring prose.
+
+And the credits question is the one to end on. Every one of Simon's 946 ledger rows is
+in the prompt. It refuses to add them up, says the sources never claim any total is the
+current balance, and points at the BambooHR credits tab - where the number actually
+lives. It diagnosed the structure argument by itself. A bigger context window is not an
+aggregation engine either.
+
+The money line is measured, not the estimate from the earlier slide: 501k tokens, not
+220k, because Dutch policy text tokenizes at about two characters a token. Five dollars
+a question against a quarter of a cent. That is the whole case for everything in
+between these two slides.
+-->
+
+---
 layout: socials
 ---
 
