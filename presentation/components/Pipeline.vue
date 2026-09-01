@@ -44,15 +44,15 @@
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 7 }">
         <span class="arrow">&rarr;</span>
-        <div class="box target">nearest chunks<br>+ question</div>
+        <div class="box target">search<em>cosine, then sort</em></div>
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 8 }">
         <span class="arrow">&rarr;</span>
-        <div class="box model">answer<br>model<em>claude-opus-5</em></div>
+        <div class="box">nearest chunks<br>+ question</div>
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 9 }">
         <span class="arrow">&rarr;</span>
-        <div class="box answer">answer</div>
+        <div class="box model">answer<br>model<em>claude-opus-5</em></div>
       </div>
     </div>
 
@@ -157,11 +157,6 @@ defineProps({ clicks: { type: Number, default: 0 } })
   background: #343434;
   border-color: #343434;
   color: #fefefe;
-}
-.box.answer {
-  border-color: #3f8a46;
-  background: #edf6ee;
-  color: #1c1c1c;
 }
 
 /* Down out of the store, one slot to the left, down again into the chunks it answers
