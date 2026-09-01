@@ -167,14 +167,14 @@ defineProps({ clicks: { type: Number, default: 0 } })
 /* Down out of the store, one slot to the left, down again into the chunks it answers
    with. Slots are equal-width flex children, so one slot is exactly the pitch between
    two box centres; the inset is half a box, which puts the legs on the box centres
-   rather than the slot centres. The height spans the whole gap between the rows, so the
-   chevron lands on the target box instead of in the air above it. */
+   rather than the slot centres. The height stops the chevron 8px short of the target
+   box, the same clearance the horizontal arrows leave. */
 .elbow {
   position: absolute;
   right: 4.28rem;
   top: 100%;
   width: 100%;
-  height: 7.425rem;
+  height: 6.484rem;
 }
 .elbow .leg {
   position: absolute;
