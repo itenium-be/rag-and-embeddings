@@ -328,6 +328,12 @@ clicks: 4
 <Scoreboard :clicks="$clicks" />
 
 ---
+layout: quote
+---
+
+# 🎬 Demo
+
+---
 layout: break
 ---
 
