@@ -78,23 +78,18 @@
     </div>
 
     <div class="scale reveal" :class="{ shown: clicks >= 6 }">
-      <div class="stitle">
-        every pair of the 2194 chunks in our corpus — 2 405 721 comparisons
-      </div>
+      <div class="stitle">our corpus</div>
+      <div class="scount">every pair of the 2194 chunks — 2 405 721 comparisons</div>
       <div class="bar">
         <span class="band"></span>
-        <span class="mark" style="left: 79.98%"></span>
         <span class="mark" style="left: 81.15%"></span>
         <span class="pin"></span>
         <span class="pinlabel">0.887</span>
       </div>
       <div class="ticks">
         <span class="tick edge" style="left: 66.1%">0.661</span>
-        <span class="tick" style="left: 79.98%">median 0.800</span>
-        <span class="tick max">0.999</span>
-      </div>
-      <div class="ticks">
         <span class="tick" style="left: 81.15%">avg 0.812</span>
+        <span class="tick max">0.999</span>
       </div>
     </div>
 
@@ -266,10 +261,16 @@ const productCells = swapIn(products, 'product')
 
 .scale { padding-top: 2rem; }
 .stitle {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1c1c1c;
+}
+.scount {
   font-family: var(--font-code);
   font-size: 0.82rem;
   letter-spacing: 0.04em;
-  margin-bottom: 0.5rem;
+  margin: 0.2rem 0 0.6rem;
   color: #5f6066;
 }
 .bar {
@@ -280,8 +281,7 @@ const productCells = swapIn(products, 'product')
   background: #fefefe;
 }
 /* The corpus occupies the right third and nothing else: the empty left two thirds is
-   the whole point of the slide, so the band is drawn, not described. Median and average
-   sit 1.2% apart, which is why their labels are on two rows rather than one. */
+   the whole point of the slide, so the band is drawn, not described. */
 .band {
   position: absolute;
   left: 66.1%;
