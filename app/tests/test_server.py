@@ -48,6 +48,13 @@ def test_questions_endpoint_returns_the_five_questions(client):
     assert all("question" in q for q in questions)
 
 
+def test_questions_report_the_step_that_first_makes_them_pass(client):
+    by_id = {q["id"]: q for q in client.get("/api/questions").json()}
+    assert by_id["ai-tools"]["demo_at"] == 1
+    assert by_id["kubernetes"]["demo_at"] == 3
+    assert by_id["creditsaldo"]["demo_at"] == 6
+
+
 def test_ask_returns_answer_used_and_candidates(client):
     body = client.post("/api/ask", json={"question": "AZ-204", "step": 1}).json()
     assert body["answer"] == "An answer [1]."
@@ -77,6 +84,25 @@ def test_map_query_returns_the_query_point_and_neighbours(client):
 
 def test_index_page_is_served(client):
     assert client.get("/").status_code == 200
+
+
+def test_ask_returns_the_query_vector_and_a_vector_per_chunk(client):
+    body = client.post("/api/ask", json={"question": "AZ-204", "step": 1}).json()
+    assert body["dims"] == 2
+    assert body["query_vector"] == [1.0, 0.0]
+    assert body["used"][0]["vector"] == [1.0, 0.0]
+    assert body["used"][0]["similarity"] == 1.0
+
+
+def test_ask_returns_candidates_reranking_dropped(client):
+    body = client.post(
+        "/api/ask",
+        json={"question": "AZ-204", "config": {"dense": True, "rerank": True, "top_n": 1}},
+    ).json()
+    used = {c["id"] for c in body["used"]}
+    assert len(used) == 1
+    # The grid greys these out. Without them the room cannot see what reranking removed.
+    assert [c["id"] for c in body["candidates"] if c["id"] not in used]
 
 
 def test_static_assets_are_served(client):

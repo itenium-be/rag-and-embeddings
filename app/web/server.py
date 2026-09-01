@@ -37,7 +37,12 @@ def _config_for(request: AskRequest) -> Config:
     return Config()
 
 
-def _scored_json(scored) -> dict:
+def _preview(vector: np.ndarray) -> list[float]:
+    return [round(float(v), 6) for v in vector]
+
+
+def _scored_json(scored, query_vector: np.ndarray, vector_of: dict) -> dict:
+    vector = vector_of.get(scored.chunk.id)
     return {
         "id": scored.chunk.id,
         "title": scored.chunk.title,
@@ -46,22 +51,28 @@ def _scored_json(scored) -> dict:
         "text": scored.chunk.text,
         "score": scored.score,
         "ranks": scored.ranks,
+        "vector": _preview(vector) if vector is not None else [],
+        # Both sides are normalised at embed time, so the dot product is the cosine.
+        "similarity": round(float(vector @ query_vector), 4) if vector is not None else None,
     }
 
 
-def _result_json(result: Result) -> dict:
+def _result_json(result: Result, query_vector: np.ndarray, vector_of: dict) -> dict:
     return {
         "question": result.question,
         "rewritten": result.rewritten,
         "answer": result.answer,
         "citations": [asdict(c) for c in result.citations],
-        "used": [_scored_json(s) for s in result.used],
-        "candidates": [_scored_json(s) for s in result.candidates[:20]],
+        "dims": int(query_vector.shape[0]),
+        "query_vector": _preview(query_vector),
+        "used": [_scored_json(s, query_vector, vector_of) for s in result.used],
+        "candidates": [_scored_json(s, query_vector, vector_of) for s in result.candidates[:20]],
     }
 
 
 def create_app(engine: Engine, chunks: list[Chunk], projection: np.ndarray) -> FastAPI:
     app = FastAPI(title="RAG demo")
+    vector_of = {c.id: v for c, v in zip(engine.dense.chunks, engine.dense.vectors)}
 
     @app.get("/")
     def index() -> FileResponse:
@@ -85,7 +96,15 @@ def create_app(engine: Engine, chunks: list[Chunk], projection: np.ndarray) -> F
     def questions() -> list[dict]:
         specs = yaml.safe_load(QUESTIONS_FILE.read_text(encoding="utf-8"))
         return [
-            {"id": s["id"], "question": s["question"], "steps": s["steps"]} for s in specs
+            {
+                "id": s["id"],
+                "question": s["question"],
+                "steps": s["steps"],
+                # The step this question exists to demonstrate: the first one it passes.
+                # Derived rather than declared, so it cannot drift from the scoreboard.
+                "demo_at": next((n for n in sorted(s["steps"]) if s["steps"][n]), None),
+            }
+            for s in specs
         ]
 
     @app.post("/api/ask")
@@ -98,7 +117,10 @@ def create_app(engine: Engine, chunks: list[Chunk], projection: np.ndarray) -> F
             # A live LLM call can fail for reasons other than a missing credential
             # (e.g. no API credit) — the room must see a message, never a stack trace.
             return {"error": str(exc)}
-        return _result_json(result)
+        # The rewritten query is what retrieval actually saw, so it is the vector the
+        # room should be looking at.
+        query_vector = engine.embed_query(result.rewritten or result.question)
+        return _result_json(result, query_vector, vector_of)
 
     @app.get("/api/map")
     def map_points() -> list[dict]:
