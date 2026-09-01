@@ -9,10 +9,29 @@ This is [When not to reach for this](../../../notes/When-Not-To-RAG.md) made run
 > in the prompt answers your five questions and RAG does not, you have learned something
 > important about your retrieval before building any of it.
 
-The tab exists to *test* that claim on this corpus, not to illustrate it. The first
-measurement already contradicts the optimistic reading: on AZ-900 long context opens with
-a false refusal, then names three of the four holders in the next sentence — worse than
-step 3, on the question step 3 exists to fix.
+The tab exists to *test* that claim on this corpus, not to illustrate it. Measured, it
+half survives: three of the five questions green, one partial, one failed.
+
+| Question    | Step -1  | Best RAG step |
+| ----------- | -------- | ------------- |
+| ai-tools    | pass     | 1             |
+| fietslease  | pass     | 1             |
+| az-900      | pass     | 3             |
+| laptoplader | partial  | 4             |
+| creditsaldo | fail     | 6             |
+
+Two of those results are worth more than the score.
+
+**AZ-900 passes while contradicting itself.** The answer opens "de bronnen bevatten geen
+enkele vermelding van een AZ-900-certificaat" and then lists all four holders, correctly
+excluding the one whose CV shows only an exam-prep course. The critic scores facts, the
+facts are all present, and the first sentence is false. Retrieving five chunks never
+produces that failure.
+
+**The ledger question fails with all 946 rows in the prompt.** Not because it cannot see
+them — because it declines to add them up: "optellen van alle boekingen op zijn naam
+levert een getal op, maar de bronnen zeggen niet dat dat het actuele saldo is". A bigger
+context window is not an aggregation engine either. Only step 6 is.
 
 ## What goes in the context
 
@@ -59,12 +78,17 @@ times the measured 16s but not a margin worth betting a talk on.
 
 ## Cost strip
 
-`2151 chunks · 262k in · 16.4s · $1.31`, and on a repeat inside the CLI's cache window
-`cache read 262k · $0.13` — [Cost and Caching](../../../notes/Cost-And-Caching.md)
-demonstrating itself.
+Measured, not estimated: `2151 chunks · 501k tokens in · $4.93 · 14.5s`.
 
-The token count is what the CLI bills, which includes roughly 22k tokens of Claude Code's
-own system prompt. The strip is labelled *as billed* rather than presented as pure corpus.
+Half a million tokens, not the 250k a `chars / 4` estimate predicts — Dutch policy text
+and Flemish proper nouns tokenize at roughly two characters each. The cost is high for
+the same reason plus cache *creation*, billed at 1.25x: a repeat inside the window reads
+the corpus back at a tenth of that.
+
+The token count is what the CLI bills, which includes its own system prompt. The strip
+says *as billed* rather than claiming to be pure corpus, and only calls a call cached
+when the cache read is most of the input — the CLI always cache-reads its own preamble,
+so a few thousand cached tokens says nothing about the corpus.
 
 ## Citations
 
@@ -77,6 +101,14 @@ Each question gains a `-1` key in its `steps` map, measured against the real cor
 every other prediction in that file. The scoreboard renders it with no change: `verdict()`
 already reads `q.steps[step]`.
 
+Step -1 is judged on its **answer**, never on what it retrieved: everything is retrieved
+by construction, so `includes` and `everyone` would pass on any question at all. It is
+scored the way `everyone` scores retrieval — every checklist item is a pass, most of them
+is `partial`, fewer is a failure.
+
+`demo_at` skips it. Step -1 demonstrates no technique; it is what the techniques are
+measured against.
+
 The live answer critic runs as it does at every other step.
 
 ## Testing
@@ -88,11 +120,12 @@ Unit, no network, no models:
 - usage JSON parses, and a missing field does not take the answer down with it
 - `/api/context` returns the documented shape
 
-Then one measured pass over the five questions to fill the `-1` column.
+Then one measured pass over the five questions to fill the `-1` column, which the slow
+scoreboard asserts from then on: 35 assertions, up from 30.
 
 ## Risks
 
-- **A live miss on stage** costs the measured ~16s. `warm_cache.py` covers the prepared five.
+- **A live miss on stage** costs the measured 12-16s. `warm_cache.py` covers the prepared five.
 - **Rebuilding the index changes every step -1 cache key**, because the corpus is the
   prompt. The README already documents the same trap for `index-real`; it gains a line.
 - **~5 MB of new cache files.** `data/` is gitignored in full.
