@@ -125,6 +125,21 @@ h2:
 
 ---
 layout: default
+clicks: 4
+h2:
+  type: dot
+  color: secondary
+  position: end
+---
+
+# Embeddings
+
+## Index cards
+
+<Chunking :clicks="$clicks" />
+
+---
+layout: default
 clicks: 3
 h2:
   type: dot
@@ -232,21 +247,6 @@ matters. That is the answer when someone asks what threshold to use: you don't, 
 the top k. It is also why the numbers look so compressed later on: 0.844 against 0.831
 is a real gap, it just does not look like one.
 -->
-
----
-layout: default
-clicks: 4
-h2:
-  type: dot
-  color: secondary
-  position: end
----
-
-# Embeddings
-
-## Index cards
-
-<Chunking :clicks="$clicks" />
 
 ---
 layout: default
