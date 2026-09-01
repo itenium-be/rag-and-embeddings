@@ -81,6 +81,25 @@ h1:
 
 <RagBox :clicks="$clicks" />
 
+<!--
+The question the room is already holding: why not just train it on our documents? That is
+the other route and the book puts it first - supervised finetuning, the last step of
+training a model. It works, for tone, format and behaviour. For *facts* it may work or it
+may struggle, which is the book's own hedge and not a promising one to build on.
+
+Three reasons it loses here, none of them about cost. There is no lookup table to install:
+finetuning moves weights, so a fact arrives blurred into everything else the model believes
+and you cannot point at where it landed. Nothing can be cited - the answer comes out of the
+weights, so "which document says that" has no answer, and the same property means nothing
+can be deleted either - everyone in this room is in this corpus by name, so "remove me"
+is a legal question and not a design one. And every changed document is a retraining run,
+where retrieval is a re-index of one file.
+
+RAG is the cheap one: the documents go in the prompt at question time, updating is copying
+a file, and provenance survives all the way to the answer. Not either-or - finetune how it
+speaks, retrieve what it knows.
+-->
+
 ---
 layout: default
 clicks: 6
@@ -325,7 +344,7 @@ clicks: 4
 
 # Use Case
 
-## Four questions
+## One works
 
 <Scoreboard :clicks="$clicks" :show="[1, 2]" />
 
