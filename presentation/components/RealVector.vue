@@ -17,7 +17,7 @@
     </div>
 
     <div class="count reveal" :class="{ shown: clicks >= 3 }">
-      <span class="tokens">384 numbers</span>
+      <span class="tokens">384 numbers / dims</span>
     </div>
 
   </div>

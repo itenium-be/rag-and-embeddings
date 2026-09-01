@@ -52,10 +52,6 @@ h1:
 ---
 layout: default
 clicks: 6
-h1:
-  type: braces
-  color: primary
-  position: all
 ---
 
 # RAG
@@ -67,10 +63,6 @@ h1:
 ---
 layout: default
 clicks: 6
-h2:
-  type: dot
-  color: secondary
-  position: end
 ---
 
 # RAG
@@ -85,7 +77,7 @@ layout: default
 clicks: 2
 h2:
   type: dot
-  color: secondary
+  color: primary
   position: end
 ---
 
@@ -111,10 +103,6 @@ Search PDFs... How?
 ---
 layout: default
 clicks: 5
-h2:
-  type: dot
-  color: secondary
-  position: end
 ---
 
 # Embeddings
@@ -126,30 +114,26 @@ h2:
 ---
 layout: default
 clicks: 5
-h2:
-  type: dot
-  color: secondary
-  position: end
+h1:
+  type: hash
+  color: muted
+  position: start
 ---
 
-# Embeddings
+# Chunking
 
-## Index cards
+## Split into pieces
 
 <Chunking :clicks="$clicks" />
 
 ---
 layout: default
 clicks: 3
-h2:
-  type: dot
-  color: secondary
-  position: end
 ---
 
-# Embeddings
+# Embedding
 
-## A real vector
+## Chunks to vectors
 
 <RealVector :clicks="$clicks" />
 
@@ -171,10 +155,6 @@ wrong for this deck.
 ---
 layout: default
 clicks: 3
-h2:
-  type: dot
-  color: secondary
-  position: end
 ---
 
 # Embeddings
@@ -199,8 +179,8 @@ Dutch question above reaches an English CV because one multilingual model drew b
 layout: default
 clicks: 6
 h2:
-  type: dot
-  color: secondary
+  type: slashes
+  color: muted
   position: end
 ---
 
@@ -251,10 +231,6 @@ is a real gap, it just does not look like one.
 ---
 layout: default
 clicks: 5
-h2:
-  type: dot
-  color: secondary
-  position: end
 ---
 
 # Embeddings
@@ -266,10 +242,6 @@ h2:
 ---
 layout: default
 clicks: 2
-h2:
-  type: dot
-  color: secondary
-  position: end
 ---
 
 # Embeddings
@@ -297,8 +269,8 @@ layout: break
 layout: default
 clicks: 4
 h2:
-  type: dot
-  color: secondary
+  type: semicolon
+  color: muted
   position: end
 ---
 
