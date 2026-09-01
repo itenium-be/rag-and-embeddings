@@ -9,6 +9,10 @@
 # `answer` is the reference answer: what a colleague who knows the corpus would say. The
 # answer critic derives its checklist from it, so it decides what the room sees ticked.
 #
+# `note` is shown beside the answer at the steps it names: what had to be tuned before
+# the technique earned its verdict. A technique that works on the first try is the
+# exception, and the room should hear that from the demo rather than from experience.
+#
 # A step's verdict is `true`, `false`, or `partial` — measurably better than naive but
 # not yet right. Only `everyone` can return `partial`, and only it can tell "found three
 # of the four people" from "found all four", which is the whole AZ-900 story.
@@ -18,6 +22,13 @@
 
 - id: ai-tools
   question: Welke AI tools mag ik gebruiken?
+  note:
+    steps: [4, 5, 6]
+    text: >
+      Rewriting broke this answer before it fixed anything: broadening the question into
+      policy language filled all five slots with the AI Policy and pushed out the one page
+      that is the list. The rewrite prompt now keeps the question as asked in front of the
+      broader phrasings. Every technique here needed a pass like that against this corpus.
   answer: |
     Voor consultants komen deze tools in aanmerking: ChatGPT Go/Plus, ChatGPT Business,
     Cursor Teams/Enterprise, Copilot Business/Enterprise en Claude Go/Pro/Team.

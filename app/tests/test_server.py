@@ -156,3 +156,11 @@ def test_the_critic_verdict_is_logged(client, caplog):
         client.post("/api/ask", json={"question": question, "step": 1})
     assert "critic" in caplog.text
     assert "1/2" in caplog.text
+
+
+def test_questions_carry_the_steps_that_needed_tuning(client):
+    by_id = {q["id"]: q for q in client.get("/api/questions").json()}
+    note = by_id["ai-tools"]["note"]
+    assert note["steps"] == [4, 5, 6]
+    assert note["text"]
+    assert by_id["creditsaldo"]["note"] is None

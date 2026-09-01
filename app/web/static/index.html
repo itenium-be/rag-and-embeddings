@@ -100,6 +100,12 @@
     text-transform: uppercase; letter-spacing: .06em;
   }
 
+  .tuned {
+    border-left: 3px solid var(--warn); background: #1c1a14; border-radius: 0 6px 6px 0;
+    padding: .6rem .8rem; margin: 0 0 1.1rem; font-size: .85rem; color: var(--dim);
+  }
+  .tuned b { color: var(--warn); font-weight: 600; }
+
   .box.verdict { padding-bottom: .55rem; }
   .box.verdict h2 { margin-bottom: .5rem; }
   .critic { columns: 3; column-gap: 1.4rem; list-style: none; margin: 0; padding: 0; }
@@ -231,6 +237,10 @@
         <h1 class="qtitle" x-text="result.question"></h1>
         <p class="rewritten" x-show="result.rewritten">
           Searched for: <em x-text="result.rewritten"></em>
+        </p>
+
+        <p class="tuned" x-show="note()">
+          <b>Needed tuning · </b><span x-text="note()"></span>
         </p>
 
         <template x-if="result?.critique">
@@ -412,6 +422,12 @@ function demo() {
     },
 
     rank(chunk, stage) { return chunk.ranks[stage] ?? '—'; },
+
+    // Only for the step it was written about: the same question is fine at the others.
+    note() {
+      const spec = this.questions.find(q => q.question === this.result?.question);
+      return spec?.note?.steps.includes(this.step) ? spec.note.text : '';
+    },
 
     // Read through the guards: Alpine re-runs these once more while it is tearing the
     // box down, when the step it belonged to has no verdict.

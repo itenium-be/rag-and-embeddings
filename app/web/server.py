@@ -128,6 +128,7 @@ def create_app(engine: Engine, chunks: list[Chunk], projection: np.ndarray) -> F
                 # only partly fixes still opens on that technique. Derived rather than
                 # declared, so it cannot drift from the scoreboard.
                 "demo_at": next((n for n in sorted(s["steps"]) if s["steps"][n]), None),
+                "note": s.get("note"),
             }
             for s in _questions()
         ]
