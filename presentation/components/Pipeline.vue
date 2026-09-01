@@ -57,7 +57,10 @@
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 9 }">
         <span class="arrow">&rarr;</span>
-        <div class="box model">answer<br>model<em>claude-opus-5</em></div>
+        <div class="box model">
+          <span class="llm"><StochasticParrot /></span>
+          answer<br>model<em>claude-opus-5</em>
+        </div>
       </div>
     </div>
 
@@ -118,6 +121,7 @@ defineProps({ clicks: { type: Number, default: 0 } })
 }
 
 .box {
+  position: relative;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -139,6 +143,25 @@ defineProps({ clicks: { type: Number, default: 0 } })
   font-weight: 700;
   color: #1c1c1c;
 }
+
+/* Both boxes say "model" and only one is a language model. The parrot is the difference,
+   and it is the slide's whole point: the thing that reads your documents is not the thing
+   that writes the answer. It hangs off the corner so the row's box widths never shift,
+   and the disc carries the box's own border so it reads as part of the box. */
+.llm {
+  position: absolute;
+  top: -0.85rem;
+  right: -0.85rem;
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  box-sizing: border-box;
+  border: 2px solid var(--color-primary);
+  border-radius: 50%;
+  background: #fefefe;
+}
+.llm :deep(svg) { width: 1.35rem; height: auto; }
 
 /* Names the concrete thing in the box: the two boxes that say "model" are two different
    models, and the store is a pair of files rather than a database. */

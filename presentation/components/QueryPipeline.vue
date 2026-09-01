@@ -11,6 +11,7 @@
     </div>
 
     <div class="agent reveal" :class="{ shown: clicks >= 2 }">
+      <span class="llm"><StochasticParrot /></span>
       retriever agent
       <em>a system prompt selects one or more retrievers</em>
     </div>
@@ -49,6 +50,7 @@
 
     <div class="tail reveal" :class="{ shown: clicks >= 7 }">
       <span class="answer-model">
+        <span class="llm"><StochasticParrot /></span>
         answer model
         <span class="rule into"></span>
         <span class="chev into"></span>
@@ -59,6 +61,7 @@
 
     <div class="sources left-out reveal" :class="{ shown: clicks >= 8 }">
       <div v-for="s in leftOut" :key="s.name" class="src off">
+        <span v-if="s.llm" class="llm"><StochasticParrot /></span>
         <span class="sname">{{ s.name }}</span>
         <em>{{ s.what }}</em>
         <b>not today</b>
@@ -88,7 +91,7 @@ const sources = [
 // never gets to.
 const leftOut = [
   { name: 'access control', what: 'who asks decides which chunks exist' },
-  { name: 'answer critic loop', what: 'the model judges its own answer and retries' },
+  { name: 'answer critic loop', what: 'the model judges its own answer and retries', llm: true },
   { name: 'evaluation', what: 'proving a change made retrieval better' },
 ]
 </script>
@@ -166,6 +169,7 @@ const leftOut = [
   font-weight: 700;
   color: #1c1c1c;
 }
+.agent { position: relative; }
 .agent em,
 .prompt em {
   font-style: normal;
@@ -174,6 +178,33 @@ const leftOut = [
   margin-top: 0.15rem;
   color: #5f6066;
 }
+
+/* The parrot marks the boxes that are a call to a language model, and only those: the
+   embedding model and the cross-encoder are neural too, and neither is one. It hangs off
+   the corner rather than sitting inside, so adding one never resizes a box — the fan legs
+   and chevrons are pinned to box centres. The disc carries the box's own border so the
+   badge reads as part of the box it sits on rather than pasted over it. */
+.llm {
+  position: absolute;
+  top: -0.85rem;
+  right: -0.85rem;
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  box-sizing: border-box;
+  border: 2px solid var(--color-primary);
+  border-radius: 50%;
+  background: #fefefe;
+}
+/* The left-out row sits directly under the answer box, and the slide has no vertical room
+   left to push it further down, so this disc rides lower on its corner than the others. */
+.src.off .llm {
+  top: -0.45rem;
+  border-color: #a8a8a8;
+  border-style: dashed;
+}
+.llm :deep(svg) { width: 1.35rem; height: auto; }
 
 .fan {
   position: relative;
@@ -228,6 +259,7 @@ const leftOut = [
   gap: var(--gap);
 }
 .src {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -296,6 +328,9 @@ const leftOut = [
   font-weight: 700;
   color: #1c1c1c;
 }
+/* Room on the right for the parrot: on a box this narrow the disc otherwise sits over
+   the word rather than over the corner. */
+.answer-model { padding-right: 2.2rem; }
 .answer {
   border-color: #3f8a46;
   background: #edf6ee;
@@ -307,6 +342,7 @@ const leftOut = [
 }
 
 /* Nothing points into these: they are not retrievers the fan could have chosen, so they
-   sit detached below the answer. */
-.left-out { margin-top: 0.4rem; }
+   sit detached below the answer. The gap also clears the critic loop's parrot, which
+   hangs above its box and would otherwise touch the answer box. */
+.left-out { margin-top: 0.6rem; }
 </style>
