@@ -1,0 +1,92 @@
+import logging
+
+from rag.models import Chunk, Config, Citation, Result, Scored
+from web.trace import format_question, format_result, install_console_logging
+
+
+def _scored(cid: str, title: str, ranks: dict) -> Scored:
+    chunk = Chunk(id=cid, text="t", source="s", source_type="cv", title=title, location="p.2")
+    return Scored(chunk=chunk, score=0.5, ranks=ranks)
+
+
+def _result(**overrides) -> Result:
+    used = [_scored("a", "Bram Willems", {"dense": 3, "bm25": 1, "fused": 1, "rerank": 1})]
+    defaults = dict(
+        question="Ik wil AZ-900 halen",
+        rewritten=None,
+        candidates=used + [_scored("b", "Dries", {"bm25": 2, "fused": 2})],
+        used=used,
+        answer="An answer [1].",
+        citations=[],
+    )
+    return Result(**{**defaults, **overrides})
+
+
+def test_question_line_names_the_step_and_the_question():
+    line = format_question("Ik wil AZ-900 halen", 2, Config(bm25=True))
+    assert "step 2" in line
+    assert "Hybrid search" in line
+    assert "Ik wil AZ-900 halen" in line
+
+
+def test_question_line_lists_the_techniques_that_are_on():
+    line = format_question("q", 3, Config(bm25=True, rerank=True))
+    assert "dense+bm25+rerank" in line
+
+
+def test_question_line_says_custom_when_the_advanced_panel_drove_it():
+    assert "custom" in format_question("q", None, Config())
+
+
+def test_result_reports_the_retrievers_that_ran_and_what_they_returned():
+    lines = format_result(_result(), Config(bm25=True), 1.5)
+    text = "\n".join(lines)
+    assert "dense 1" in text
+    assert "bm25 2" in text
+    assert "2 candidates" in text
+
+
+def test_result_shows_the_rewritten_query_when_rewriting_ran():
+    text = "\n".join(format_result(_result(rewritten="azure fundamentals certificaat"), Config(rewrite=True), 0.1))
+    assert "azure fundamentals certificaat" in text
+
+
+def test_result_says_off_for_the_stages_that_did_not_run():
+    text = "\n".join(format_result(_result(), Config(), 0.1))
+    assert "rewrite   off" in text
+    assert "rerank    off" in text
+
+
+def test_result_lists_the_used_chunks_with_their_rank_at_every_stage():
+    text = "\n".join(format_result(_result(), Config(bm25=True, rerank=True), 0.1))
+    assert "Bram Willems" in text
+    assert "p.2" in text
+    assert "dense#3" in text
+    assert "rerank#1" in text
+
+
+def test_result_reports_citations_and_elapsed_time():
+    citations = [Citation(marker=1, chunk_id="a", title="Bram Willems", location="p.2")]
+    text = "\n".join(format_result(_result(citations=citations), Config(citations=True), 1.25))
+    assert "1 citation" in text
+    assert "1.2s" in text
+
+
+def test_result_reports_an_empty_retrieval_without_crashing():
+    text = "\n".join(format_result(_result(candidates=[], used=[]), Config(), 0.1))
+    assert "0 candidates" in text
+
+
+def test_console_logging_mutes_the_hub_banner():
+    import os
+
+    install_console_logging()
+    assert os.environ["HF_HUB_VERBOSITY"] == "error"
+
+
+def test_console_logging_puts_the_pipeline_loggers_on_stderr_once():
+    install_console_logging()
+    install_console_logging()
+    logger = logging.getLogger("rag")
+    assert len(logger.handlers) == 1
+    assert logging.getLogger("rag.llm").isEnabledFor(logging.INFO)

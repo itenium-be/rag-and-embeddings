@@ -13,5 +13,5 @@ Reply with the rewritten query and nothing else."""
 
 
 def rewrite_query(llm, question: str) -> str:
-    rewritten = llm.complete(SYSTEM, f"Question: {question}").strip()
+    rewritten = llm.complete(SYSTEM, f"Question: {question}", label="rewrite").strip()
     return rewritten or question

@@ -24,7 +24,7 @@ def generate_answer(llm, question: str, candidates: list[Scored], **kwargs) -> s
     if not candidates:
         return "Nothing in the corpus matched that question."
     prompt = f"Sources:\n\n{_format_sources(candidates)}\n\nQuestion: {question}"
-    return llm.complete(SYSTEM, prompt, **kwargs).strip()
+    return llm.complete(SYSTEM, prompt, label="answer", **kwargs).strip()
 
 
 def extract_citations(answer: str, candidates: list[Scored]) -> list[Citation]:

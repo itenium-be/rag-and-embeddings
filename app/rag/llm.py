@@ -9,10 +9,14 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import shutil
 import subprocess
+import time
 from pathlib import Path
 from typing import Protocol
+
+log = logging.getLogger(__name__)
 
 MODEL = "claude-opus-5"
 MAX_TOKENS = 2048
@@ -99,9 +103,12 @@ class CachedLLM:
             return None
         return json.loads(path.read_text(encoding="utf-8"))["response"]
 
-    def complete(self, system: str, prompt: str, *, fallback_to: str | None = None) -> str:
+    def complete(
+        self, system: str, prompt: str, *, fallback_to: str | None = None, label: str = "llm"
+    ) -> str:
         cached = self._read(system, prompt)
         if cached is not None:
+            log.info("   %-9s %s · cache hit", "llm", label)
             return cached
 
         if self._inner is None:
@@ -110,6 +117,7 @@ class CachedLLM:
                 "or `ant auth login` to enable live calls."
             )
 
+        started = time.perf_counter()
         try:
             response = self._inner.complete(system, prompt)
         except Exception:
@@ -117,8 +125,10 @@ class CachedLLM:
             if fallback_to is not None:
                 stale = self._read(system, fallback_to)
                 if stale is not None:
+                    log.info("   %-9s %s · cache miss, the call failed — serving a stale answer", "llm", label)
                     return stale
             raise
+        log.info("   %-9s %s · cache miss → %.1fs", "llm", label, time.perf_counter() - started)
 
         self._path(system, prompt).write_text(
             json.dumps({"system": system, "prompt": prompt, "response": response}),

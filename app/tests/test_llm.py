@@ -85,3 +85,22 @@ def test_cli_llm_raises_with_stderr_when_the_cli_fails():
 
     with pytest.raises(RuntimeError, match="not logged in"):
         ClaudeCliLLM(runner=runner).complete("sys", "prompt")
+
+
+def test_a_cache_hit_is_logged(tmp_path, caplog):
+    llm = CachedLLM(CountingLLM(), tmp_path)
+    llm.complete("sys", "prompt", label="answer")
+    with caplog.at_level("INFO", logger="rag.llm"):
+        llm.complete("sys", "prompt", label="answer")
+    assert "answer" in caplog.text
+    assert "cache hit" in caplog.text
+
+
+def test_a_cache_miss_is_logged_with_the_time_the_call_took(tmp_path, caplog):
+    import re
+
+    with caplog.at_level("INFO", logger="rag.llm"):
+        CachedLLM(CountingLLM(), tmp_path).complete("sys", "prompt", label="rewrite")
+    assert "rewrite" in caplog.text
+    assert "cache miss" in caplog.text
+    assert re.search(r"\d+\.\ds", caplog.text)
