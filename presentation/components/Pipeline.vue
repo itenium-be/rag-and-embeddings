@@ -11,11 +11,11 @@
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 2 }">
         <span class="arrow">&rarr;</span>
-        <div class="box">chunks<em>max 800, 100 overlap</em></div>
+        <div class="box">chunks<em>max 800<br>&middot; 100 overlap</em></div>
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 3 }">
         <span class="arrow">&rarr;</span>
-        <div class="box model">embedding<br>model<em>e5-small · 384 dims</em></div>
+        <div class="box model">embedding<br>model<em>e5-small<br>&middot; 384 dims</em></div>
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 4 }">
         <span class="arrow">&rarr;</span>
@@ -40,7 +40,7 @@
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 6 }">
         <span class="arrow">&rarr;</span>
-        <div class="box model">embedding<br>model<em>e5-small · 384 dims</em></div>
+        <div class="box model">embedding<br>model<em>e5-small<br>&middot; 384 dims</em></div>
       </div>
       <div class="slot reveal" :class="{ shown: clicks >= 7 }">
         <span class="arrow">&rarr;</span>
@@ -146,9 +146,9 @@ defineProps({ clicks: { type: Number, default: 0 } })
   font-style: normal;
   font-size: 0.62rem;
   font-weight: 400;
-  line-height: 1.35;
+  line-height: 1.1;
   letter-spacing: 0.01em;
-  margin-top: 0.35rem;
+  margin-top: 0.25rem;
   color: #5f6066;
 }
 .box.store em { color: #b9b9b9; }
