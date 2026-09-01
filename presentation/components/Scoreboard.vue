@@ -62,7 +62,7 @@ const asked = [
   justify-content: flex-end;
   gap: 1.1rem;
   border: 2px solid transparent;
-  padding: 0 0 0.6rem;
+  padding: 0 1.1rem 0.6rem;
 }
 .head-label {
   font-family: var(--font-code);
@@ -82,8 +82,7 @@ const asked = [
   border: 2px solid #a8a8a8;
   border-radius: 0.5rem;
   background: #fefefe;
-  padding: 0.75rem 0 0.75rem 1.1rem;
-  /* The fix column is the last child; its own padding is the row's right edge. */
+  padding: 0.75rem 1.1rem;
   margin-bottom: 0.85rem;
 }
 .num {
@@ -105,7 +104,7 @@ const asked = [
 .fix { flex: 0 0 var(--fix-col); text-align: center; }
 
 .detail,
-.fix {
+.row .fix {
   font-family: var(--font-code);
   font-size: 0.72rem;
   line-height: 1.2;
@@ -117,13 +116,13 @@ const asked = [
   background: #e4e4e4;
   color: #5f6066;
 }
-.fix {
+.row .fix {
   background: #ffe2d2;
   color: #8a2f00;
 }
 /* Row 1 has nothing to fix, and an empty chip is still a coloured rectangle. */
 .detail:empty,
-.fix:empty {
+.row .fix:empty {
   background: none;
   padding: 0;
 }
