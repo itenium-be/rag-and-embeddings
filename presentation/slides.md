@@ -48,10 +48,14 @@ layout: full
 
 ---
 layout: agenda
+textSize: sm
 items:
   - RAG
   - Embeddings
   - Use Case
+  - <s>Agents &amp; routers</s>
+  - <s>Entity resolution</s>
+  - <s>Evals</s>
 ---
 
 ---

@@ -13,6 +13,7 @@ const sessions = [
   { date: 'Dec 2026',    title: 'The Math Behind the AI Curtain',            status: 'scheduled' },
   { date: 'TBD',         title: 'Agent Cage Match & Model Bake-Off',         status: 'proposed' },
   { date: 'TBD',         title: 'Text-to-SQL & Semantic Search',            status: 'proposed' },
+  { date: 'TBD',         title: 'Evals: Grading the Machine',              status: 'proposed' },
 ]
 </script>
 
