@@ -176,6 +176,35 @@ h2:
 
 # Embeddings
 
+## Comparing two vectors
+
+<DotProduct :clicks="$clicks" />
+
+<!--
+The `.npy` file holds no index and no notion of similarity - it is a header and 3.2 MB
+of raw floats. The comparison is one line: `vectors @ query_vector`, then sort. 2194 dot
+products, sub-millisecond, no clever data structure anywhere.
+
+The band is the honest part. Nothing in this corpus is ever *unrelated* to anything
+else - the floor is 0.672, and that is a CV paragraph against car damage norms. So a
+score on its own means nothing; only the order does. Anyone who asks "what cut-off do
+we use" has to be told: there isn't one.
+
+0.999 is two BambooHR rows for the same person that differ by a single date. Remember
+that when question 5 fails.
+-->
+
+---
+layout: default
+clicks: 4
+h2:
+  type: dot
+  color: secondary
+  position: end
+---
+
+# Embeddings
+
 ## Index cards
 
 <Chunking :clicks="$clicks" />
