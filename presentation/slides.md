@@ -243,6 +243,34 @@ clicks: 5
 
 ---
 layout: default
+clicks: 5
+---
+
+# Retrieval
+
+## Every question
+
+<QueryPipeline :clicks="$clicks" />
+
+<!--
+The pipeline slide showed retrieval as one box. This is that box.
+
+Vector search is what we built and it is one option of several. Retrieval only has to
+put the right context in the prompt - it does not have to be a similarity search. An API
+call against BambooHR answers "who is free in October" properly; a SQL `count` answers
+"how many" properly. Neither needs an embedding.
+
+What decides between them is the agent box at the top, and that is the whole of session
+2 - a model that picks the retriever, runs it, and checks its own answer. Today it is a
+picture, not code: everything below the fan is vector search only.
+
+The line worth landing: the model never sees your documents. It sees whatever retrieval
+put in the prompt, and nothing else. Every failure for the rest of the session is a
+retrieval failure, not a model failure.
+-->
+
+---
+layout: default
 clicks: 2
 ---
 
