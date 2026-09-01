@@ -55,6 +55,7 @@
   }
   .blurb { color: var(--dim); font-size: .9rem; margin: 0 0 1rem; }
   .rewritten { border-left: 3px solid var(--accent); padding-left: .8rem; margin-bottom: 1rem; font-size: .9rem; }
+  .rewritten .asked { color: var(--dim); }
   .answer > :first-child { margin-top: 0; }
   .answer > :last-child { margin-bottom: 0; }
   .answer h1, .answer h2, .answer h3 {
@@ -260,7 +261,7 @@
       <div>
         <h1 class="qtitle" x-text="result.question"></h1>
         <p class="rewritten" x-show="result.rewritten">
-          Searched for: <em x-text="result.rewritten"></em>
+          Searched for: <em x-html="rewrittenHtml()"></em>
         </p>
 
         <p class="tuned" x-show="note()">
@@ -533,6 +534,16 @@ function demo() {
     override(flag, value) {
       this.overrides[flag] = value;
       if (this.question) this.ask(this.question);
+    },
+
+    // The rewrite prompt puts the question as asked in front of the broader phrasings,
+    // so dimming that prefix leaves only what rewriting actually added.
+    rewrittenHtml() {
+      const escape = t => t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+      const rewritten = this.result.rewritten;
+      const asked = this.result.question;
+      if (!rewritten.startsWith(asked)) return escape(rewritten);
+      return `<span class="asked">${escape(asked)}</span>${escape(rewritten.slice(asked.length))}`;
     },
 
     // The model is told to cite in every step, so the markers are in the prose from
