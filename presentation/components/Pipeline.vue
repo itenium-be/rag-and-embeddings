@@ -152,9 +152,12 @@ defineProps({ clicks: { type: Number, default: 0 } })
   color: #5f6066;
 }
 /* The separator sits on a line of its own between the two values; a collapsed
-   line-height keeps that from costing a full extra line. */
+   line-height keeps that from costing a full extra line. The dot's ink sits high in its
+   own line box, so it needs nudging down to look centred between the two lines. */
 .box em .sep {
   display: block;
+  position: relative;
+  top: 1.5px;
   line-height: 0.75;
 }
 .box.store em { color: #b9b9b9; }
